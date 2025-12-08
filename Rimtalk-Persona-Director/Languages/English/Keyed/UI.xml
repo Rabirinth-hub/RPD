@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <!-- Settings Window -->
+  <RPD_Settings_Title>AI Persona Director - Settings</RPD_Settings_Title>
+  <RPD_Setting_DebugLog>Enable Debug Log</RPD_Setting_DebugLog>
+  <RPD_Setting_DebugLogDesc>Print full data sent to AI in the developer console.</RPD_Setting_DebugLogDesc>
+  
+  <RPD_Setting_FilterLabel>Select Data sent to AI (Left: Name, Right: Description):</RPD_Setting_FilterLabel>
+  
+  <!-- Groups -->
+  <RPD_Group_Bio>Biology &amp; Background</RPD_Group_Bio>
+  <RPD_Group_Traits>Traits &amp; Status</RPD_Group_Traits>
+
+  <!-- Filters -->
+  <RPD_Filter_Basic>Basic Info</RPD_Filter_Basic>
+  <RPD_Filter_Race>Race</RPD_Filter_Race>
+  <RPD_Filter_Genes>Genes</RPD_Filter_Genes>
+  <RPD_Filter_Backstory>Backstory</RPD_Filter_Backstory>
+  <RPD_Filter_Relations>Family</RPD_Filter_Relations>
+  <RPD_Filter_DirectorNotes>Director Notes</RPD_Filter_DirectorNotes>
+  
+  <RPD_Filter_Traits>Traits</RPD_Filter_Traits>
+  <RPD_Filter_Ideology>Ideology</RPD_Filter_Ideology>
+  <RPD_Filter_Skills>Skills</RPD_Filter_Skills>
+  <RPD_Filter_Health>Health</RPD_Filter_Health>
+
+  <!-- Tooltips -->
+  <RPD_Tip_GenesDesc>Warning: Descriptions can be very long!</RPD_Tip_GenesDesc>
+  <RPD_Tip_NotesDesc>Click 'Edit Notes' button in RimTalk persona editor to modify.</RPD_Tip_NotesDesc>
+
+  <!-- Prompt Section -->
+  <RPD_Prompt_Label>Prompt Template ({LANG} = Current Language):</RPD_Prompt_Label>
+  <RPD_Button_Reset>Reset Default</RPD_Button_Reset>
+  <RPD_Label_JsonTip>System automatically appends JSON protocol.</RPD_Label_JsonTip>
+  <RPD_Label_TokenEst>Est. Total Tokens: ~{0} (Prompt only)</RPD_Label_TokenEst>
+
+  <!-- Director Notes Window -->
+  <RPD_Notes_WinTitle>Director Notes / Custom Context</RPD_Notes_WinTitle>
+  <RPD_Notes_WinDesc>Add custom backstory or events here. Global setting: Persists across characters. Update manually.</RPD_Notes_WinDesc>
+  <RPD_Button_Clear>Clear</RPD_Button_Clear>
+  <RPD_Label_CharCount>Chars: {0} | Est. Tokens (This Window): ~{1}</RPD_Label_CharCount>
+
+  <!-- Main UI Button -->
+  <RPD_Button_EditNotes>Edit Notes</RPD_Button_EditNotes>
+</LanguageData>

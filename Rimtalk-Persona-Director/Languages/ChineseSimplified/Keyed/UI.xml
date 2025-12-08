@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <!-- 设置窗口 -->
+  <RPD_Settings_Title>AI 人设导演 - 设置面板</RPD_Settings_Title>
+  <RPD_Setting_DebugLog>开启调试日志 (Enable Debug Log)</RPD_Setting_DebugLog>
+  <RPD_Setting_DebugLogDesc>在控制台打印发送给 AI 的完整数据。</RPD_Setting_DebugLogDesc>
+  
+  <RPD_Setting_FilterLabel>选择发送给 AI 的数据内容 (左: 名称, 右: 详细描述):</RPD_Setting_FilterLabel>
+  
+  <!-- 分组标题 -->
+  <RPD_Group_Bio>生物与背景</RPD_Group_Bio>
+  <RPD_Group_Traits>特征与状态</RPD_Group_Traits>
+
+  <!-- 过滤器选项 -->
+  <RPD_Filter_Basic>基础</RPD_Filter_Basic>
+  <RPD_Filter_Race>种族</RPD_Filter_Race>
+  <RPD_Filter_Genes>基因</RPD_Filter_Genes>
+  <RPD_Filter_Backstory>背景</RPD_Filter_Backstory>
+  <RPD_Filter_Relations>亲属</RPD_Filter_Relations>
+  <RPD_Filter_DirectorNotes>备注</RPD_Filter_DirectorNotes>
+  
+  <RPD_Filter_Traits>特性</RPD_Filter_Traits>
+  <RPD_Filter_Ideology>文化</RPD_Filter_Ideology>
+  <RPD_Filter_Skills>技能</RPD_Filter_Skills>
+  <RPD_Filter_Health>健康</RPD_Filter_Health>
+
+  <!-- 提示信息 -->
+  <RPD_Tip_GenesDesc>警告: 描述可能极长！</RPD_Tip_GenesDesc>
+  <RPD_Tip_NotesDesc>在 RimTalk 个性编辑器中点击“编辑备注”按钮来填写。</RPD_Tip_NotesDesc>
+
+  <!-- 提示词区域 -->
+  <RPD_Prompt_Label>提示词模板 ({LANG} = 当前语言):</RPD_Prompt_Label>
+  <RPD_Button_Reset>重置默认</RPD_Button_Reset>
+  <RPD_Label_JsonTip>系统会自动追加 JSON 协议。</RPD_Label_JsonTip>
+  <RPD_Label_TokenEst>预估总 Prompt Token: ~{0} (含隐藏协议，不含角色数据)</RPD_Label_TokenEst>
+
+  <!-- 导演备注窗口 -->
+  <RPD_Notes_WinTitle>备注 / 自定义背景</RPD_Notes_WinTitle>
+  <RPD_Notes_WinDesc>在此处添加游戏无法记录的经历或命令（全局文本，切换角色不重置）。</RPD_Notes_WinDesc>
+  <RPD_Button_Clear>清空</RPD_Button_Clear>
+  <RPD_Label_CharCount>字符数: {0} | 预估 Token (本窗口): ~{1}</RPD_Label_CharCount>
+
+  <!-- 主界面按钮 -->
+  <RPD_Button_EditNotes>备注</RPD_Button_EditNotes>
+</LanguageData>
