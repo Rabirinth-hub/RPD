@@ -23,10 +23,12 @@
   <RPD_Filter_Ideology>Ideology</RPD_Filter_Ideology>
   <RPD_Filter_Skills>Skills</RPD_Filter_Skills>
   <RPD_Filter_Health>Health</RPD_Filter_Health>
+  <RPD_Filter_RimPsyche>RimPsyche</RPD_Filter_RimPsyche>
 
   <!-- Tooltips -->
   <RPD_Tip_GenesDesc>Warning: Descriptions can be very long!</RPD_Tip_GenesDesc>
   <RPD_Tip_NotesDesc>Click 'Edit Notes' button in RimTalk persona editor to modify.</RPD_Tip_NotesDesc>
+  <RPD_Tip_RimPsyche>Active only with RimPsyche. Left: only extreme values; Right: all data.</RPD_Tip_RimPsyche>
 
   <!-- Prompt Section -->
   <RPD_Prompt_Label>Prompt Template ({LANG} = Current Language):</RPD_Prompt_Label>
@@ -42,4 +44,6 @@
 
   <!-- Main UI Button -->
   <RPD_Button_EditNotes>Edit Notes</RPD_Button_EditNotes>
+  <RPD_Tip_CurrentNotes>Notes</RPD_Tip_CurrentNotes>
+  <RPD_Tip_NoNotes>Click to edit</RPD_Tip_NoNotes>
 </LanguageData>

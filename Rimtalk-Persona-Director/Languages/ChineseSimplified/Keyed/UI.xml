@@ -23,11 +23,11 @@
   <RPD_Filter_Ideology>文化</RPD_Filter_Ideology>
   <RPD_Filter_Skills>技能</RPD_Filter_Skills>
   <RPD_Filter_Health>健康</RPD_Filter_Health>
-
+  <RPD_Filter_RimPsyche>RimPsyche</RPD_Filter_RimPsyche>
   <!-- 提示信息 -->
   <RPD_Tip_GenesDesc>警告: 描述可能极长！</RPD_Tip_GenesDesc>
   <RPD_Tip_NotesDesc>在 RimTalk 个性编辑器中点击“编辑备注”按钮来填写。</RPD_Tip_NotesDesc>
-
+   <RPD_Tip_RimPsyche>仅在安装 RimPsyche 时生效。左：仅极端数值，右：全部数据。</RPD_Tip_RimPsyche>
   <!-- 提示词区域 -->
   <RPD_Prompt_Label>提示词模板 ({LANG} = 当前语言):</RPD_Prompt_Label>
   <RPD_Button_Reset>重置默认</RPD_Button_Reset>
@@ -42,4 +42,6 @@
 
   <!-- 主界面按钮 -->
   <RPD_Button_EditNotes>备注</RPD_Button_EditNotes>
+  <RPD_Tip_CurrentNotes>备注</RPD_Tip_CurrentNotes>
+  <RPD_Tip_NoNotes>点击编辑</RPD_Tip_NoNotes>
 </LanguageData>

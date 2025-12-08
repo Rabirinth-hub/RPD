@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Verse;
 using System;
+using HarmonyLib;
 
 namespace RimPersonaDirector
 {
@@ -9,9 +10,15 @@ namespace RimPersonaDirector
         public static DirectorSettings Settings;
         private Vector2 scrollPosition = Vector2.zero;
 
+        //缓存 RimPsyche 加载状态
+        private static bool _isRimPsycheLoaded = false;
+
         public DirectorMod(ModContentPack content) : base(content)
         {
             Settings = GetSettings<DirectorSettings>();
+
+            // 初始化检查
+            _isRimPsycheLoaded = AccessTools.TypeByName("Maux36.RimPsyche.CompPsyche") != null;
         }
 
         public override string SettingsCategory() => "RimTalk: Persona Director";
@@ -22,11 +29,11 @@ namespace RimPersonaDirector
             list.Begin(inRect);
 
             Text.Font = GameFont.Medium;
-            list.Label("RPD_Settings_Title".Translate()); 
+            list.Label("RPD_Settings_Title".Translate());
             Text.Font = GameFont.Small;
             list.Gap(8f);
 
-            list.CheckboxLabeled("RPD_Setting_DebugLog".Translate(), ref Settings.EnableDebugLog, "RPD_Setting_DebugLogDesc".Translate()); 
+            list.CheckboxLabeled("RPD_Setting_DebugLog".Translate(), ref Settings.EnableDebugLog, "RPD_Setting_DebugLogDesc".Translate());
             list.GapLine();
 
             DrawContextFilterSettings(list);
@@ -42,8 +49,8 @@ namespace RimPersonaDirector
         private void DrawPromptSection(Listing_Standard list, Rect inRect)
         {
             Rect headerRect = list.GetRect(24f);
-            Widgets.Label(headerRect.LeftPart(0.7f), "RPD_Prompt_Label".Translate()); 
-            if (Widgets.ButtonText(headerRect.RightPart(0.3f), "RPD_Button_Reset".Translate())) 
+            Widgets.Label(headerRect.LeftPart(0.7f), "RPD_Prompt_Label".Translate());
+            if (Widgets.ButtonText(headerRect.RightPart(0.3f), "RPD_Button_Reset".Translate()))
             {
                 Settings.activePrompt = DirectorSettings.DefaultUserPrompt;
             }
@@ -56,8 +63,8 @@ namespace RimPersonaDirector
 
             GUI.color = Color.gray;
             Text.Font = GameFont.Tiny;
-            list.Label("RPD_Label_JsonTip".Translate()); 
-            list.Label("RPD_Label_TokenEst".Translate(estTokens)); 
+            list.Label("RPD_Label_JsonTip".Translate());
+            list.Label("RPD_Label_TokenEst".Translate(estTokens));
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
             list.Gap(5f);
@@ -75,7 +82,7 @@ namespace RimPersonaDirector
         {
             var ctx = Settings.Context;
 
-            listingStandard.Label("RPD_Setting_FilterLabel".Translate()); 
+            listingStandard.Label("RPD_Setting_FilterLabel".Translate());
             listingStandard.Gap(5f);
 
             const float columnGap = 30f;
@@ -87,13 +94,13 @@ namespace RimPersonaDirector
             Listing_Standard leftListing = new Listing_Standard { ColumnWidth = columnWidth };
             leftListing.Begin(leftColumnRect);
 
-            DrawHeader(leftListing, "RPD_Group_Bio".Translate()); 
+            DrawHeader(leftListing, "RPD_Group_Bio".Translate());
             DrawFilterRow(leftListing, "RPD_Filter_Basic".Translate(), ref ctx.Inc_Basic);
             DrawFilterRow(leftListing, "RPD_Filter_Race".Translate(), ref ctx.Inc_Race, ref ctx.Inc_Race_Desc);
-            DrawFilterRow(leftListing, "RPD_Filter_Genes".Translate(), ref ctx.Inc_Genes, ref ctx.Inc_Genes_Desc, "RPD_Tip_GenesDesc".Translate()); 
+            DrawFilterRow(leftListing, "RPD_Filter_Genes".Translate(), ref ctx.Inc_Genes, ref ctx.Inc_Genes_Desc, "RPD_Tip_GenesDesc".Translate());
             DrawFilterRow(leftListing, "RPD_Filter_Backstory".Translate(), ref ctx.Inc_Backstory, ref ctx.Inc_Backstory_Desc);
             DrawFilterRow(leftListing, "RPD_Filter_Relations".Translate(), ref ctx.Inc_Relations);
-            DrawFilterRow(leftListing, "RPD_Filter_DirectorNotes".Translate(), ref ctx.Inc_DirectorNotes, "RPD_Tip_NotesDesc".Translate()); 
+            DrawFilterRow(leftListing, "RPD_Filter_DirectorNotes".Translate(), ref ctx.Inc_DirectorNotes, "RPD_Tip_NotesDesc".Translate());
 
             leftListing.End();
 
@@ -102,11 +109,17 @@ namespace RimPersonaDirector
             Listing_Standard rightListing = new Listing_Standard { ColumnWidth = columnWidth };
             rightListing.Begin(rightColumnRect);
 
-            DrawHeader(rightListing, "RPD_Group_Traits".Translate()); 
+            DrawHeader(rightListing, "RPD_Group_Traits".Translate());
             DrawFilterRow(rightListing, "RPD_Filter_Traits".Translate(), ref ctx.Inc_Traits, ref ctx.Inc_Traits_Desc);
             DrawFilterRow(rightListing, "RPD_Filter_Ideology".Translate(), ref ctx.Inc_Ideology, ref ctx.Inc_Ideology_Desc);
             DrawFilterRow(rightListing, "RPD_Filter_Skills".Translate(), ref ctx.Inc_Skills, ref ctx.Inc_Skills_Desc);
             DrawFilterRow(rightListing, "RPD_Filter_Health".Translate(), ref ctx.Inc_Health, ref ctx.Inc_Health_Desc);
+
+            // 只在检测到 Mod 时显示此行
+            if (_isRimPsycheLoaded)
+            {
+                DrawFilterRow(rightListing, "RPD_Filter_RimPsyche".Translate(), ref ctx.Inc_RimPsyche, ref ctx.Inc_RimPsyche_All, "RPD_Tip_RimPsyche".Translate());
+            }
 
             rightListing.End();
 
@@ -127,14 +140,24 @@ namespace RimPersonaDirector
 
             Rect descRect = new Rect(rowRect.xMax - descCheckboxWidth, rowRect.y, descCheckboxWidth, rowRect.height);
             Widgets.Checkbox(descRect.position, ref descSwitch, descCheckboxWidth, !nameSwitch);
-            if (descTooltip != null) TooltipHandler.TipRegion(descRect, descTooltip);
 
             GUI.enabled = true;
+
+            if (descTooltip != null)
+            {
+                TooltipHandler.TipRegion(rowRect, descTooltip);
+            }
         }
 
         private void DrawFilterRow(Listing_Standard list, string label, ref bool nameSwitch, string tooltip = null)
         {
-            list.CheckboxLabeled(label, ref nameSwitch, tooltip);
+            Rect rowRect = list.GetRect(24f);
+            Widgets.CheckboxLabeled(rowRect, label, ref nameSwitch);
+
+            if (tooltip != null)
+            {
+                TooltipHandler.TipRegion(rowRect, tooltip);
+            }
         }
 
         private void DrawHeader(Listing_Standard list, string text)

@@ -96,6 +96,7 @@ Fields:
         public bool Inc_Ideology = false; public bool Inc_Ideology_Desc = false;
         public bool Inc_Skills = true; public bool Inc_Skills_Desc = true;
         public bool Inc_Health = false; public bool Inc_Health_Desc = false;
+        public bool Inc_RimPsyche = false; public bool Inc_RimPsyche_All = false; // ★ 新增 RimPsyche 开关
 
         public void ExposeData()
         {
@@ -116,6 +117,9 @@ Fields:
             Scribe_Values.Look(ref Inc_Skills_Desc, "Inc_Skills_Desc", true);
             Scribe_Values.Look(ref Inc_Health, "Inc_Health", false);
             Scribe_Values.Look(ref Inc_Health_Desc, "Inc_Health_Desc", false);
+            // ★ 保存 RimPsyche 开关
+            Scribe_Values.Look(ref Inc_RimPsyche, "Inc_RimPsyche", false);
+            Scribe_Values.Look(ref Inc_RimPsyche_All, "Inc_RimPsyche_All", false);
         }
     }
 }
