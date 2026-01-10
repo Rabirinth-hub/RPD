@@ -12,7 +12,8 @@ namespace RimPersonaDirector
             this.doCloseX = true;
             this.draggable = true;
             this.resizeable = true;
-            this.absorbInputAroundWindow = true;
+            this.absorbInputAroundWindow = false; 
+            this.closeOnClickedOutside = false;
         }
 
         public override Vector2 InitialSize => new Vector2(500f, 420f);
@@ -22,10 +23,19 @@ namespace RimPersonaDirector
             Listing_Standard list = new Listing_Standard();
             list.Begin(inRect);
 
-            Text.Font = GameFont.Medium;
-            list.Label("RPD_Notes_WinTitle".Translate()); 
-            Text.Font = GameFont.Small;
-            list.Label("RPD_Notes_WinDesc".Translate()); 
+            // 标题栏：左边标题，右边切换按钮
+            Rect headerRect = list.GetRect(30f);
+            Widgets.Label(headerRect.LeftPart(0.6f), "RPD_Notes_Title".Translate());
+
+            // ★ 切换按钮 ★
+            if (Widgets.ButtonText(headerRect.RightPart(0.4f), "RPD_Mode_SwitchToAdvanced".Translate()))
+            {
+                this.Close();
+                Find.WindowStack.Add(new Window_BatchDirector());
+            }
+
+            list.Gap(5f);
+            list.Label("RPD_Notes_Description".Translate());
             list.Gap(5f);
 
             // 清空按钮

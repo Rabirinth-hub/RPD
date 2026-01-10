@@ -1,7 +1,8 @@
-﻿using UnityEngine;
-using Verse;
+﻿using HarmonyLib;
 using System;
-using HarmonyLib;
+using System.Collections.Generic;
+using UnityEngine;
+using Verse;
 
 namespace RimPersonaDirector
 {
@@ -27,15 +28,29 @@ namespace RimPersonaDirector
         {
             Listing_Standard list = new Listing_Standard();
             list.Begin(inRect);
-
+            
+            Rect titleRect = list.GetRect(30f);
+            // 左侧标题
             Text.Font = GameFont.Medium;
-            list.Label("RPD_Settings_Title".Translate());
+            Widgets.Label(titleRect.LeftPart(0.7f), "RPD_Settings_Title".Translate());
             Text.Font = GameFont.Small;
+
+            // 右侧按钮
+            Rect libraryBtnRect = titleRect.RightPart(0.25f);
+            if (Widgets.ButtonText(libraryBtnRect, "RPD_Settings_OpenLibrary".Translate()))
+            {
+                Find.WindowStack.Add(new Window_LibraryManager());
+            }
+            // 使用翻译 Key
+            TooltipHandler.TipRegion(libraryBtnRect, "RPD_Tip_OpenLibrary".Translate());
+
             list.Gap(8f);
 
+            list.CheckboxLabeled("RPD_Settings_ShowMainButton".Translate(), ref Settings.ShowMainButton, "RPD_Settings_ShowMainButtonTip".Translate());
+            list.CheckboxLabeled("RPD_Settings_EnableEvolve".Translate(), ref Settings.enableEvolveFeature, "RPD_Settings_EnableEvolveTip".Translate());
             list.CheckboxLabeled("RPD_Setting_DebugLog".Translate(), ref Settings.EnableDebugLog, "RPD_Setting_DebugLogDesc".Translate());
             list.GapLine();
-
+            
             DrawContextFilterSettings(list);
 
             list.GapLine();
@@ -48,33 +63,107 @@ namespace RimPersonaDirector
 
         private void DrawPromptSection(Listing_Standard list, Rect inRect)
         {
+            // 获取当前槽位引用
+            var settings = Settings;
+            if (settings.presets == null || settings.presets.Count < 3) settings.InitPresets();
+
+            var currentPreset = settings.presets[settings.selectedPresetIndex];
+
+            // --- 标题行 ---
             Rect headerRect = list.GetRect(24f);
-            Widgets.Label(headerRect.LeftPart(0.7f), "RPD_Prompt_Label".Translate());
+            Widgets.Label(headerRect.LeftPart(0.7f), "RPD_Prompt_Label".Translate()); // "Prompt Template:"
+
+            // 重置按钮 (只重置当前槽位)
             if (Widgets.ButtonText(headerRect.RightPart(0.3f), "RPD_Button_Reset".Translate()))
             {
-                Settings.activePrompt = DirectorSettings.DefaultUserPrompt;
+                if (settings.selectedPresetIndex == 0)
+                {
+                    currentPreset.label = "Standard (3 Options)";
+                    currentPreset.text = DirectorSettings.DefaultPrompt_Standard;
+                }
+                else if (settings.selectedPresetIndex == 1)
+                {
+                    currentPreset.label = "Story-Driven";
+                    currentPreset.text = DirectorSettings.DefaultPrompt_Simple;
+                }
+                else if (settings.selectedPresetIndex == 2)
+                {
+                    currentPreset.label = "Data-Driven";
+                    currentPreset.text = DirectorSettings.DefaultPrompt_Strict;
+                }
+                else if (settings.selectedPresetIndex == 3)
+                {
+                    currentPreset.label = "Evolution (Update Only)";
+                    currentPreset.text = DirectorSettings.DefaultPrompt_Evolve;
+                }
             }
-            list.Gap(2f);
+            list.Gap(5f);
 
-            int userChar = Settings.activePrompt?.Length ?? 0;
-            int hiddenChar = DirectorSettings.HiddenTechnicalPrompt.Length;
-            int totalChar = userChar + hiddenChar;
-            int estTokens = (int)(totalChar / 2.5f);
-
+            // --- 文本编辑区 ---
+            // 提示信息
             GUI.color = Color.gray;
             Text.Font = GameFont.Tiny;
             list.Label("RPD_Label_JsonTip".Translate());
-            list.Label("RPD_Label_TokenEst".Translate(estTokens));
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
+            list.Gap(2f);
+
+            // --- 控制行 (左：Token估算，右：下拉菜单 + 标签编辑) ---
+            Rect ctrlRect = list.GetRect(26f);
+
+            // 1. 左侧 Token 估算 (保持原有逻辑)
+            int userChar = currentPreset.text?.Length ?? 0;
+            int hiddenChar = DirectorSettings.HiddenTechnicalPrompt_Single.Length; // 估算单体
+            int estTokens = (int)((userChar + hiddenChar) / 2.5f);
+
+            GUI.color = Color.gray;
+            Text.Font = GameFont.Tiny;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(ctrlRect.LeftPart(0.4f), "RPD_Label_TokenEst".Translate(estTokens));
+
+            // 2. 右侧 标签编辑 + 下拉选择
+            Text.Font = GameFont.Small;
+            GUI.color = Color.white;
+            Text.Anchor = TextAnchor.MiddleLeft;
+
+            Rect rightPart = ctrlRect.RightPart(0.6f);
+            float dropdownWidth = 100f;
+            float labelWidth = rightPart.width - dropdownWidth - 5f;
+
+            // 标签编辑框
+            Rect labelRect = new Rect(rightPart.x, rightPart.y, labelWidth, 24f);
+            string newLabel = Widgets.TextField(labelRect, currentPreset.label);
+            if (newLabel != currentPreset.label) currentPreset.label = newLabel;
+
+            // 下拉菜单按钮
+            Rect dropdownRect = new Rect(labelRect.xMax + 5f, rightPart.y, dropdownWidth, 24f);
+            if (Widgets.ButtonText(dropdownRect, $"Slot {settings.selectedPresetIndex + 1} ▼"))
+            {
+                List<FloatMenuOption> options = new List<FloatMenuOption>();
+                for (int i = 0; i < settings.presets.Count; i++)
+                {
+                    int index = i; // 闭包捕获
+                    string name = settings.presets[i].label;
+                    if (string.IsNullOrEmpty(name)) name = $"Slot {i + 1}";
+
+                    options.Add(new FloatMenuOption($"{i + 1}. {name}", () =>
+                    {
+                        settings.selectedPresetIndex = index;
+                    }));
+                }
+                Find.WindowStack.Add(new FloatMenu(options));
+            }
+
+            Text.Anchor = TextAnchor.UpperLeft; // 还原对齐
             list.Gap(5f);
 
+            // 大文本框
             float remainingHeight = inRect.height - list.CurHeight - 10f;
             Rect outRect = list.GetRect(remainingHeight);
             Rect viewRect = new Rect(0, 0, outRect.width - 16f, 1500f);
 
             Widgets.BeginScrollView(outRect, ref scrollPosition, viewRect);
-            Settings.activePrompt = Widgets.TextArea(viewRect, Settings.activePrompt);
+            currentPreset.text = Widgets.TextArea(viewRect, currentPreset.text);
             Widgets.EndScrollView();
         }
 
@@ -85,45 +174,85 @@ namespace RimPersonaDirector
             listingStandard.Label("RPD_Setting_FilterLabel".Translate());
             listingStandard.Gap(5f);
 
-            const float columnGap = 30f;
-            float columnWidth = (listingStandard.ColumnWidth - columnGap) / 2;
+            // 3. 计算列宽
+            const float colGap = 10f; // 稍微紧凑一点
+            int colCount = 3;
+            // 总宽度减去间隙，除以列数
+            float colWidth = (listingStandard.ColumnWidth - (colGap * (colCount - 1))) / colCount;
+
+            // 获取当前 Y 轴位置
             Rect positionRect = listingStandard.GetRect(0f);
+            float startY = positionRect.y;
 
-            // --- 左栏 ---
-            Rect leftColumnRect = new Rect(positionRect.x, positionRect.y, columnWidth, 9999f);
-            Listing_Standard leftListing = new Listing_Standard { ColumnWidth = columnWidth };
-            leftListing.Begin(leftColumnRect);
+            // =================================================
+            // 第一列：生物与背景 (Biology & Background) - 6项
+            // =================================================
+            Rect col1Rect = new Rect(positionRect.x, startY, colWidth, 9999f);
+            Listing_Standard list1 = new Listing_Standard { ColumnWidth = colWidth };
+            list1.Begin(col1Rect);
 
-            DrawHeader(leftListing, "RPD_Group_Bio".Translate());
-            DrawFilterRow(leftListing, "RPD_Filter_Basic".Translate(), ref ctx.Inc_Basic);
-            DrawFilterRow(leftListing, "RPD_Filter_Race".Translate(), ref ctx.Inc_Race, ref ctx.Inc_Race_Desc);
-            DrawFilterRow(leftListing, "RPD_Filter_Genes".Translate(), ref ctx.Inc_Genes, ref ctx.Inc_Genes_Desc, "RPD_Tip_GenesDesc".Translate());
-            DrawFilterRow(leftListing, "RPD_Filter_Backstory".Translate(), ref ctx.Inc_Backstory, ref ctx.Inc_Backstory_Desc);
-            DrawFilterRow(leftListing, "RPD_Filter_Relations".Translate(), ref ctx.Inc_Relations);
-            DrawFilterRow(leftListing, "RPD_Filter_DirectorNotes".Translate(), ref ctx.Inc_DirectorNotes, "RPD_Tip_NotesDesc".Translate());
+            DrawHeader(list1, "RPD_Group_Bio".Translate());
+            DrawFilterRow(list1, "RPD_Filter_Basic".Translate(), ref ctx.Inc_Basic);
+            DrawFilterRow(list1, "RPD_Filter_Race".Translate(), ref ctx.Inc_Race, ref ctx.Inc_Race_Desc);
+            DrawFilterRow(list1, "RPD_Filter_Genes".Translate(), ref ctx.Inc_Genes, ref ctx.Inc_Genes_Desc, "RPD_Tip_GenesDesc".Translate());
+            DrawFilterRow(list1, "RPD_Filter_Backstory".Translate(), ref ctx.Inc_Backstory, ref ctx.Inc_Backstory_Desc);
+            DrawFilterRow(list1, "RPD_Filter_Relations".Translate(), ref ctx.Inc_Relations);
+            DrawFilterRow(list1, "RPD_Filter_DirectorNotes".Translate(), ref ctx.Inc_DirectorNotes, "RPD_Tip_NotesDesc".Translate());
 
-            leftListing.End();
+            list1.End();
 
-            // --- 右栏 ---
-            Rect rightColumnRect = new Rect(leftColumnRect.xMax + columnGap, positionRect.y, columnWidth, 9999f);
-            Listing_Standard rightListing = new Listing_Standard { ColumnWidth = columnWidth };
-            rightListing.Begin(rightColumnRect);
+            // =================================================
+            // 第二列：特征与状态 (Traits & Status) - 6项
+            // =================================================
+            Rect col2Rect = new Rect(col1Rect.xMax + colGap, startY, colWidth, 9999f);
+            Listing_Standard list2 = new Listing_Standard { ColumnWidth = colWidth };
+            list2.Begin(col2Rect);
 
-            DrawHeader(rightListing, "RPD_Group_Traits".Translate());
-            DrawFilterRow(rightListing, "RPD_Filter_Traits".Translate(), ref ctx.Inc_Traits, ref ctx.Inc_Traits_Desc);
-            DrawFilterRow(rightListing, "RPD_Filter_Ideology".Translate(), ref ctx.Inc_Ideology, ref ctx.Inc_Ideology_Desc);
-            DrawFilterRow(rightListing, "RPD_Filter_Skills".Translate(), ref ctx.Inc_Skills, ref ctx.Inc_Skills_Desc);
-            DrawFilterRow(rightListing, "RPD_Filter_Health".Translate(), ref ctx.Inc_Health, ref ctx.Inc_Health_Desc);
+            DrawHeader(list2, "RPD_Group_Traits".Translate());
+            DrawFilterRow(list2, "RPD_Filter_Traits".Translate(), ref ctx.Inc_Traits, ref ctx.Inc_Traits_Desc);
+            DrawFilterRow(list2, "RPD_Filter_Ideology".Translate(), ref ctx.Inc_Ideology, ref ctx.Inc_Ideology_Desc);
+            DrawFilterRow(list2, "RPD_Filter_Skills".Translate(), ref ctx.Inc_Skills, ref ctx.Inc_Skills_Desc);
+            DrawFilterRow(list2, "RPD_Filter_Health".Translate(), ref ctx.Inc_Health, ref ctx.Inc_Health_Desc);
+            DrawFilterRow(list2, "RPD_Filter_Equipment".Translate(), ref ctx.Inc_Equipment);
+            DrawFilterRow(list2, "RPD_Filter_Inventory".Translate(), ref ctx.Inc_Inventory);
 
-            // 只在检测到 Mod 时显示此行
+            list2.End();
+
+            // =================================================
+            // 第三列：外部数据源 (External Data) - 动态显示
+            // =================================================
+            Rect col3Rect = new Rect(col2Rect.xMax + colGap, startY, colWidth, 9999f);
+            Listing_Standard list3 = new Listing_Standard { ColumnWidth = colWidth };
+            list3.Begin(col3Rect);
+
+            DrawHeader(list3, "RPD_Group_ExternalData".Translate());
+
+            DrawFilterRow(list3, "RPD_Filter_DataComparison".Translate(), ref ctx.Inc_DataComparison);
+
+            // 1. RimPsyche
             if (_isRimPsycheLoaded)
             {
-                DrawFilterRow(rightListing, "RPD_Filter_RimPsyche".Translate(), ref ctx.Inc_RimPsyche, ref ctx.Inc_RimPsyche_All, "RPD_Tip_RimPsyche".Translate());
+                    DrawFilterRow(list3, "RPD_Filter_RimPsyche".Translate(), ref ctx.Inc_RimPsyche, ref ctx.Inc_RimPsyche_All, "RPD_Tip_RimPsyche".Translate());
             }
 
-            rightListing.End();
+            // 2. Memory Mod
+            if (ModsConfig.IsActive("cj.rimtalk.expandmemory"))
+            {
+                    DrawFilterRow(list3, "RPD_Filter_Memories".Translate(), ref ctx.Inc_Memories);
+                    DrawFilterRow(list3, "RPD_Filter_CommonKnowledge".Translate(), ref ctx.Inc_CommonKnowledge);
+            }
 
-            listingStandard.Gap(Mathf.Max(leftListing.CurHeight, rightListing.CurHeight));
+
+                list3.End();
+
+            // =================================================
+            // 布局收尾
+            // =================================================
+            // 计算三列中最高的一列，撑开主 Listing 的高度，防止内容重叠
+            float maxHeight = Mathf.Max(list1.CurHeight, list2.CurHeight);
+            maxHeight = Mathf.Max(maxHeight, list3.CurHeight);
+
+            listingStandard.Gap(maxHeight);
         }
 
         private void DrawFilterRow(Listing_Standard list, string label, ref bool nameSwitch, ref bool descSwitch, string descTooltip = null)
