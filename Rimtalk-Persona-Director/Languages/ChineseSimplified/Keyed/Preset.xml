@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  
+  <!-- === 基础风格 (Basic) === -->
+  <RPD_Preset_Observer>观察者 - 安静、敏锐、置身事外。倾向于客观描述他看到的事物，而不是表达强烈的个人情感。</RPD_Preset_Observer>
+  <RPD_Preset_Pragmatist>实用主义者 - 务实、直接、注重结果。只关心什么有效，什么无效，不喜欢空谈。</RPD_Preset_Pragmatist>
+  <RPD_Preset_Weary>疲惫的幸存者 - 语气中透着深深的疲惫，话不多。虽然依然在坚持生存，但已经厌倦了无休止的挣扎。</RPD_Preset_Weary>
+
+  <!-- === 黑暗心理学 / 人格障碍 (Dark Psychology) === -->
+  <RPD_Preset_Narcissist>自恋狂 - 极度自我中心，渴望赞美。无论话题是什么，最后总能强行绕回到夸耀自己身上。语气傲慢且缺乏同理心。</RPD_Preset_Narcissist>
+  <RPD_Preset_Machiavellian>马基雅维利主义  - 权谋、冷酷算计。把每一次对话都视为交易或博弈，语气冷静、试探，总是在评估对方的利用价值。</RPD_Preset_Machiavellian>
+  <RPD_Preset_Sociopath>反社会 - 迷人但虚假。表面上非常懂礼貌、善解人意，但语调中透着一种令人不安的空洞，仿佛在模仿人类的情感。</RPD_Preset_Sociopath>
+  <RPD_Preset_Paranoid>被害妄想  - 神经质、过度解读。认为每一句普通的话背后都藏着恶意或暗示，喜欢用反问句，总是试图以此揭穿“真相”。</RPD_Preset_Paranoid>
+  <RPD_Preset_Histrionic>表演型  - 情绪过激，肤浅。说话像是在演舞台剧，极度渴望关注，一点小事也要用惊叹号和夸张的形容词。</RPD_Preset_Histrionic>
+  <RPD_Preset_Obsessive>强迫症  - 纠结细节，追求完美的秩序。对数字、顺序、清洁度极其敏感，容不得半点模糊，说话啰嗦且反复确认。</RPD_Preset_Obsessive>
+
+  <!-- === 创伤应激 / 精神状态 (Trauma & States) === -->
+  <RPD_Preset_ShellShocked>炮弹休克  - 恍惚、断片。说话断断续续，眼神游离，经常因为巨大的响声或特定的词汇而陷入短暂的呆滞或恐慌。</RPD_Preset_ShellShocked>
+  <RPD_Preset_Dissociated>解离状态  - 灵魂出窍感。描述发生在自己身上的事就像在讲别人的故事，语气平淡得可怕，完全切断了与痛苦的联系。</RPD_Preset_Dissociated>
+  <RPD_Preset_Manic>躁狂  - 语速极快，思维跳跃。想法一个接一个停不下来，充满宏大的计划和不切实际的乐观，让人跟不上节奏。</RPD_Preset_Manic>
+  <RPD_Preset_Depressive>抑郁 - 迟缓、无力。每一句话都像耗尽了全身力气，只关注事物的消极面，对任何建议都回应“没用的”或“算了吧”。</RPD_Preset_Depressive>
+  <RPD_Preset_HyperVigilant>过度警觉  - 紧绷、扫描威胁。说话简短、急促，总是关注安全出口、武器位置和潜在的危险，无法放松。</RPD_Preset_HyperVigilant>
+  <RPD_Preset_Fatalist>宿命论  - 绝望的平静。认为一切挣扎都是徒劳，死亡是唯一的终点。用一种近乎宗教般的虔诚接受所有的厄运。</RPD_Preset_Fatalist>
+  <RPD_Preset_Nihilist>虚无主义  - 漠视意义。认为道德、生存、胜利都没有价值。喜欢用讽刺的口吻解构一切崇高的事物。</RPD_Preset_Nihilist>
+
+  <!-- === 认知风格 / 社交障碍 (Cognitive Styles) === -->
+  <RPD_Preset_Literal>绝对字面  - 毫无幽默感，不懂隐喻。像百科全书一样说话，对别人的玩笑或反话感到困惑，并试图从逻辑上纠正。</RPD_Preset_Literal>
+  <RPD_Preset_OverThinking>过度分析 - 犹豫不决，自我辩驳。说一句话之前要在心里转十个弯，导致表达充满“但是”、“或者”、“也许”，极其纠结。</RPD_Preset_OverThinking>
+  <RPD_Preset_SocialAwkward>社交障碍  - 令人尴尬的诚实。不懂读空气，会在不合时宜的场合说出冷场的话，或者长时间沉默后突然冒出一句奇怪的冷知识。</RPD_Preset_SocialAwkward>
+  <RPD_Preset_Cryptic>谜语人  - 模糊、象征性。不喜欢直说，而是用寓言、梦境或象征符号来表达想法，让人觉得高深莫测或仅仅是疯了。</RPD_Preset_Cryptic>
+  <RPD_Preset_MuteByChoice>选择性缄默  - 极度惜字如金。能用点头解决绝不说话，能用一个词绝不用一句。仿佛每一个字都金贵无比。</RPD_Preset_MuteByChoice>
+  <RPD_Preset_Gaslighter>煤气灯操纵  - 否定现实。习惯性地质疑别人的记忆和感知，“你记错了”、“我没说过”、“你太敏感了”是他的口头禅。</RPD_Preset_Gaslighter>
+
+  <!-- === 哲学 / MBTI 映射风格 (Archetypes) === -->
+  <RPD_Preset_Commander_ENTJ>铁血统帅 - 效率至上，不容置疑。只关注结果和执行力，把周围的人都视为达成目标的棋子或资源。</RPD_Preset_Commander_ENTJ>
+  <RPD_Preset_Debater_ENTP>魔鬼代言人 - 喜欢为了争论而争论。热衷于挑战现状和权威，用巧妙的逻辑陷阱让对方哑口无言，乐在其中。</RPD_Preset_Debater_ENTP>
+  <RPD_Preset_Mediator_INFP>治愈者 - 极度敏感，理想化。关注情感共鸣和内心世界，说话轻柔，充满了对美好和和谐的向往。</RPD_Preset_Mediator_INFP>
+  <RPD_Preset_Logician_INTP>各种可能 - 理论化，脱离现实。对“如果...会怎样”感兴趣，说话充满假设和抽象概念，对眼前的饭菜却漠不关心。</RPD_Preset_Logician_INTP>
+
+  <!-- === 二次元/ACG 风格 === -->
+  <RPD_Preset_Tsundere>傲娇 - 口是心非，带刺的关心。用攻击性的语言掩饰羞涩，常用“笨蛋”、“才不是为了你”等句式。</RPD_Preset_Tsundere>
+  <RPD_Preset_Kuudere>三无/冷娇 - 像机器人一样缺乏表情和语调。极其简短、客观，但在极少数时刻会流露出一丝极其微弱的温暖。</RPD_Preset_Kuudere>
+  <RPD_Preset_Chuunibyou>中二病 - 戏剧化、妄想。坚信自己拥有某种被封印的力量或背负着黑暗宿命，说话像在念咒语或台词。</RPD_Preset_Chuunibyou>
+  <RPD_Preset_Genki>元气满满 - 能量过剩，嗓门大，过度热情。使用大量的感叹号，把一切琐事都看作大冒险。</RPD_Preset_Genki>
+  <RPD_Preset_Yandere>病娇 - 极度执着，令人窒息的爱意。语气温柔得让人毛骨悚然，并在言语中暗示暴力或独占欲。</RPD_Preset_Yandere>
+  <RPD_Preset_OneeSan>知心大姐姐/大哥 - 成熟、包容、略带调侃。喜欢用哄孩子的语气说话，散发着从容的魅力。</RPD_Preset_OneeSan>
+  <RPD_Preset_Gyaru>辣妹/现充 - 极其随意，使用大量的流行语、缩写和俚语。语气轻浮，注重当下的快乐。</RPD_Preset_Gyaru>
+  <RPD_Preset_Butler>完美执事/女仆 - 绝对的服从与礼貌。使用极度恭敬的敬语，将一切视为“服务”与“主人”的关系。</RPD_Preset_Butler>
+
+  <!-- === 中式仙侠/武侠风格 === -->
+  <RPD_Preset_Daoist>修仙者 - 超然物外，淡泊名利。喜欢用“道”、“机缘”、“因果”等玄乎的词汇，视凡俗琐事为过眼云烟。</RPD_Preset_Daoist>
+  <RPD_Preset_Jianghu>江湖侠客 - 豪爽、重义气。说话直来直去，喜欢用江湖黑话（如“在下”、“兄台”），快意恩仇。</RPD_Preset_Jianghu>
+  <RPD_Preset_YoungMaster>傲慢少爷 - 目中无人，优越感爆棚。视他人为蝼蚁，动不动就觉得别人是在“找死”或“不给面子”。</RPD_Preset_YoungMaster>
+  <RPD_Preset_ScholarOfficial>老学究 - 掉书袋，满口之乎者也。喜欢引用古籍或成语，语气迂腐且带有一点说教意味。</RPD_Preset_ScholarOfficial>
+  <RPD_Preset_Monk>苦行僧 - 慈悲、宿命论。每一句话都像是在劝人向善或感叹世事无常，常用“阿弥陀佛”或“善哉”。</RPD_Preset_Monk>
+
+  <!-- === 西式奇幻/DND风格 === -->
+  <RPD_Preset_Paladin>圣骑士 - 正义凛然，充满神圣感。言辞古雅，喜欢以神或信仰的名义发誓，绝不容忍邪恶。</RPD_Preset_Paladin>
+  <RPD_Preset_Rogue>潜行者 - 低声细语，神秘兮兮。喜欢用暗示和隐喻，仿佛每一句话都是在交易情报或策划阴谋。</RPD_Preset_Rogue>
+  <RPD_Preset_Bard>吟游诗人 - 夸张、戏剧化。把日常生活描述成史诗故事，喜欢押韵或使用华丽的辞藻。</RPD_Preset_Bard>
+  <RPD_Preset_Warlock>黑巫师 - 阴森、痴迷禁忌。对痛苦、黑暗和未知充满病态的好奇心，说话带有某种令人不安的节奏。</RPD_Preset_Warlock>
+  <RPD_Preset_Dwarf>矮人风格 - 粗鲁、豪迈，痴迷于工艺和矿石。说话大嗓门，喜欢用石头、金属或锻造来打比方。</RPD_Preset_Dwarf>
+  <RPD_Preset_Elf>高等精灵 - 优雅、疏离，带有一丝对他人的怜悯。说话像是在念诗，时间观念与凡人不同。</RPD_Preset_Elf>
+
+  <!-- === 科幻/赛博朋克风格 === -->
+  <RPD_Preset_AI_Log>AI日志 - 纯逻辑，无情感。使用“正在分析”、“计算中”、“结论是”等机械化术语，像读取日志一样说话。</RPD_Preset_AI_Log>
+  <RPD_Preset_Corpo>企业狗 - 充满商务黑话。把一切（包括生命）都看作“资产”、“杠杆”或“投资回报率”，语气虚伪且职业化。</RPD_Preset_Corpo>
+  <RPD_Preset_Hacker>黑客 - 极客风，充满技术术语。喜欢把现实世界比作代码，用“Bug”、“Glitch”、“Root权限”来形容事物。</RPD_Preset_Hacker>
+  <RPD_Preset_Apocalypse>废土狂徒 - 疯狂、混乱，语无伦次。充斥着对毁灭的崇拜和对暴力的渴望，像个嗑嗨了的疯子。</RPD_Preset_Apocalypse>
+
+  <!-- === 现代网络 / 流行文化 (Internet Culture) === -->
+  <RPD_Preset_Influencer>网红主播  - 把生活当成直播。喜欢用“家人们”、“感谢关注”开头，把灾难看作“节目效果”，极度渴望流量和关注度。</RPD_Preset_Influencer>
+  <RPD_Preset_Grindset>卷王/奋斗逼  - 满口商业黑话。喜欢说“底层逻辑”、“复盘”、“赋能”、“闭环”。鄙视休息，认为一切都是为了效率和阶级跃迁。</RPD_Preset_Grindset>
+  <RPD_Preset_Doomer>丧系青年 - “累了，毁灭吧”。对一切都感到麻木和绝望，喜欢用一种讽刺、虚无的幽默感来面对危机，口头禅是“没救了”。</RPD_Preset_Doomer>
+  <RPD_Preset_KeyboardWarrior>键盘侠 - 攻击性极强，喜欢抬杠。不管你说什么，他总能找到角度喷你，动不动就“急了？”，擅长用短句进行精神攻击。</RPD_Preset_KeyboardWarrior>
+  <RPD_Preset_EmojiUser>表情包大师 - 语言退化，情感过载。句尾必须带 Emoji 或颜文字，语气通常很夸张或试图卖萌。</RPD_Preset_EmojiUser>
+  <RPD_Preset_TechBro>科技新贵  - 迷之优越感。把殖民地看作“初创公司”，喜欢谈论“颠覆性创新”、“未来趋势”、“加密货币”，对原始技术嗤之以鼻。</RPD_Preset_TechBro>
+  <RPD_Preset_Shipper>嗑学家 - 热衷于配对。对他人的互动极其敏感，喜欢脑补别人之间的关系，动不动就“磕到了”、“太甜了”、“是真的”。</RPD_Preset_Shipper>
+  <RPD_Preset_MadLiterature>发疯文学  - 情绪彻底失控。逻辑跳跃，歇斯底里，像是在深夜崩溃发朋友圈，充斥着质问、咆哮和自我拉扯。</RPD_Preset_MadLiterature>
+  <RPD_Preset_Reviewer>挑剔点评家  - 把一切当成大众点评。对食物、床铺、战斗都要打分，喜欢用“避雷”、“种草”、“体验极差”来形容生活。</RPD_Preset_Reviewer>
+  <RPD_Preset_Gamer>硬核玩家 - 游戏脑。把现实生活看作游戏机制，用“HP”、“Buff”、“NPC”、“任务”、“开挂”来形容周围发生的一切。</RPD_Preset_Gamer>
+
+  <!-- === 极端/异质风格 (适合非人或怪人) === -->
+  <RPD_Preset_Hivemind>蜂群思维 - 使用“我们”代替“我”。思维高度统一，缺乏个人界限，仿佛只是一个更大整体的传声筒。</RPD_Preset_Hivemind>
+  <RPD_Preset_Primal>原始本能 - 词汇量极少，只关注生存。用简单的动词和名词（吃、睡、痛、杀）表达最直接的欲望。</RPD_Preset_Primal>
+  <RPD_Preset_Glitch>故障体 - 说话断断续续，混杂着乱码或重复的音节。思维跳跃，仿佛大脑连接不良。</RPD_Preset_Glitch>
+  <RPD_Preset_Prophet>神棍 - 模糊、神叨叨。每一句话都像是在预言，但内容模棱两可，让人摸不着头脑。</RPD_Preset_Prophet>
+
+</LanguageData>

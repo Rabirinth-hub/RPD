@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+
+  <!-- Main Library Window -->
+  <RPD_Library_Title>Director Library</RPD_Library_Title>
+  <RPD_Library_TabPresets>Preset Library</RPD_Library_TabPresets>
+  <RPD_Library_TabRules>Auto-Assignment Rules</RPD_Library_TabRules>
+  <RPD_Library_ResetDefaults>Reset Defaults</RPD_Library_ResetDefaults>
+  <RPD_Library_ResetConfirm>DANGER: This will delete ALL your custom presets and rules, and restore the default library.\nAre you sure?</RPD_Library_ResetConfirm>
+  <RPD_Settings_OpenLibrary>Open Preset Library</RPD_Settings_OpenLibrary>
+  <RPD_Tip_OpenLibrary>Manage character personality presets and automatic assignment rules for new characters</RPD_Tip_OpenLibrary>
+  
+  <!-- Presets Tab -->
+  <RPD_Library_Category>Category: {0}</RPD_Library_Category>
+  <RPD_Library_CreatePreset>+ Create New Preset</RPD_Library_CreatePreset>
+  <RPD_Library_DeletePreset>Delete</RPD_Library_DeletePreset>
+  <RPD_Library_ImportTemplate>Import Template</RPD_Library_ImportTemplate>
+  <RPD_Library_SelectToEdit>Select or create a preset to edit</RPD_Library_SelectToEdit>
+  <RPD_Library_PresetName>Preset Name:</RPD_Library_PresetName>
+  <RPD_Library_PresetCategory>Category (Type to create new):</RPD_Library_PresetCategory>
+  <RPD_Library_Chattiness>Chattiness: {0}</RPD_Library_Chattiness>
+  <RPD_Library_Description>Persona Description:</RPD_Library_Description>
+  <RPD_Library_I_E>Import / Export</RPD_Library_I_E>
+
+
+  <!-- Rules Tab -->
+  <RPD_Library_CreateRule>+ Create New Rule</RPD_Library_CreateRule>
+  <RPD_Library_DeleteRule>Delete Rule</RPD_Library_DeleteRule>
+  <RPD_Library_SelectToEditRule>Select or create a rule to edit</RPD_Library_SelectToEditRule>
+  <RPD_Library_RuleEnabled>Rule Enabled</RPD_Library_RuleEnabled>
+  <RPD_Library_Priority>Priority: {0} (Higher overrides Lower)</RPD_Library_Priority>
+  <RPD_Library_TargetType>Target Type: {0}</RPD_Library_TargetType>
+  <RPD_Library_TargetDef>Target Def: {0}</RPD_Library_TargetDef>
+  <RPD_Library_TargetSelect>Select Target Def...</RPD_Library_TargetSelect>
+  <RPD_Library_TargetMissing>WARNING: Def not found! (Mod missing?)</RPD_Library_TargetMissing>
+  <RPD_Library_PresetsPool>Allowed Presets Pool (Randomly picked):</RPD_Library_PresetsPool>
+  <RPD_Library_NoDefsFound>No compatible defs found</RPD_Library_NoDefsFound>
+
+  <!-- Preset Browser Window -->
+  <RPD_Browser_ApplySelected>Apply Selected</RPD_Browser_ApplySelected>
+  <RPD_Browser_ApplyRandom>Apply Random</RPD_Browser_ApplyRandom>
+  <RPD_Browser_TipApplySelected>Apply the currently selected preset from the list above.</RPD_Browser_TipApplySelected>
+  <RPD_Browser_TipApplyRandom>Apply a random preset from the currently visible list.</RPD_Browser_TipApplyRandom>
+  <RPD_Browser_NoPresetsInCategory>No presets in this category.</RPD_Browser_NoPresetsInCategory>
+  <RPD_Browser_AppliedSuccess>Applied preset: {0}</RPD_Browser_AppliedSuccess>
+<!-- Rule Type Names -->
+  <RPD_RuleType_FactionDef>Faction</RPD_RuleType_FactionDef>
+  <RPD_RuleType_RaceDef>Race</RPD_RuleType_RaceDef>
+  <RPD_RuleType_XenotypeDef>Xenotype</RPD_RuleType_XenotypeDef>
+<!-- Import/Export Window -->
+  <RPD_IO_Export>Export...</RPD_IO_Export>
+  <RPD_IO_TipExport>Left-click: Copy to Clipboard\nRight-click: Save to File</RPD_IO_TipExport>
+  <RPD_IO_ImportAppend>Import (Append)</RPD_IO_ImportAppend>
+  <RPD_IO_ImportOverwrite>Import (Overwrite)</RPD_IO_ImportOverwrite>
+  <RPD_IO_ImportFile>Import From File</RPD_IO_ImportFile>
+  <RPD_IO_ConfirmOverwrite>Overwrite ALL existing presets and rules?</RPD_IO_ConfirmOverwrite>
+  
+  <RPD_IO_MsgExportClipboard>Library exported to clipboard.</RPD_IO_MsgExportClipboard>
+  <RPD_IO_MsgExportFile>Library exported to file:\n{0}</RPD_IO_MsgExportFile>
+  <RPD_IO_MsgImportSuccess>Library imported successfully.</RPD_IO_MsgImportSuccess>
+  <RPD_IO_MsgImportFail>Import failed: Invalid format or corrupted data.\n{0}</RPD_IO_MsgImportFail>
+  <RPD_IO_MsgNoFolder>No export folder found.</RPD_IO_MsgNoFolder>
+  <RPD_IO_MsgNoFiles>No files found</RPD_IO_MsgNoFiles>
+</LanguageData>

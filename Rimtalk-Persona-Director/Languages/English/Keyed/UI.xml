@@ -4,12 +4,16 @@
   <RPD_Settings_Title>AI Persona Director - Settings</RPD_Settings_Title>
   <RPD_Setting_DebugLog>Enable Debug Log</RPD_Setting_DebugLog>
   <RPD_Setting_DebugLogDesc>Print full data sent to AI in the developer console.</RPD_Setting_DebugLogDesc>
-  
+  <RPD_Settings_ShowMainButton>Displays icons at the bottom of the interface for quick access to notes and settings.</RPD_Settings_ShowMainButton>
+  <RPD_Settings_ShowMainButtonTip>Left-click: Open notes;\nRight-click: Open List;\nShift + Left-click: Open Mod settings</RPD_Settings_ShowMainButtonTip>
   <RPD_Setting_FilterLabel>Select Data sent to AI (Left: Name, Right: Description):</RPD_Setting_FilterLabel>
-  
+  <RPD_Settings_EnableEvolve>Enable Evolve Feature</RPD_Settings_EnableEvolve>
+  <RPD_Settings_EnableEvolveTip>Shows Evolve and Set Time buttons in the persona editor, allowing for character development over time based on memories. Please be sure to refer to the usage instructions provided on the Workshop page.</RPD_Settings_EnableEvolveTip>
+
   <!-- Groups -->
   <RPD_Group_Bio>Biology &amp; Background</RPD_Group_Bio>
   <RPD_Group_Traits>Traits &amp; Status</RPD_Group_Traits>
+  <RPD_Group_ExternalData>Expand Info</RPD_Group_ExternalData>
 
   <!-- Filters -->
   <RPD_Filter_Basic>Basic Info</RPD_Filter_Basic>
@@ -23,7 +27,13 @@
   <RPD_Filter_Ideology>Ideology</RPD_Filter_Ideology>
   <RPD_Filter_Skills>Skills</RPD_Filter_Skills>
   <RPD_Filter_Health>Health</RPD_Filter_Health>
+  <RPD_Filter_Equipment>Equipment</RPD_Filter_Equipment>
+  <RPD_Filter_Inventory>Inventory</RPD_Filter_Inventory>
   <RPD_Filter_RimPsyche>RimPsyche</RPD_Filter_RimPsyche>
+
+  <RPD_Filter_Memories>Memories</RPD_Filter_Memories>
+  <RPD_Filter_CommonKnowledge>Common Knowledge</RPD_Filter_CommonKnowledge>
+  <RPD_Filter_DataComparison>Data Comparison (For Evolve Button)</RPD_Filter_DataComparison>
 
   <!-- Tooltips -->
   <RPD_Tip_GenesDesc>Warning: Descriptions can be very long!</RPD_Tip_GenesDesc>
@@ -37,13 +47,89 @@
   <RPD_Label_TokenEst>Est. Total Tokens: ~{0} (Prompt only)</RPD_Label_TokenEst>
 
   <!-- Director Notes Window -->
-  <RPD_Notes_WinTitle>Director Notes / Custom Context</RPD_Notes_WinTitle>
-  <RPD_Notes_WinDesc>Add custom backstory or events here. Global setting: Persists across characters. Update manually.</RPD_Notes_WinDesc>
+  <RPD_Notes_Title>Director Notes / Custom Context</RPD_Notes_Title>
+  <RPD_Notes_Description>Add custom backstory or events here. Global setting: Persists across characters. Update manually.</RPD_Notes_Description>
   <RPD_Button_Clear>Clear</RPD_Button_Clear>
   <RPD_Label_CharCount>Chars: {0} | Est. Tokens (This Window): ~{1}</RPD_Label_CharCount>
+
+  <!-- Mode Switching -->
+  <RPD_Mode_SwitchToAdvanced>Switch to List Mode</RPD_Mode_SwitchToAdvanced>
+  <RPD_Mode_SwitchToSimple>Switch to Note Mode</RPD_Mode_SwitchToSimple>
 
   <!-- Main UI Button -->
   <RPD_Button_EditNotes>Edit Notes</RPD_Button_EditNotes>
   <RPD_Tip_CurrentNotes>Notes</RPD_Tip_CurrentNotes>
   <RPD_Tip_NoNotes>Click to edit</RPD_Tip_NoNotes>
+  <RPD_MainButton_Label>Notes</RPD_MainButton_Label>
+  <RPD_Button_Evolve>Evolve</RPD_Button_Evolve>
+  <RPD_Tip_Evolve>Append new character development based on recent memories and time passed.</RPD_Tip_Evolve>
+  
+  <RPD_Button_SetTime>Set Time</RPD_Button_SetTime>
+  <RPD_Button_TimeAgo>{0}d ago</RPD_Button_TimeAgo> <!-- {0} is days number -->
+  <RPD_Tip_SetTime_Empty>Click to record current time/age as baseline for future evolution.</RPD_Tip_SetTime_Empty>
+  <RPD_Tip_SetTime_Info>Last recorded: {0} days ago.\nBiological Age at record: {1}y.\nClick to RESET timer to NOW.</RPD_Tip_SetTime_Info>
+  
+  <RPD_Msg_TimestampUpdated>Director Timestamp Updated.</RPD_Msg_TimestampUpdated>
+
+  <!-- Batch Director Panel -->
+  <RPD_Batch_Title>Director Console</RPD_Batch_Title>
+  <RPD_Batch_SceneNotes>Director Notes (Applied to all selected):</RPD_Batch_SceneNotes>
+  <RPD_Batch_Filter_Label>Filter:</RPD_Batch_Filter_Label>
+  <RPD_Batch_SelectAll>All</RPD_Batch_SelectAll>
+  <RPD_Batch_Refresh>Refresh</RPD_Batch_Refresh>
+  <RPD_Faction_None>No Faction</RPD_Faction_None>
+
+<!-- Checkbox Filters -->
+  <RPD_Filter_Colonists>Colonists</RPD_Filter_Colonists>
+  <RPD_Filter_Prisoners>Prisoners</RPD_Filter_Prisoners>
+  <RPD_Filter_Slaves>Slaves</RPD_Filter_Slaves>
+  <RPD_Filter_Visitors>Visitors</RPD_Filter_Visitors>
+  <RPD_Filter_Enemies>Enemies</RPD_Filter_Enemies>
+  <RPD_Filter_Animals>Animals</RPD_Filter_Animals>
+  <RPD_Filter_Mechs>Mechs</RPD_Filter_Mechs>
+  <RPD_Filter_Anomalies>Anomaly</RPD_Filter_Anomalies>
+
+<!-- List Headers -->
+  <RPD_Batch_Header_Name>Name</RPD_Batch_Header_Name>
+  <RPD_Batch_Header_Race>Race</RPD_Batch_Header_Race>
+  <RPD_Batch_Header_Faction>Faction</RPD_Batch_Header_Faction>
+  <RPD_Batch_Header_Tag>Tag</RPD_Batch_Header_Tag>
+  <RPD_Batch_Header_Actions>Actions</RPD_Batch_Header_Actions>
+
+  <RPD_Batch_PawnTooltip>Current Persona:\n{0}</RPD_Batch_PawnTooltip>
+  <RPD_Batch_PersonalityNotSet>(Not Set)</RPD_Batch_PersonalityNotSet>
+
+<!-- Pawn Tags -->
+  <RPD_Tag_Colonist>Colonist</RPD_Tag_Colonist>
+  <RPD_Tag_Prisoner>Prisoner</RPD_Tag_Prisoner>
+  <RPD_Tag_Slave>Slave</RPD_Tag_Slave>
+  <RPD_Tag_Visitor>Visitor</RPD_Tag_Visitor>
+  <RPD_Tag_Enemy>Enemy</RPD_Tag_Enemy>
+  <RPD_Tag_Animal>Animal</RPD_Tag_Animal>
+  <RPD_Tag_Mech>Mech</RPD_Tag_Mech>
+  <RPD_Tag_Anomaly>Anomaly</RPD_Tag_Anomaly>
+  <RPD_Tag_Other>Other</RPD_Tag_Other>
+
+<!-- Buttons & Status -->
+  <RPD_Batch_Status_Generating>Generating...</RPD_Batch_Status_Generating>
+  <RPD_Batch_Button_QuickGen>Quick Gen</RPD_Batch_Button_QuickGen>
+  <RPD_Batch_Button_DeepEdit>Edit</RPD_Batch_Button_DeepEdit>
+<RPD_Batch_Button_Talk>Talk</RPD_Batch_Button_Talk>
+  <RPD_Batch_Button_BatchGen>Generate for {0} selected</RPD_Batch_Button_BatchGen>
+  <RPD_Batch_Button_ModeSingle>Mode: Single Send</RPD_Batch_Button_ModeSingle>
+  <RPD_Batch_Button_ModeBatch>Mode: Batch Send</RPD_Batch_Button_ModeBatch>
+  <RPD_Batch_Button_ModeTooltip>Single Send: Requests AI individually for each pawn. \nBatch Send (Experimental): Sends all data in one request. Tries to create interconnected stories.</RPD_Batch_Button_ModeTooltip>
+ <RPD_Tip_PromptSwitch>Click to switch the Prompt Preset used for generation</RPD_Tip_PromptSwitch>
+
+<!-- Messages -->
+  <RPD_Message_BatchGeneratedSuccess>Successfully generated personas for {0} characters.</RPD_Message_BatchGeneratedSuccess>
+  <RPD_Message_BatchGeneratedFail>Batch generation failed. AI returned empty result or format error.</RPD_Message_BatchGeneratedFail>
+  <RPD_Message_GeneratedSuccess>Generated persona for {0}.</RPD_Message_GeneratedSuccess>
+  <RPD_Message_GeneratedFail>Failed to generate for {0}: AI returned empty result.</RPD_Message_GeneratedFail>
+
+<!-- Evolve Messages  -->
+  <RPD_Msg_NoPersona>No existing persona to update.</RPD_Msg_NoPersona>
+  <RPD_Msg_UpdatedSuccess>Persona updated successfully.</RPD_Msg_UpdatedSuccess>
+  <RPD_Msg_UpdateFailed>Update failed or no changes detected.</RPD_Msg_UpdateFailed>
+
 </LanguageData>

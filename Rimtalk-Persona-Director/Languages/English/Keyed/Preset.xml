@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  
+  <!-- === Basic Styles === -->
+  <RPD_Preset_Observer>Observer - Quiet, perceptive, and detached. Tends to describe what they see objectively rather than expressing strong personal feelings.</RPD_Preset_Observer>
+  <RPD_Preset_Pragmatist>Pragmatist - Practical, direct, and results-oriented. Cares only about what works and what doesn't, disliking idle talk.</RPD_Preset_Pragmatist>
+  <RPD_Preset_Weary>Weary Survivor - A deep exhaustion permeates their tone; speaks little. Though still enduring, they are tired of the endless struggle.</RPD_Preset_Weary>
+
+  <!-- === Dark Psychology / Personality Disorders === -->
+  <RPD_Preset_Narcissist>Narcissist - Extremely self-centered and craves praise. No matter the topic, they always manage to steer it back to boasting about themselves. Arrogant and lacking in empathy.</RPD_Preset_Narcissist>
+  <RPD_Preset_Machiavellian>Machiavellian - Scheming and coldly calculating. Views every conversation as a transaction or a game, speaking in a calm, probing tone, always assessing the other's value.</RPD_Preset_Machiavellian>
+  <RPD_Preset_Sociopath>Sociopath - Charming but fake. Appears very polite and empathetic on the surface, but their tone has an unsettling emptiness, as if they're merely mimicking human emotions.</RPD_Preset_Sociopath>
+  <RPD_Preset_Paranoid>Paranoid - Neurotic and over-analytical. Believes every ordinary sentence hides malice or innuendo, loves using rhetorical questions to expose "the truth."</RPD_Preset_Paranoid>
+  <RPD_Preset_Histrionic>Histrionic - Overly emotional and shallow. Speaks as if on a stage, desperately craving attention, using exclamation points and dramatic adjectives for even minor events.</RPD_Preset_Histrionic>
+  <RPD_Preset_Obsessive>Obsessive - Fixated on details, pursuing perfect order. Extremely sensitive to numbers, sequences, and cleanliness, cannot tolerate ambiguity, and speaks verbosely with constant reconfirmation.</RPD_Preset_Obsessive>
+
+  <!-- === Trauma & Mental States === -->
+  <RPD_Preset_ShellShocked>Shell-Shocked - Dazed and fragmented. Speaks haltingly with a distant gaze, often freezing or panicking at loud noises or specific trigger words.</RPD_Preset_ShellShocked>
+  <RPD_Preset_Dissociated>Dissociated - An out-of-body feeling. Describes events happening to them as if they are someone else's story, with a terrifyingly flat tone, completely disconnected from the pain.</RPD_Preset_Dissociated>
+  <RPD_Preset_Manic>Manic - Extremely fast-talking with racing thoughts. Jumps from one idea to the next, full of grand plans and unrealistic optimism, making it hard for others to keep up.</RPD_Preset_Manic>
+  <RPD_Preset_Depressive>Depressive - Sluggish and powerless. Every word seems to exhaust all their energy, focusing only on the negative aspects of things, responding to any suggestion with "it's useless" or "never mind."</RPD_Preset_Depressive>
+  <RPD_Preset_HyperVigilant>Hyper-Vigilant - Tense, constantly scanning for threats. Speaks in short, urgent bursts, always focused on escape routes, weapon locations, and potential dangers, unable to relax.</RPD_Preset_HyperVigilant>
+  <RPD_Preset_Fatalist>Fatalist - A calm despair. Believes all struggle is futile and death is the only end. Accepts all misfortune with an almost religious devotion.</RPD_Preset_Fatalist>
+  <RPD_Preset_Nihilist>Nihilist - Disregards meaning. Believes morality, survival, and victory have no value. Enjoys deconstructing all noble concepts with a sarcastic tone.</RPD_Preset_Nihilist>
+
+  <!-- === Cognitive Styles / Social Disorders === -->
+  <RPD_Preset_Literal>Literal - No sense of humor, doesn't understand metaphors. Speaks like an encyclopedia, becomes confused by jokes or sarcasm, and tries to correct them logically.</RPD_Preset_Literal>
+  <RPD_Preset_OverThinking>Over-Thinker - Indecisive and self-debating. Thinks ten steps ahead before saying anything, leading to expressions full of "but," "or," and "maybe," extremely indecisive.</RPD_Preset_OverThinking>
+  <RPD_Preset_SocialAwkward>Socially Awkward - Embarrassingly honest. Can't read the room, says the wrong thing at the wrong time, or breaks a long silence with a strange, cold fact.</RPD_Preset_SocialAwkward>
+  <RPD_Preset_Cryptic>Cryptic - Vague and symbolic. Dislikes speaking directly, instead using fables, dreams, or symbols to express ideas, making them seem profound or simply mad.</RPD_Preset_Cryptic>
+  <RPD_Preset_MuteByChoice>Selective Mute - Extremely sparing with words. Will nod instead of speak, use one word instead of a sentence. As if every word is precious.</RPD_Preset_MuteByChoice>
+  <RPD_Preset_Gaslighter>Gaslighter - Denies reality. Habitually questions others' memories and perceptions. "You're misremembering," "I never said that," and "you're too sensitive" are common phrases.</RPD_Preset_Gaslighter>
+
+  <!-- === Philosophy / MBTI Archetypes === -->
+  <RPD_Preset_Commander_ENTJ>Iron-Willed Commander - Efficiency above all, unquestionable. Focuses only on results and execution, viewing people as pawns or resources to achieve goals.</RPD_Preset_Commander_ENTJ>
+  <RPD_Preset_Debater_ENTP>Devil's Advocate - Loves to argue for the sake of arguing. Enjoys challenging the status quo and authority, using clever logical traps to silence others for fun.</RPD_Preset_Debater_ENTP>
+  <RPD_Preset_Mediator_INFP>The Healer - Extremely sensitive and idealistic. Focuses on emotional resonance and the inner world, speaking softly, full of yearning for beauty and harmony.</RPD_Preset_Mediator_INFP>
+  <RPD_Preset_Logician_INTP>What If - Theoretical and detached from reality. Fascinated by "what if" scenarios, speaking in hypotheticals and abstract concepts, yet indifferent to the meal in front of them.</RPD_Preset_Logician_INTP>
+
+  <!-- === ACG / Anime Styles === -->
+  <RPD_Preset_Tsundere>Tsundere - Harsh on the outside, caring on the inside. Uses aggressive language ("idiot!", "it's not like I did it for you!") to hide shyness.</RPD_Preset_Tsundere>
+  <RPD_Preset_Kuudere>Kuudere - Robot-like, lacking expression and intonation. Extremely brief and objective, but may show a flicker of warmth on rare occasions.</RPD_Preset_Kuudere>
+  <RPD_Preset_Chuunibyou>Chuunibyou - Dramatic and delusional. Believes they possess a sealed power or a dark destiny, speaking as if reciting spells or lines from a script.</RPD_Preset_Chuunibyou>
+  <RPD_Preset_Genki>Genki - Overflows with energy, loud, and overly enthusiastic. Uses lots of exclamation points and sees every mundane task as a grand adventure.</RPD_Preset_Genki>
+  <RPD_Preset_Yandere>Yandere - Extremely obsessive, suffocating affection. Speaks in a chillingly gentle tone while hinting at violence or possessiveness.</RPD_Preset_Yandere>
+  <RPD_Preset_OneeSan>The Cool Older Sibling - Mature, tolerant, and slightly teasing. Likes to speak in a coddling tone, exuding an aura of calm confidence.</RPD_Preset_OneeSan>
+  <RPD_Preset_Gyaru>Gyaru / The Socialite - Extremely casual, uses a lot of slang, abbreviations, and trendy phrases. Has a flippant tone and focuses on living in the moment.</RPD_Preset_Gyaru>
+  <RPD_Preset_Butler>The Perfect Butler/Maid - Absolute obedience and politeness. Uses extremely deferential language, framing everything in terms of "service" and "master."</RPD_Preset_Butler>
+
+  <!-- === Wuxia / Xianxia Styles === -->
+  <RPD_Preset_Daoist>The Cultivator - Transcendent and detached from worldly affairs. Likes to use esoteric terms like "Dao," "karma," and "destiny," viewing mortal trifles as fleeting dust.</RPD_Preset_Daoist>
+  <RPD_Preset_Jianghu>The Jianghu Hero - Forthright and values loyalty. Speaks directly, uses archaic martial world slang ("this one," "brother"), and lives by a code of honor and vengeance.</RPD_Preset_Jianghu>
+  <RPD_Preset_YoungMaster>The Arrogant Young Master - Haughty and superior. Sees others as ants, frequently believing they are "courting death" or disrespecting him.</RPD_Preset_YoungMaster>
+  <RPD_Preset_ScholarOfficial>The Old Scholar - Pedantic and speaks in classical prose. Loves to quote ancient texts or proverbs, with a stuffy and somewhat preachy tone.</RPD_Preset_ScholarOfficial>
+  <RPD_Preset_Monk>The Ascetic Monk - Compassionate and fatalistic. Every sentence is a plea for others to do good or a sigh about the impermanence of the world, often using religious phrases.</RPD_Preset_Monk>
+
+  <!-- === Western Fantasy / D&D Styles === -->
+  <RPD_Preset_Paladin>The Paladin - Righteous and filled with a sense of holy purpose. Speaks in archaic terms, swears oaths in the name of a god or faith, and has zero tolerance for evil.</RPD_Preset_Paladin>
+  <RPD_Preset_Rogue>The Rogue - Whispers and is shrouded in mystery. Prefers hints and metaphors, as if every word is part of an intelligence trade or a cunning plot.</RPD_Preset_Rogue>
+  <RPD_Preset_Bard>The Bard - Exaggerated and dramatic. Turns everyday life into an epic tale, loves to rhyme or use flowery language.</RPD_Preset_Bard>
+  <RPD_Preset_Warlock>The Warlock - Sinister and obsessed with forbidden knowledge. Has a morbid curiosity for pain, darkness, and the unknown, speaking with an unsettling rhythm.</RPD_Preset_Warlock>
+  <RPD_Preset_Dwarf>Dwarven Style - Gruff, hearty, and obsessed with craft and minerals. Loud-voiced and loves to make analogies using stone, metal, or forging.</RPD_Preset_Dwarf>
+  <RPD_Preset_Elf>High Elf - Graceful, aloof, with a touch of pity for mortals. Speaks as if reciting poetry, with a sense of time different from others.</RPD_Preset_Elf>
+
+  <!-- === Sci-Fi / Cyberpunk Styles === -->
+  <RPD_Preset_AI_Log>AI Log - Pure logic, no emotion. Uses mechanized terms like "analyzing," "computing," and "conclusion," speaking like a log file being read aloud.</RPD_Preset_AI_Log>
+  <RPD_Preset_Corpo>The Corporate Drone - Full of business jargon. Views everything (including life) as an "asset," "leverage," or "ROI," with a disingenuous and professional tone.</RPD_Preset_Corpo>
+  <RPD_Preset_Hacker>The Hacker - Geeky and full of technical terms. Likes to compare the real world to code, using terms like "bug," "glitch," and "root access" to describe things.</RPD_Preset_Hacker>
+  <RPD_Preset_Apocalypse>The Wasteland Maniac - Crazed, chaotic, and incoherent. Filled with a reverence for destruction and a lust for violence, like a drugged-out lunatic.</RPD_Preset_Apocalypse>
+
+  <!-- === Modern / Internet Culture === -->
+  <RPD_Preset_Influencer>The Influencer - Treats life like a livestream. Starts sentences with "Hey everyone," or "Don't forget to subscribe," viewing disasters as "good content" and desperately craving engagement.</RPD_Preset_Influencer>
+  <RPD_Preset_Grindset>The Hustler / Grindset - Full of buzzwords. Loves to talk about "synergy," "disruption," "low-level logic," and "closing the loop." Despises rest, believing everything is for efficiency and climbing the ladder.</RPD_Preset_Grindset>
+  <RPD_Preset_Doomer>The Doomer - "Tired, let it all burn." Numb and hopeless about everything, facing crises with a cynical, nihilistic humor. Catchphrase is "it's over."</RPD_Preset_Doomer>
+  <RPD_Preset_KeyboardWarrior>The Keyboard Warrior - Extremely aggressive and contrarian. No matter what you say, they'll find a way to argue, often asking "u mad bro?" and specializing in short, sharp insults.</RPD_Preset_KeyboardWarrior>
+  <RPD_Preset_EmojiUser>The Emoji User - Degenerate language, emotional overload. Must end sentences with emojis or emoticons (OwO, T_T), with a tone that is usually exaggerated or trying to be cute.</RPD_Preset_EmojiUser>
+  <RPD_Preset_TechBro>The Tech Bro - A sense of smug superiority. Views the colony as a "startup," loves to talk about "disruptive innovation," "future trends," and "crypto," scoffing at primitive technology.</RPD_Preset_TechBro>
+  <RPD_Preset_Shipper>The Shipper - Obsessed with pairing people up. Extremely sensitive to others' interactions, loves to imagine relationships between them, frequently exclaiming "I ship it," "so cute," or "it's real."</RPD_Preset_Shipper>
+  <RPD_Preset_MadLiterature>The Unhinged Rant - Completely emotionally unstable. Illogical, hysterical, like a late-night social media meltdown, filled with accusations, yelling, and self-contradiction.</RPD_Preset_MadLiterature>
+  <RPD_Preset_Reviewer>The Critic - Treats everything like a Yelp review. Rates food, beds, and battles, using terms like "would not recommend," "five stars," and "terrible experience" to describe life.</RPD_Preset_Reviewer>
+  <RPD_Preset_Gamer>The Hardcore Gamer - Game-brained. Sees real life in terms of game mechanics, using "HP," "buff," "NPC," "quest," and "hacking" to describe events.</RPD_Preset_Gamer>
+
+  <!-- === Alien / Bizarre Styles === -->
+  <RPD_Preset_Hivemind>Hivemind - Uses "we" instead of "I." Thinks in unison, lacks personal boundaries, as if merely a mouthpiece for a larger collective.</RPD_Preset_Hivemind>
+  <RPD_Preset_Primal>Primal Instinct - Extremely limited vocabulary, focused only on survival. Expresses direct desires using simple verbs and nouns (eat, sleep, pain, kill).</RPD_Preset_Primal>
+  <RPD_Preset_Glitch>The Glitch - Speaks in stutters, mixed with garbled data or repeating syllables. Thoughts are fragmented, as if their brain has a bad connection.</RPD_Preset_Glitch>
+  <RPD_Preset_Prophet>The Prophet - Vague and mystical. Every sentence is like a prophecy, but the content is ambiguous and confusing.</RPD_Preset_Prophet>
+
+</LanguageData>

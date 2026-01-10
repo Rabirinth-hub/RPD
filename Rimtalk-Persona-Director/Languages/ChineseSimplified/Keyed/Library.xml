@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+
+  <!-- Main Library Window -->
+  <RPD_Library_Title>人设库</RPD_Library_Title>
+  <RPD_Library_TabPresets>预设库</RPD_Library_TabPresets>
+  <RPD_Library_TabRules>分配规则</RPD_Library_TabRules>
+  <RPD_Library_ResetDefaults>重置默认</RPD_Library_ResetDefaults>
+  <RPD_Library_ResetConfirm>注意: 会删除所有人设和规则，应用预设库。\n你确定?</RPD_Library_ResetConfirm>
+  
+  <!-- Presets Tab -->
+  <RPD_Library_Category>分类: {0}</RPD_Library_Category>
+  <RPD_Library_CreatePreset>+ 新预设</RPD_Library_CreatePreset>
+  <RPD_Library_DeletePreset>删除</RPD_Library_DeletePreset>
+  <RPD_Library_ImportTemplate>导入模板</RPD_Library_ImportTemplate>
+  <RPD_Library_SelectToEdit>选择或创建新预设以编辑</RPD_Library_SelectToEdit>
+  <RPD_Library_PresetName>预设名:</RPD_Library_PresetName>
+  <RPD_Library_PresetCategory>分类 (输入以新建分类):</RPD_Library_PresetCategory>
+  <RPD_Library_Chattiness>Chattiness: {0}</RPD_Library_Chattiness>
+  <RPD_Library_Description>介绍:</RPD_Library_Description>
+  <RPD_Library_I_E>导入/导出</RPD_Library_I_E>
+
+  <!-- Rules Tab -->
+  <RPD_Library_CreateRule>+ 新规则</RPD_Library_CreateRule>
+  <RPD_Library_DeleteRule>删除</RPD_Library_DeleteRule>
+  <RPD_Library_SelectToEditRule>选择或创建新规则以编辑</RPD_Library_SelectToEditRule>
+  <RPD_Library_RuleEnabled>启用规则</RPD_Library_RuleEnabled>
+  <RPD_Library_Priority>优先级: {0} (高覆盖低)</RPD_Library_Priority>
+  <RPD_Library_TargetType>目标类型: {0}</RPD_Library_TargetType>
+  <RPD_Library_TargetDef>目标 Def: {0}</RPD_Library_TargetDef>
+  <RPD_Library_TargetSelect>选择目标 Def...</RPD_Library_TargetSelect>
+  <RPD_Library_TargetMissing>警告: Def 缺失! (缺少mod?)</RPD_Library_TargetMissing>
+  <RPD_Library_PresetsPool>允许的预设池 (随机选择):</RPD_Library_PresetsPool>
+  <RPD_Library_NoDefsFound>没有找到适合的 Def</RPD_Library_NoDefsFound>
+
+  <!-- Preset Browser Window -->
+  <RPD_Browser_ApplySelected>应用所选</RPD_Browser_ApplySelected>
+  <RPD_Browser_ApplyRandom>应用随机</RPD_Browser_ApplyRandom>
+  <RPD_Browser_NoPresetsInCategory>该分类下没有预设</RPD_Browser_NoPresetsInCategory>
+  <RPD_Browser_AppliedSuccess>已应用预设: {0}</RPD_Browser_AppliedSuccess>
+
+<!-- Rule Type Names -->
+  <RPD_RuleType_FactionDef>派系</RPD_RuleType_FactionDef>
+  <RPD_RuleType_RaceDef>种族</RPD_RuleType_RaceDef>
+  <RPD_RuleType_XenotypeDef>异种</RPD_RuleType_XenotypeDef>
+<!-- Import/Export Window -->
+  <RPD_IO_Export>导出到...</RPD_IO_Export>
+  <RPD_IO_TipExport>左键: 复制到剪贴板\n右键: 保存到文件</RPD_IO_TipExport>
+  <RPD_IO_ImportAppend>导入 (增加)</RPD_IO_ImportAppend>
+  <RPD_IO_ImportOverwrite>导入 (覆盖)</RPD_IO_ImportOverwrite>
+  <RPD_IO_ImportFile>从文件导入</RPD_IO_ImportFile>
+  <RPD_IO_ConfirmOverwrite>确定覆盖所有的预设和规则?</RPD_IO_ConfirmOverwrite>
+  
+  <RPD_IO_MsgExportClipboard>库已经导出到剪贴板</RPD_IO_MsgExportClipboard>
+  <RPD_IO_MsgExportFile>库已经导出到文件:\n{0}</RPD_IO_MsgExportFile>
+  <RPD_IO_MsgImportSuccess>成功导入</RPD_IO_MsgImportSuccess>
+  <RPD_IO_MsgImportFail>导入失败: 格式错误或者数据损坏\n{0}</RPD_IO_MsgImportFail>
+  <RPD_IO_MsgNoFolder>未找到导出文件夹</RPD_IO_MsgNoFolder>
+  <RPD_IO_MsgNoFiles>未找到文件</RPD_IO_MsgNoFiles>
+</LanguageData>
