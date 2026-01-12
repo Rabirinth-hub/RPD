@@ -1,4 +1,6 @@
-﻿using System;
+//已失效
+/*﻿
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using HarmonyLib;
@@ -48,4 +50,6 @@ namespace RimPersonaDirector
             return false;
         }
     }
+
 }
+*/
