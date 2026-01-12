@@ -18,6 +18,28 @@ namespace RimPersonaDirector
 {
     public static class DirectorUtils
     {
+        // Helper: normalize chattiness to new 0..1 scale by halving values > 1.0
+        public static float NormalizeChattiness(float chattiness)
+        {
+            // If upstream values were produced on 0..2 scale, divide values greater than 1 by 2
+            if (chattiness > 1.0f) return chattiness / 2f;
+            return chattiness;
+        }
+
+        public static string CurrentLanguage
+        {
+            get
+            {
+                try
+                {
+                    if (LanguageDatabase.activeLanguage != null)
+                        return LanguageDatabase.activeLanguage.info.friendlyNameNative;
+                }
+                catch { }
+                return "English"; // 保底默认值
+            }
+        }
+
         //  1. 生成逻辑 (异步 Task)
 
         public static string GetFinalPrompt(bool isBatch, string dataContent)
@@ -29,7 +51,7 @@ namespace RimPersonaDirector
                 ? DirectorSettings.HiddenTechnicalPrompt_Batch
                 : DirectorSettings.HiddenTechnicalPrompt_Single;
 
-            return userPrompt.Replace("{LANG}", Constant.Lang) +
+            return userPrompt.Replace("{LANG}", CurrentLanguage) +
            "\n" + technicalPrompt +
            "\n\n[Character Data]\n" + dataContent;
         }
@@ -48,7 +70,7 @@ namespace RimPersonaDirector
                 // 指令 (Prompt) = 我们自定义的用户指令 + JSON 协议
                 string userInstruction = DirectorMod.Settings.GetActivePrompt(false);
                 if (string.IsNullOrEmpty(userInstruction)) userInstruction = DirectorSettings.DefaultPrompt_Standard;
-                string finalInstruction = userInstruction.Replace("{LANG}", Constant.Lang) + "\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
+                string finalInstruction = userInstruction.Replace("{LANG}", CurrentLanguage) + "\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
 
                 // 数据 (Context) = 角色数据
                 string finalContext = $"[Character Data]\n{characterData}";
@@ -82,7 +104,7 @@ namespace RimPersonaDirector
                 string userPrompt = DirectorMod.Settings.GetActivePrompt(false);
                 string userInstruction = DirectorMod.Settings.GetActivePrompt();
                 if (string.IsNullOrEmpty(userInstruction)) userInstruction = DirectorSettings.DefaultPrompt_Standard;
-                string finalInstruction = userInstruction.Replace("{LANG}", Constant.Lang) + "\n" + DirectorSettings.HiddenTechnicalPrompt_Batch;
+                string finalInstruction = userInstruction.Replace("{LANG}", CurrentLanguage) + "\n" + DirectorSettings.HiddenTechnicalPrompt_Batch;
 
                 string finalContext = $"[Character Data]\n{combinedData}";
 
@@ -112,14 +134,25 @@ namespace RimPersonaDirector
                 if (hediff != null)
                 {
                     hediff.Personality = data.Persona.Trim();
+                    // 状态激活
+                    hediff.Severity = 1.0f;
+
+                    // 数值处理
+                    // 如果 AI 还是因为某些原因（比如旧 Prompt 缓存）返回了 > 1 的数，Clamp 会把它修剪到 1.0
+
                     if (data.Chattiness < 0.05f)
                     {
-                        hediff.TalkInitiationWeight = 1.0f;
+                        hediff.TalkInitiationWeight = 0.5f;
                     }
                     else
                     {
-                        hediff.TalkInitiationWeight = Mathf.Clamp(data.Chattiness, 0.1f, 2.0f);
+                        // 钳位到 0.1 - 1.0
+                        // 这样即使旧数据是 1.8，也会变成 1.0，不会出错
+                        hediff.TalkInitiationWeight = Mathf.Clamp(data.Chattiness, 0.1f, 1.0f);
                     }
+
+                    // 4. 刷新
+                    pawn.health.Notify_HediffChanged(hediff);
                 }
             }
             catch (Exception e)
@@ -151,7 +184,7 @@ namespace RimPersonaDirector
                 // Substring(0, length) -> 从 0 开始，截取到 ']' 为止
                 string keyPart = part.Substring(0, bracketIndex + 1).Trim();
 
-                // 2. 提取内容。从 ']' 后面开始截取，并修剪掉可能存在的冒号、空格、换行
+                // 2. 提取内容。从 ']' 后面开始截取，并修 trimmed掉可能存在的冒号、空格、换行
                 string text = part.Substring(bracketIndex + 1).TrimStart(':', ' ', '\n', '\r').Trim();
 
                 Pawn target = null;
@@ -368,7 +401,7 @@ namespace RimPersonaDirector
         private static PropertyInfo _timeAgoProp; // TimeAgoString 是属性
         private static PropertyInfo _typeNameProp; // TypeName 是属性
 
-        private static string GetExternalMemories(Pawn p, int lastTick)
+        public static string GetExternalMemories(Pawn p, int lastTick)
         {
             if (!ModsConfig.IsActive("cj.rimtalk.expandmemory")) return null;
 
@@ -440,7 +473,7 @@ namespace RimPersonaDirector
         private static Type _listScoreType;
         private static Type _memoryManagerType;
 
-        private static string GetCommonKnowledge(string context, Pawn p)
+        public static string GetCommonKnowledge(string context, Pawn p)
         {
             // 1. 检查 Mod 是否激活
             if (!ModsConfig.IsActive("cj.rimtalk.expandmemory")) return null;
@@ -542,126 +575,17 @@ namespace RimPersonaDirector
             }
         }
 
-        private static string ExtractJsonFromText(string text)
+        public static (TalkRequest request, string currentPersona) PrepareEvolve(Pawn p, Window editorWindow)
         {
-            if (string.IsNullOrEmpty(text)) return "";
-
-            int startIndex = text.IndexOf('{');
-            int endIndex = text.LastIndexOf('}');
-
-            if (startIndex != -1 && endIndex != -1 && endIndex > startIndex)
-            {
-                return text.Substring(startIndex, endIndex - startIndex + 1);
-            }
-            return text; // 如果没找到花括号，原样返回碰运气
-        }
-
-        // ★★★ 核心修复：安全查询方法 ★★★
-        private static async Task<T> SafeQuery<T>(TalkRequest request) where T : class, IJsonData
-        {
-            // 1. 初始化日志反射
-            InitLogReflection();
-            object apiLog = null;
-            string rawText = null;
-            string cleanJson = null;
-
             try
             {
-                // 2. ★★★ 记录请求 (就像 AIService.Query 一样) ★★★
-                if (_addRequestMethod != null)
-                {
-                    // 尝试构建 Channel.Query 枚举值 (如果存在)
-                    object channelObj = null;
-                    var channelType = AccessTools.TypeByName("RimTalk.Source.Data.Channel");
-                    if (channelType != null) channelObj = Enum.Parse(channelType, "Query");
-
-                    // 调用 AddRequest
-                    object[] args = _addRequestMethod.GetParameters().Length == 2
-                        ? new object[] { request, channelObj }
-                        : new object[] { request };
-
-                    apiLog = _addRequestMethod.Invoke(null, args);
-                }
-
-                // 3. 发送网络请求
-                var client = await AIClientFactory.GetAIClientAsync();
-                if (client == null) throw new Exception("No AI Client available.");
-
-                string instruction = request.Context;
-                var messages = new List<(Role, string)> { (Role.User, request.Prompt) };
-
-                Payload payload = await client.GetChatCompletionAsync(instruction, messages);
-
-                if (payload == null || string.IsNullOrEmpty(payload.Response))
-                    return null;
-
-                // 4. ★★★ 数据清洗 (这是我们做这一切的原因) ★★★
-                rawText = payload.Response;
-                cleanJson = ExtractJsonFromText(rawText);
-
-                if (DirectorMod.Settings.EnableDebugLog)
-                    Log.Message($"[Director] Cleaned JSON: {cleanJson}");
-
-                // 5. 反序列化
-                T result = RimTalk.Util.JsonUtil.DeserializeFromJson<T>(cleanJson);
-
-                // 6. ★★★ 记录响应 (让它显示在 Debug 窗口) ★★★
-                if (_addResponseMethod != null && apiLog != null && result != null)
-                {
-                    // 获取 Log ID
-                    var idProp = AccessTools.Property(apiLog.GetType(), "Id");
-                    Guid logId = (Guid)idProp.GetValue(apiLog);
-
-                    // 调用 AddResponse
-                    // 参数: id, responseText, name(null), interaction(null), payload, elapsed(0)
-                    object[] args = _addResponseMethod.GetParameters().Length == 6
-                        ? new object[] { logId, result.GetText(), null, null, payload, 0 }
-                        : new object[] { logId, result.GetText(), null, null, payload };
-
-                    _addResponseMethod.Invoke(null, args);
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[Director] Query failed: {ex.Message}");
-
-                // 向 RimTalk Log 写入报错信息 
-                if (apiLog != null)
-                {
-                    try
-                    {
-                        var logType = apiLog.GetType();
-
-                        var isErrorProp = AccessTools.Property(logType, "IsError");
-                        isErrorProp?.SetValue(apiLog, true);
-
-                        var responseProp = AccessTools.Property(logType, "Response");
-
-                        // ★★★ 现在这里可以访问 cleanJson 和 rawText 了 ★★★
-                        // 优先显示清洗后的，如果没有则显示原始的，还没有就显示 Empty
-                        string contentToShow = !string.IsNullOrEmpty(cleanJson) ? cleanJson : (rawText ?? "Empty/Network Error");
-
-                        string errorMsg = $"[Director Error]: {ex.Message}\n\n[Failed Content]:\n{contentToShow}";
-                        responseProp?.SetValue(apiLog, errorMsg);
-                    }
-                    catch { }
-                }
-
-                return null;
-            }
-        }
-
-        public static async Task<string> EvolvePersona(Pawn p, Window editorWindow)
-        {
-            // 1. 从窗口获取当前正在编辑的文本
-            string currentPersona = GetWindowText(editorWindow);
+                // 1. 从窗口获取当前正在编辑的文本
+                string currentPersona = GetWindowText(editorWindow);
 
             if (string.IsNullOrEmpty(currentPersona))
             {
                 Messages.Message("RPD_Msg_NoPersona".Translate(), MessageTypeDefOf.RejectInput, false);
-                return null;
+                return (null, null);
             }
 
             // 2. 获取时间和数据
@@ -784,39 +708,89 @@ namespace RimPersonaDirector
 
             // 4. 构建 Prompt (指令部分)
             // 使用 Prompt 4 (Evolve 专用) + JSON 协议
-            string userPrompt = DirectorMod.Settings.presets[3].text;
-            string finalInstruction = userPrompt.Replace("{LANG}", Constant.Lang) +
-                                          "\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
+            string userInstruction = DirectorMod.Settings.presets[3].text;
+            string finalInstruction = userInstruction.Replace("{LANG}", CurrentLanguage) + "\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
 
                 // 5. 构造请求 (Prompt 与 Context 分离)
-            var request = new TalkRequest(finalInstruction, p)
-            {
-                Context = finalContext // 数据放在 Context 属性里
-            };
-
-            // --- 同步等待结果 ---
-            PersonalityData result = null;
-            try
-            {
-                result = await SafeQuery<PersonalityData>(request);
+                var request = new TalkRequest(finalInstruction, p) { Context = finalContext };
+                return (request, currentPersona);
             }
             catch (Exception ex)
             {
-                Log.Error($"[Director] Evolve failed: {ex.Message}");
-                return null;
+                Log.Error($"[Director] Evolve preparation failed: {ex.Message}");
+                return (null, null);
             }
+        }
 
-            // --- 返回结果 ---
-            if (result != null && !string.IsNullOrEmpty(result.Persona))
+        // ★★★ 2. 新方法：应用结果 (主线程安全) ★★★
+        public static string ExecuteEvolve(TalkRequest request, string originalPersona)
+        {
+            if (request == null) return null;
+
+            try
             {
-                return result.Persona.Trim();
+                // ★★★ 核心：在后台线程中阻塞等待 ★★★
+                Task<PersonalityData> task = AIService.Query<PersonalityData>(request);
+                PersonalityData result = task.Result; // 阻塞后台线程，不影响 UI
+
+                if (result != null && !string.IsNullOrEmpty(result.Persona))
+                {
+                    return result.Persona.Trim();
+                }
+            }
+            catch (Exception ex)
+            {
+                // 后台线程记录错误
+                Log.Error($"[Director] Evolve execution failed: {ex.Message}");
+                // (可选) 调用 TryLogErrorToApiHistory
             }
             return null;
         }
 
+        // ★★★ 新增辅助方法：安全地向 RimTalk 写入错误日志 ★★★
+        private static MethodInfo addRequestMethod;
+        private static bool apiHistoryReflectionFailed = false;
+
+        public static void TryLogErrorToApiHistory(TalkRequest request, Exception ex)
+        {
+            if (apiHistoryReflectionFailed) return;
+
+            try
+            {
+                // 初始化
+                if (addRequestMethod == null)
+                {
+                    var apiHistoryType = AccessTools.TypeByName("RimTalk.Data.ApiHistory");
+                    if (apiHistoryType != null)
+                    {
+                        var channelType = AccessTools.TypeByName("RimTalk.Source.Data.Channel");
+                        if (channelType != null)
+                        {
+                            addRequestMethod = AccessTools.Method(apiHistoryType, "AddRequest", new[] { typeof(TalkRequest), channelType });
+                        }
+                    }
+                    if (addRequestMethod == null) { apiHistoryReflectionFailed = true; return; }
+                }
+
+                // 记录请求
+                object channelQuery = Enum.Parse(AccessTools.TypeByName("RimTalk.Source.Data.Channel"), "Query");
+                object apiLog = addRequestMethod.Invoke(null, new object[] { request, channelQuery });
+
+                if (apiLog != null)
+                {
+                    // 设置错误状态
+                    var logType = apiLog.GetType();
+                    AccessTools.Property(logType, "IsError")?.SetValue(apiLog, true);
+                    AccessTools.Property(logType, "Response")?.SetValue(apiLog, $"[Director] Task failed: {ex.Message}");
+                }
+            }
+            catch { apiHistoryReflectionFailed = true; }
+        }
+
+
         /// 智能差异比较器：按数据块分割，对比列表型和键值对型数据。
         /// </summary>
-        private static string GenerateDiffReport(string oldSnapshot, string newSnapshot)
+        public static string GenerateDiffReport(string oldSnapshot, string newSnapshot)
         {
             if (oldSnapshot == newSnapshot) return "No significant changes.";
 
@@ -971,7 +945,7 @@ namespace RimPersonaDirector
             windowTextField?.SetValue(window, text);
         }
 
-        private static string GetPawnSocialStatus(Pawn p)
+        public static string GetPawnSocialStatus(Pawn p)
         {
             string socialStatus = "Unknown";
 
@@ -1485,7 +1459,7 @@ namespace RimPersonaDirector
             return sb.ToString();
         }
 
-        private static string GetTemporaryColonistDescription(Pawn p)
+        public static string GetTemporaryColonistDescription(Pawn p)
         {
             // 1. 使用 QuestReserves 查找任务
             if (p.IsQuestLodger())
@@ -1534,7 +1508,7 @@ namespace RimPersonaDirector
         }
 
         // 获取简短的 Pawn 状态
-        private static string GetPawnShortStatus(Pawn p)
+        public static string GetPawnShortStatus(Pawn p)
         {
             if (p.Dead) return "(Deceased)";
             if (p.IsPrisonerOfColony) return "(Prisoner in Colony)";
@@ -1567,7 +1541,7 @@ namespace RimPersonaDirector
         private static MethodInfo vseMethodCache;
         private static bool vseReflectionFailed = false;
 
-        private static Def GetVSEPassionDef(SkillRecord skill)
+        public static Def GetVSEPassionDef(SkillRecord skill)
         {
             // 1. 检查 VSE 是否激活
             if (!ModsConfig.IsActive("vanillaexpanded.skills") || vseReflectionFailed)
@@ -1615,7 +1589,7 @@ namespace RimPersonaDirector
             return null;
         }
 
-        private static string GetPassionInfoHardcoded(Passion passion)
+        public static string GetPassionInfoHardcoded(Passion passion)
         {
             int val = (int)passion;
             switch (val)
@@ -1630,7 +1604,7 @@ namespace RimPersonaDirector
             }
         }
 
-        private static string GetMauxRimPsycheData(Pawn p)
+        public static string GetMauxRimPsycheData(Pawn p)
         {
             StringBuilder psySb = new StringBuilder();
             object comp = p.AllComps.FirstOrDefault(c => c.GetType().FullName.Contains("RimPsyche") || c.GetType().Name.Contains("Psyche"));

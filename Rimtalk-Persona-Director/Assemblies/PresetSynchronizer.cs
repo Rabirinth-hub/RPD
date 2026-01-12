@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using HarmonyLib;
 using System;
+using UnityEngine;
 
 namespace RimPersonaDirector
 {
@@ -18,38 +19,60 @@ namespace RimPersonaDirector
 
             try
             {
-                // 1. 获取 RimTalk 的字段
-                FieldInfo personalitiesField = AccessTools.Field(typeof(Constant), "Personalities");
-                if (personalitiesField == null) return;
+                // 1. ★★★ 核心修复：寻找写入目标 ★★★
+                // 优先级 A: 新版 RimTalk 的私有幕后字段 _personalities
+                FieldInfo targetField = AccessTools.Field(typeof(Constant), "_personalities");
+
+                // 优先级 B: 旧版 RimTalk 的公有字段 Personalities
+                if (targetField == null)
+                {
+                    targetField = AccessTools.Field(typeof(Constant), "Personalities");
+                }
+
+                if (targetField == null)
+                {
+                    // 如果都找不到，说明 RimTalk 结构彻底变了，放弃同步
+                    return;
+                }
 
                 // 2. 将我们的 userPresets 转换为 RimTalk 需要的 PersonalityData 列表
                 List<PersonalityData> syncList = new List<PersonalityData>();
 
                 foreach (var preset in settings.userPresets)
                 {
-                    syncList.Add(new PersonalityData(preset.personaText, preset.chattiness));
+                    // Ensure chattiness is normalized to the expected 0..1 range before syncing
+                    float chat = preset.chattiness;
+                    try
+                    {
+                        chat = DirectorUtils.NormalizeChattiness(chat);
+                    }
+                    catch { }
+
+                    syncList.Add(new PersonalityData(preset.personaText, chat));
                 }
+                
+                if (syncList.Count == 0) return;
 
-                // 3. ★★★ 暴力覆盖 ★★★
-
-                object currentValue = personalitiesField.GetValue(null);
+                // 3. ★★★ 类型适配与覆盖 ★★★
                 object newValue = null;
 
-                if (currentValue != null && currentValue.GetType().IsArray)
+                // 检查目标字段是 数组 还是 List
+                if (targetField.FieldType.IsArray)
                 {
-                    // 目标是数组
+                    // 如果是数组 (PersonalityData[])，转为数组
                     newValue = syncList.ToArray();
                 }
                 else
                 {
-                    // 目标是 List (或者 null，默认为 List)
+                    // 如果是 List (List<PersonalityData>)，直接用 List
                     newValue = syncList;
                 }
 
-                // 4. 执行替换
-                personalitiesField.SetValue(null, newValue);
+                // 4. 执行写入
+                // 静态字段，实例传 null
+                targetField.SetValue(null, newValue);
 
-                // Log.Message($"[Persona Director] Synced {syncList.Count} presets to RimTalk random pool.");
+                // Log.Message($"[Persona Director] Synced {syncList.Count} presets to RimTalk.");
             }
             catch (Exception ex)
             {

@@ -1,4 +1,6 @@
-﻿using RimTalk.Data;
+﻿using HarmonyLib;
+using RimTalk.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -221,7 +223,7 @@ You must return a valid JSON object. DO NOT use Markdown code blocks.
 The 'persona' field must be a SINGLE LINE string using \n for breaks.
 Fields:
 1. ""persona"":  The full text of the result (use \n for formatting).
-2. ""chattiness"": Float (0.1 - 2.0).
+2. ""chattiness"": Float (0.1 - 1.0).
 ";
 
         public const string HiddenTechnicalPrompt_Batch = @"
@@ -240,7 +242,7 @@ Example for 'persona' field:
 
 Fields:
 1. ""persona"": The combined text for ALL characters.
-2. ""chattiness"": Float (just use 1.0 as a default).
+2. ""chattiness"": Float (just use 0.5 as a default).
 ";
 
         // =============================================================
@@ -261,9 +263,11 @@ Fields:
         public ContextSettings Context = new ContextSettings();
         public Dictionary<string, bool> BatchFilters;
 
-        // ★★★ 新增字段：预设库和规则库 ★★★
+        //  新增字段：预设库和规则库 
         public List<CustomPreset> userPresets;
         public List<AssignmentRule> assignmentRules;
+        //  新增：迁移标记 (默认为 false) 
+        private bool _chattinessMigratedV2 = false;
         public override void ExposeData()
         {
             // 读取旧数据
@@ -287,16 +291,44 @@ Fields:
             Scribe_Collections.Look(ref userPresets, "userPresets", LookMode.Deep);
             Scribe_Collections.Look(ref assignmentRules, "assignmentRules", LookMode.Deep);
 
+            Scribe_Values.Look(ref _chattinessMigratedV2, "chattinessMigratedV2", false);
+
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
-                InitPresets();
-                InitFilters();
+                InitPresets(); // Prompt 1-4 初始化 (这个是安全的，因为只涉及我们自己的类)
+                InitFilters(); // 过滤器初始化 (安全)
 
+                // ★★★ 核心修复：不要在这里调用 InitLibrary() ★★★
+                // 我们只确保 List 对象不为 null，防止 UI 报错
                 if (userPresets == null) userPresets = new List<CustomPreset>();
                 if (assignmentRules == null) assignmentRules = new List<AssignmentRule>();
+
+                // ★★★ 也不要在这里做任何迁移逻辑 ★★★
+                // 统统移到后面去
             }
 
             base.ExposeData();
+        }
+
+        public void MigrateChattinessValuesIfNeeded()
+        {
+            if (_chattinessMigratedV2) return;
+
+            if (userPresets == null) return;
+
+            int count = 0;
+            foreach (var preset in userPresets)
+            {
+                // 旧版逻辑是 0-2.0，新版是 0-1.0
+                // 直接除以 2，进行无损压缩
+                if (preset.chattiness > 0)
+                {
+                    preset.chattiness = Mathf.Clamp(preset.chattiness / 2.0f, 0.1f, 1.0f);
+                    count++;
+                }
+            }
+            _chattinessMigratedV2 = true;
+            Log.Message($"[Persona Director] Migrated {count} user presets to new chattiness scale (v2).");
         }
 
         public void InitLibrary()
@@ -327,41 +359,50 @@ Fields:
                 }
 
                 // B. 导入 RimTalk 原版库 (智能提取标题)
-                if (Constant.Personalities != null)
+                try
                 {
-                    var vanillaList = Constant.Personalities as IEnumerable<PersonalityData>;
-                    if (vanillaList != null)
+                    // 获取 Constant.Personalities 属性 (Property)
+                    // 最新版 RimTalk 中，这是一个 Property，不再是 Field
+                    var propInfo = AccessTools.Property(typeof(Constant), "Personalities");
+                    if (propInfo != null)
                     {
-                        int count = 0;
-                        foreach (var p in vanillaList)
+                        var vanillaList = propInfo.GetValue(null) as IEnumerable<PersonalityData>;
+                        if (vanillaList != null)
                         {
-                            if (!userPresets.Any(existing => existing.personaText == p.Persona))
+                            int count = 0;
+                            foreach (var p in vanillaList)
                             {
-                                // 同样使用智能提取
-                                string smartLabel = ExtractLabelFromText(p.Persona);
-                                if (string.IsNullOrEmpty(smartLabel)) smartLabel = $"Vanilla {++count}";
-
-                                userPresets.Add(new CustomPreset
+                                if (!userPresets.Any(existing => existing.personaText == p.Persona))
                                 {
-                                    label = smartLabel,
-                                    personaText = p.Persona,
-                                    chattiness = p.Chattiness,
-                                    category = "Vanilla"
-                                });
+                                    // 同样使用智能提取
+                                    string smartLabel = ExtractLabelFromText(p.Persona);
+                                    if (string.IsNullOrEmpty(smartLabel)) smartLabel = $"Vanilla {++count}";
+
+                                    userPresets.Add(new CustomPreset
+                                    {
+                                        label = smartLabel,
+                                        personaText = p.Persona,
+                                        chattiness = p.Chattiness,
+                                        category = "Vanilla"
+                                    });
+                                }
                             }
                         }
                     }
-                    
                 }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[Persona Director] Failed to read vanilla presets: {ex.Message}");
+                }
+                _chattinessMigratedV2 = true;
             }
-            PresetSynchronizer.SyncToRimTalk();
 
             // 2. 填充规则库
             if (assignmentRules.Count == 0)
             {
                 AddDefaultRules();
             }
-
+            PresetSynchronizer.SyncToRimTalk();
         }
 
         // ★★★ 辅助方法：智能提取标题 ★★★

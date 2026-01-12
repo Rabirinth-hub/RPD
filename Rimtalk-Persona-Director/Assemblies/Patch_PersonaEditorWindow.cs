@@ -91,17 +91,28 @@ namespace RimPersonaDirector
                         ClearEvolveState();
 
                         evolvingPawn = pawn;
-
-                        evolveTask = Task.Run(() => DirectorUtils.EvolvePersona(pawn, __instance));
-
-                        evolveTask.ContinueWith(task =>
+                        var (request, originalPersona) = DirectorUtils.PrepareEvolve(pawn, __instance);
+                        if (request != null)
                         {
-                            if (task.IsCompleted && !task.IsFaulted)
+                            // ★★★ 2. 后台线程：只负责执行网络请求 ★★★
+                            evolveTask = Task.Run(() => DirectorUtils.ExecuteEvolve(request, originalPersona));
+
+                            // ★★★ 3. 任务完成后，将结果放入 evolveResult ★★★
+                            evolveTask.ContinueWith(task =>
                             {
-                                evolveResult = task.Result;
-                            }
-                            evolveTask = null;
-                        });
+                                if (task.IsCompleted && !task.IsFaulted)
+                                {
+                                    // 这里拿到的 task.Result 就是拼接好的完整新文本
+                                    evolveResult = task.Result;
+                                }
+                                evolveTask = null;
+                            });
+                        }
+                        else
+                        {
+                            // 准备阶段就失败了，直接恢复按钮
+                            ClearEvolveState();
+                        }
                     }
                     TooltipHandler.TipRegion(evolveRect, "RPD_Tip_Evolve".Translate());
                 }
