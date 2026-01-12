@@ -1,4 +1,6 @@
-﻿using HarmonyLib;
+//不再使用
+/*
+using HarmonyLib;
 using Verse;
 using RimWorld;
 using RimTalk.Data;
@@ -111,4 +113,6 @@ namespace RimPersonaDirector
             }
         }
     }
+
 }
+*/
