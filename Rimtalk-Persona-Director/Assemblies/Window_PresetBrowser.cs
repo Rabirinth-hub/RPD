@@ -16,8 +16,6 @@ namespace RimPersonaDirector
         private string selectedCategory = "All";
         private CustomPreset selectedPreset;
 
-        private bool _initialized = false;
-
         public Window_PresetBrowser(Pawn pawn, Window editor)
         {
             pawnToApply = pawn;
@@ -25,22 +23,22 @@ namespace RimPersonaDirector
             doCloseX = true;
             forcePause = true;
             absorbInputAroundWindow = true;
+
+            if (DirectorMod.Settings.userPresets == null)
+            {
+                DirectorMod.Settings.userPresets = new List<CustomPreset>();
+            }
+            // 确保库里有东西
+            if (DirectorMod.Settings.userPresets.Count == 0)
+            {
+                DirectorMod.Settings.InitLibrary();
+            }
         }
 
         public override Vector2 InitialSize => new Vector2(700f, 500f);
 
         public override void DoWindowContents(Rect inRect)
         {
-            // 初始化
-            if (!_initialized)
-            {
-                if (DirectorMod.Settings.userPresets.Count == 0)
-                {
-                    DirectorMod.Settings.InitLibrary();
-                }
-                _initialized = true;
-            }
-
             // --- 主布局 ---
             Rect leftRect = inRect.LeftPart(0.3f).Rounded();
             Rect rightRect = inRect.RightPart(0.68f).Rounded();

@@ -135,7 +135,7 @@ namespace RimPersonaDirector
 
                     if (Widgets.ButtonText(timeRect, timeLabel))
                     {
-                        string snapshot = DirectorUtils.BuildCustomCharacterData(pawn, true);
+                        string snapshot = DirectorUtils.BuildCustomCharacterData(pawn, true, false);
                         worldComp.SetTimestamp(pawn, snapshot);
                         Messages.Message("RPD_Msg_TimestampUpdated".Translate(), MessageTypeDefOf.PositiveEvent, false);
                     }

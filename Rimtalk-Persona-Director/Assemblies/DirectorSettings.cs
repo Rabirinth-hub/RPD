@@ -263,11 +263,16 @@ Fields:
         public ContextSettings Context = new ContextSettings();
         public Dictionary<string, bool> BatchFilters;
 
+        public string rimTalkPreset_Single = ""; // 单体生成用的预设名
+        public string rimTalkPreset_Evolve = ""; // 演变生成用的预设名
+
         //  新增字段：预设库和规则库 
         public List<CustomPreset> userPresets;
         public List<AssignmentRule> assignmentRules;
         //  新增：迁移标记 (默认为 false) 
         private bool _chattinessMigratedV2 = false;
+        // ★★★ 新增：目标 RimTalk 预设名称 ★★★
+        public string rimTalkPresetName = "Director";
         public override void ExposeData()
         {
             // 读取旧数据
@@ -292,6 +297,9 @@ Fields:
             Scribe_Collections.Look(ref assignmentRules, "assignmentRules", LookMode.Deep);
 
             Scribe_Values.Look(ref _chattinessMigratedV2, "chattinessMigratedV2", false);
+
+            Scribe_Values.Look(ref rimTalkPreset_Single, "rimTalkPreset_Single", "");
+            Scribe_Values.Look(ref rimTalkPreset_Evolve, "rimTalkPreset_Evolve", "");
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {

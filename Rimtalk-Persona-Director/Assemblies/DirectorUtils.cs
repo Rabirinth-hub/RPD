@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using RimTalk.Client;
 using RimTalk.Data;
+using RimTalk.Prompt;
 using RimTalk.Service;
 using RimWorld;
 using RimWorld.Planet;
@@ -13,6 +14,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using Verse;
+using Verse.AI.Group;
 
 namespace RimPersonaDirector
 {
@@ -56,32 +58,147 @@ namespace RimPersonaDirector
            "\n\n[Character Data]\n" + dataContent;
         }
 
+        // ★★★ 新增：尝试从 RimTalk 预设渲染 Prompt ★★★
+        // ★★★ 纯反射版本：尝试从 RimTalk 预设渲染 ★★★
+        private static string TryRenderFromRimTalkPreset(Pawn p, string targetName)
+        {
+            if (string.IsNullOrEmpty(targetName) || targetName == "None") return null;
+
+            try
+            {
+                // 1. 查找预设
+                var presets = RimTalk.API.RimTalkPromptAPI.GetAllPresets();
+                var targetPreset = presets.FirstOrDefault(x => x.Name == targetName);
+
+                if (targetPreset == null)
+                {
+                    if (DirectorMod.Settings.EnableDebugLog)
+                        Log.Warning($"[Director] Preset '{targetName}' not found in RimTalk. Available: {string.Join(", ", presets.Select(x => x.Name))}");
+                    return null;
+                }
+
+                // 2. 获取模板内容
+                StringBuilder templateSb = new StringBuilder();
+                foreach (var entry in targetPreset.Entries)
+                {
+                    if (entry.Enabled) templateSb.AppendLine(entry.Content);
+                }
+                string rawTemplate = templateSb.ToString();
+
+                if (string.IsNullOrWhiteSpace(rawTemplate))
+                {
+                    if (DirectorMod.Settings.EnableDebugLog) Log.Warning($"[Director] Preset '{targetName}' is empty or all entries are disabled.");
+                    return null;
+                }
+
+                // 3. ★★★ 基于源码的精准反射 ★★★
+
+                // A. 获取类型
+                Type contextType = AccessTools.TypeByName("RimTalk.Prompt.PromptContext");
+                Type varStoreType = AccessTools.TypeByName("RimTalk.Prompt.VariableStore"); // 参数类型
+                Type parserType = AccessTools.TypeByName("RimTalk.Prompt.ScribanParser");
+
+                if (contextType == null || parserType == null)
+                {
+                    Log.Error("[Director] Critical: RimTalk Context or Parser types not found.");
+                    return null;
+                }
+
+                // B. 创建 Context 实例
+                // 目标构造函数: public PromptContext(Pawn pawn, VariableStore variableStore = null)
+                object contextObj = null;
+                try
+                {
+                    // 我们显式传入 null 作为 variableStore，利用它内部的默认逻辑
+                    contextObj = Activator.CreateInstance(contextType, new object[] { p, null });
+                }
+                catch (Exception createEx)
+                {
+                    Log.Warning($"[Director] Failed to create PromptContext(Pawn, null): {createEx.Message}");
+                    // 尝试备用方案：无参构造 + 属性赋值
+                    try
+                    {
+                        contextObj = Activator.CreateInstance(contextType);
+                        AccessTools.Property(contextType, "CurrentPawn").SetValue(contextObj, p);
+                        // 设置 AllPawns 为 List<Pawn>{p}
+                        var listType = typeof(List<>).MakeGenericType(typeof(Pawn));
+                        var list = Activator.CreateInstance(listType);
+                        listType.GetMethod("Add").Invoke(list, new object[] { p });
+                        AccessTools.Property(contextType, "AllPawns").SetValue(contextObj, list);
+                    }
+                    catch { }
+                }
+
+                if (contextObj == null) return null;
+
+                // C. 注入我们的自定义变量逻辑 (如果之前没有全局注册)
+                // 现在的架构是 DirectorApiAdapter 已经在全局注册了变量，
+                // 所以 ScribanParser.Render 应该能自动调用到我们的变量，不需要额外操作。
+
+                // D. 调用 Render
+                // 签名: public static string Render(string templateText, PromptContext context, bool logErrors = true)
+                MethodInfo renderMethod = AccessTools.Method(parserType, "Render", new[] { typeof(string), contextType, typeof(bool) });
+
+                if (renderMethod == null)
+                {
+                    Log.Error("[Director] ScribanParser.Render method not found.");
+                    return null;
+                }
+
+                string renderedText = (string)renderMethod.Invoke(null, new object[] { rawTemplate, contextObj, true });
+                return renderedText;
+            }
+            catch (Exception ex)
+            {
+                // 捕获所有异常并打印，方便调试
+                Log.Warning($"[Director] TryRenderFromRimTalkPreset Exception: {ex}");
+                return null;
+            }
+        }
+
         /// 单体生成任务
         public static async Task<PersonalityData> GeneratePersonalityTask(string characterData, string pawnNameForLog, Pawn pawn)
         {
             try
             {
-                if (DirectorMod.Settings.EnableDebugLog)
+                // 1. 尝试使用 RimTalk 预设渲染
+                string renderedPrompt = TryRenderFromRimTalkPreset(pawn, DirectorMod.Settings.rimTalkPreset_Single);
+                TalkRequest request;
+
+                if (!string.IsNullOrEmpty(renderedPrompt))
                 {
-                    Log.Message($"[Director] Gen Data for {pawnNameForLog}:\n{characterData}");
+                    // === 路径 A: 使用了 RimTalk 模板 ===
+                    // 此时 renderedPrompt 已经包含了所有数据（因为变量被解析了）
+                    // 我们只需要加上 JSON 协议即可
+                    string finalInstruction = renderedPrompt + "\n\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
+                    string triggerPrompt = "Generate persona based on the instructions.";
+                    request = new TalkRequest(triggerPrompt, pawn)
+                    {
+                        Context = finalInstruction
+                    };
+
+                    if (DirectorMod.Settings.EnableDebugLog)
+                        Log.Message($"[Director] Using RimTalk Preset '{DirectorMod.Settings.rimTalkPresetName}' for {pawnNameForLog}");
                 }
-
-                // 1.  模仿原版：将指令和数据分开 
-                // 指令 (Prompt) = 我们自定义的用户指令 + JSON 协议
-                string userInstruction = DirectorMod.Settings.GetActivePrompt(false);
-                if (string.IsNullOrEmpty(userInstruction)) userInstruction = DirectorSettings.DefaultPrompt_Standard;
-                string finalInstruction = userInstruction.Replace("{LANG}", CurrentLanguage) + "\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
-
-                // 数据 (Context) = 角色数据
-                string finalContext = $"[Character Data]\n{characterData}";
-
-                // 2. 创建 TalkRequest 并同时赋值 Prompt 和 Context 
-                var request = new TalkRequest(finalInstruction, pawn)
+                else
                 {
-                    Context = finalContext
-                };
+                    // === 路径 B: 回退到旧逻辑 (手动拼接) ===
+                    // 获取 Mod 设置里的 Prompt
+                    if (DirectorMod.Settings.EnableDebugLog)
+                        Log.Message($"[Director] Using internal prompt for {pawnNameForLog}");
 
-                // 2. 发送请求
+                    string userPrompt = DirectorMod.Settings.GetActivePrompt(false);
+                    if (string.IsNullOrEmpty(userPrompt)) userPrompt = DirectorSettings.DefaultPrompt_Standard;
+
+                    // 拼接
+                    string finalInstruction = userPrompt.Replace("{LANG}", CurrentLanguage) + "\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
+                    string finalData = $"[Character Data]\n{characterData}";
+                    
+                    request = new TalkRequest(finalData, pawn)
+                    {
+                        Context = finalInstruction
+                    };
+                }
                 return await AIService.Query<PersonalityData>(request);
             }
             catch (Exception e)
@@ -100,24 +217,22 @@ namespace RimPersonaDirector
                 {
                     Log.Message($"[Director] Batch Gen Data:\n{combinedData}");
                 }
-                
-                string userPrompt = DirectorMod.Settings.GetActivePrompt(false);
-                string userInstruction = DirectorMod.Settings.GetActivePrompt();
+
+                string userInstruction = DirectorMod.Settings.GetActivePrompt(false);
                 if (string.IsNullOrEmpty(userInstruction)) userInstruction = DirectorSettings.DefaultPrompt_Standard;
                 string finalInstruction = userInstruction.Replace("{LANG}", CurrentLanguage) + "\n" + DirectorSettings.HiddenTechnicalPrompt_Batch;
+                string finalData = $"[Character Data]\n{combinedData}";
 
-                string finalContext = $"[Character Data]\n{combinedData}";
-
-                var request = new TalkRequest(finalInstruction, representative)
+                var request = new TalkRequest(finalData, representative)
                 {
-                    Context = finalContext
+                    Context = finalInstruction
                 };
 
                 return await AIService.Query<PersonalityData>(request);
             }
             catch (Exception e)
             {
-                Log.Error($"[Director Batch] Failed: {e.Message}");
+                Log.Error($"[Director] Batch Gen failed: {e.Message}");
                 return null;
             }
         }
@@ -580,9 +695,9 @@ namespace RimPersonaDirector
             try
             {
                 // 1. 从窗口获取当前正在编辑的文本
-                string currentPersona = GetWindowText(editorWindow);
+                string currentPersona = GetWindowText(editorWindow) ?? "";
 
-            if (string.IsNullOrEmpty(currentPersona))
+                if (string.IsNullOrEmpty(currentPersona))
             {
                 Messages.Message("RPD_Msg_NoPersona".Translate(), MessageTypeDefOf.RejectInput, false);
                 return (null, null);
@@ -703,16 +818,27 @@ namespace RimPersonaDirector
                     contextSb.AppendLine($"[Common Knowledge]\n{ck}\n");
                 }
             }
-
-            string finalContext = contextSb.ToString();
-
-            // 4. 构建 Prompt (指令部分)
-            // 使用 Prompt 4 (Evolve 专用) + JSON 协议
-            string userInstruction = DirectorMod.Settings.presets[3].text;
-            string finalInstruction = userInstruction.Replace("{LANG}", CurrentLanguage) + "\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
-
-                // 5. 构造请求 (Prompt 与 Context 分离)
-                var request = new TalkRequest(finalInstruction, p) { Context = finalContext };
+                // 设置临时缓存
+                DirectorDataEngine.TempCurrentPersona = currentPersona;
+                
+                TalkRequest request;
+                // 尝试渲染 (使用 Evolve 预设配置)
+                string renderedPrompt = TryRenderFromRimTalkPreset(p, DirectorMod.Settings.rimTalkPreset_Evolve);
+                // 清空缓存
+                DirectorDataEngine.TempCurrentPersona = "";
+                string dataPayload = contextSb.ToString();
+                if (!string.IsNullOrEmpty(renderedPrompt))
+                {
+                    string instruction = renderedPrompt + "\n\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
+                    request = new TalkRequest("Generate development based on data.", p) { Context = instruction };
+                }
+                else
+                {
+                    // --- 组装最终 Prompt ---
+                    string instruction = DirectorMod.Settings.presets[3].text.Replace("{LANG}", CurrentLanguage) + "\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
+                    string data = "[Update Data]\n" + dataPayload;
+                    request = new TalkRequest(data, p) { Context = instruction };
+                }
                 return (request, currentPersona);
             }
             catch (Exception ex)
@@ -1004,8 +1130,53 @@ namespace RimPersonaDirector
                 // B. 中立/友好派系人员 (商人会被归入此类)
                 else
                 {
-                    if (p.IsSlave) socialStatus = "Visitor (as a Slave)";
-                    else socialStatus = "Visitor / Guest";
+                    // ★★★ 核心修复：通过 LordJob 判断访客意图 ★★★
+
+                    // 获取控制这个 Pawn 的领主任务 (LordJob)
+                    var lord = p.GetLord();
+
+                    if (p.IsSlave)
+                    {
+                        socialStatus = "Visitor (as a Slave)";
+                    }
+                    else if (lord != null && lord.LordJob != null)
+                    {
+                        // A. 商队 (Trader Caravan)
+                        // LordJob_TradeWithColony 代表这群人是来做生意的
+                        // 即使是保镖，只要在这个队里，也会被标记为 Trader Group
+                        if (lord.LordJob is LordJob_TradeWithColony)
+                        {
+                            socialStatus = "Trader Caravan Member";
+                        }
+                        // B. 访客 (Guest / Visitor)
+                        // LordJob_VisitColony 代表这群人是来串门的 (包括 Hospitality Mod)
+                        else if (lord.LordJob is LordJob_VisitColony)
+                        {
+                            socialStatus = "Guest / Visitor";
+                        }
+                        // C. 路人 (Traveler)
+                        // LordJob_TravelAndExit 代表他们只是路过地图，不打算停留
+                        else if (lord.LordJob is LordJob_TravelAndExit)
+                        {
+                            socialStatus = "Traveler (Passing through)";
+                        }
+                        // D. 援军 (Ally)
+                        // LordJob_AssistColony 代表他们是来帮忙打架的
+                        else if (lord.LordJob is LordJob_AssistColony || lord.LordJob is LordJob_DefendPoint)
+                        {
+                            socialStatus = "Ally Reinforcement";
+                        }
+                        else
+                        {
+                            // 其他情况 (比如参加婚礼、参加仪式等)
+                            socialStatus = "Visitor";
+                        }
+                    }
+                    else
+                    {
+                        // 没有 Lord 的散人
+                        socialStatus = "Visitor / Guest";
+                    }
                 }
             }
 
@@ -1021,10 +1192,11 @@ namespace RimPersonaDirector
         }
 
         // ★ 核心修改：无差别的通用数据提取器 ★
-        public static string BuildCustomCharacterData(Pawn p, bool isSnapshot = false)
+        public static string BuildCustomCharacterData(Pawn p, bool isSnapshot = false, bool simpleEquipment = false)
         {
             StringBuilder sb = new StringBuilder();
             var ctx = DirectorMod.Settings.Context;
+            string data = DirectorDataEngine.BuildCompleteData(p, simpleEquipment);
 
             try
             {

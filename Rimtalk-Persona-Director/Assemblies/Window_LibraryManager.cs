@@ -29,6 +29,15 @@ namespace RimPersonaDirector
         public override Vector2 InitialSize => new Vector2(1000f, 700f);
         public override void DoWindowContents(Rect inRect)
         {
+            // 在执行任何操作之前，确保列表对象已创建
+            if (DirectorMod.Settings.userPresets == null)
+            {
+                DirectorMod.Settings.userPresets = new List<CustomPreset>();
+            }
+            if (DirectorMod.Settings.assignmentRules == null)
+            {
+                DirectorMod.Settings.assignmentRules = new List<AssignmentRule>();
+            }
             // --- 1. 手动定义所有顶层区域 ---
             float topBarHeight = 35f; // 给重置按钮留一行
             float tabHeight = 30f;    // Tab 的高度
@@ -172,7 +181,7 @@ namespace RimPersonaDirector
                 editor.Label("RPD_Library_PresetCategory".Translate());
                 selectedPreset.category = editor.TextEntry(selectedPreset.category);
                 editor.Label("RPD_Library_Chattiness".Translate(selectedPreset.chattiness.ToString("F2")));
-                selectedPreset.chattiness = editor.Slider(selectedPreset.chattiness, 0f, 2f);
+                selectedPreset.chattiness = editor.Slider(selectedPreset.chattiness, 0f, 1f);
                 editor.Label("RPD_Library_Description".Translate());
                 float h = rightRect.height - editor.CurHeight - 80f;
                 selectedPreset.personaText = Widgets.TextArea(editor.GetRect(h), selectedPreset.personaText);
