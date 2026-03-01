@@ -9,7 +9,6 @@ using UnityEngine;
 
 namespace RimPersonaDirector
 {
-    // 不再需要 StaticConstructorOnStartup，因为我们会手动调用它
     public static class PresetSynchronizer
     {
         public static void SyncToRimTalk()
@@ -40,15 +39,18 @@ namespace RimPersonaDirector
 
                 foreach (var preset in settings.userPresets)
                 {
-                    // Ensure chattiness is normalized to the expected 0..1 range before syncing
-                    float chat = preset.chattiness;
-                    try
+                    if (preset.enabled)
                     {
-                        chat = DirectorUtils.NormalizeChattiness(chat);
-                    }
-                    catch { }
+                        // Ensure chattiness is normalized to the expected 0..1 range before syncing
+                        float chat = preset.chattiness;
+                        try
+                        {
+                            chat = DirectorUtils.NormalizeChattiness(chat);
+                        }
+                        catch { }
 
-                    syncList.Add(new PersonalityData(preset.personaText, chat));
+                        syncList.Add(new PersonalityData(preset.personaText, chat));
+                    }
                 }
                 
                 if (syncList.Count == 0) return;

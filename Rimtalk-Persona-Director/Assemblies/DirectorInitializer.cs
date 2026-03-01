@@ -13,9 +13,6 @@ namespace RimPersonaDirector
         {
             base.FinalizeInit();
 
-            // 1. 初始化预设库 (此时 RimTalk 数据已安全加载)
-            DirectorMod.Settings.InitLibrary();
-
             // 2. 执行数据迁移 (Chattiness 2.0 -> 1.0)
             DirectorMod.Settings.MigrateChattinessValuesIfNeeded();
 

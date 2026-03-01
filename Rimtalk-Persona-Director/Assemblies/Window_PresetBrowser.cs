@@ -28,11 +28,7 @@ namespace RimPersonaDirector
             {
                 DirectorMod.Settings.userPresets = new List<CustomPreset>();
             }
-            // 确保库里有东西
-            if (DirectorMod.Settings.userPresets.Count == 0)
-            {
-                DirectorMod.Settings.InitLibrary();
-            }
+
         }
 
         public override Vector2 InitialSize => new Vector2(700f, 500f);
@@ -131,7 +127,15 @@ namespace RimPersonaDirector
                 Rect row = new Rect(0f, i * rowHeight, viewRect.width, rowHeight);
                 if (selectedPreset == p) Widgets.DrawHighlightSelected(row);
                 if (Widgets.ButtonInvisible(row)) selectedPreset = p;
+                // 如果预设被禁用，文字显示为灰色 
+                string label = p.label;
+                if (!p.enabled)
+                {
+                    GUI.color = Color.gray;
+                }
+
                 Widgets.Label(row.ContractedBy(4f), p.label);
+                GUI.color = Color.white; // 还原颜色
             }
             Widgets.EndScrollView();
 

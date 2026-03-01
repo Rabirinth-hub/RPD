@@ -36,6 +36,7 @@ namespace RimPersonaDirector
         public string personaText;
         public float chattiness = 1.0f;
         public string category = "Default";
+        public bool enabled = true;
         public CustomPreset()
         {
             id = System.Guid.NewGuid().ToString();
@@ -54,6 +55,7 @@ namespace RimPersonaDirector
             Scribe_Values.Look(ref personaText, "personaText");
             Scribe_Values.Look(ref chattiness, "chattiness", 1.0f);
             Scribe_Values.Look(ref category, "category", "Default");
+            Scribe_Values.Look(ref enabled, "enabled", true);
         }
     }
 
@@ -267,8 +269,12 @@ Fields:
         public string rimTalkPreset_Evolve = ""; // 演变生成用的预设名
 
         //  新增字段：预设库和规则库 
-        public List<CustomPreset> userPresets;
-        public List<AssignmentRule> assignmentRules;
+        public List<CustomPreset> userPresets = new List<CustomPreset>();
+        public List<AssignmentRule> assignmentRules = new List<AssignmentRule>();
+        // 初始化状态标记
+        public bool _libraryInitialized = false;
+        // 缓存 (不保存)
+        public static List<PersonalityData> OriginalVanillaCache;
         //  新增：迁移标记 (默认为 false) 
         private bool _chattinessMigratedV2 = false;
         // ★★★ 新增：目标 RimTalk 预设名称 ★★★
@@ -292,10 +298,11 @@ Fields:
             if (Context == null) Context = new ContextSettings();
 
             Scribe_Collections.Look(ref BatchFilters, "BatchFilters", LookMode.Value, LookMode.Value);
-
+            // 库数据           
             Scribe_Collections.Look(ref userPresets, "userPresets", LookMode.Deep);
             Scribe_Collections.Look(ref assignmentRules, "assignmentRules", LookMode.Deep);
-
+            // 保存初始化标记 
+            Scribe_Values.Look(ref _libraryInitialized, "libraryInitialized", false);
             Scribe_Values.Look(ref _chattinessMigratedV2, "chattinessMigratedV2", false);
 
             Scribe_Values.Look(ref rimTalkPreset_Single, "rimTalkPreset_Single", "");
@@ -310,9 +317,10 @@ Fields:
                 // 我们只确保 List 对象不为 null，防止 UI 报错
                 if (userPresets == null) userPresets = new List<CustomPreset>();
                 if (assignmentRules == null) assignmentRules = new List<AssignmentRule>();
-
-                // ★★★ 也不要在这里做任何迁移逻辑 ★★★
-                // 统统移到后面去
+                if (!_libraryInitialized && userPresets.Count > 0)
+                {
+                    _libraryInitialized = true;
+                }
             }
 
             base.ExposeData();
@@ -341,80 +349,89 @@ Fields:
 
         public void InitLibrary()
         {
+            Log.Message("[Persona Director] -> InitLibrary: Starting...");
             if (userPresets == null) userPresets = new List<CustomPreset>();
+            else userPresets.Clear();
             if (assignmentRules == null) assignmentRules = new List<AssignmentRule>();
-
-            // 1. 填充预设库
-            if (userPresets.Count == 0)
+            else assignmentRules.Clear();
+            Log.Message("[Persona Director] -> InitLibrary: Cleared existing lists. Loading built-in presets...");
+            // 填充预设库
+            // 1. 内置库
+            int builtInCount = 0;
+            foreach (var def in PresetLibrary.Defaults)
             {
-                // A. 导入我们的内置库 (智能提取标题)
-                foreach (var def in PresetLibrary.Defaults)
+                string translatedText = def.personaText.Translate().Resolve();
+                string smartLabel = ExtractLabelFromText(translatedText) ?? def.label;
+
+                // 如果提取失败(比如没有横杠)，就用原来的英文 Label 做保底
+                if (string.IsNullOrEmpty(smartLabel)) smartLabel = def.label;
+
+                userPresets.Add(new CustomPreset
                 {
-                    // def.personaText 已经是翻译过的文本了 (在 PresetLibrary 里调用的 Translate)
-                    // 我们直接从里面提取标题，而不是用 def.label (那是英文硬编码的)
-                    string smartLabel = ExtractLabelFromText(def.personaText);
+                    label = smartLabel,
+                    personaText = translatedText,
+                    chattiness = def.chattiness,
+                    category = "Built-in",
+                });
+                builtInCount++;
+            }
+            Log.Message($"[Persona Director] -> InitLibrary: Loaded {builtInCount} built-in presets. Loading vanilla presets...");
+            // 2. 填充原版
+            int vanillaCount = 0;
+            IEnumerable<RimTalk.Data.PersonalityData> sourceList = null;
 
-                    // 如果提取失败(比如没有横杠)，就用原来的英文 Label 做保底
-                    if (string.IsNullOrEmpty(smartLabel)) smartLabel = def.label;
-
-                    userPresets.Add(new CustomPreset
-                    {
-                        label = smartLabel,
-                        personaText = def.personaText,
-                        chattiness = def.chattiness,
-                        category = "Built-in" 
-                    });
+            if (OriginalVanillaCache != null)
+            {
+                sourceList = OriginalVanillaCache;
+            }
+            else if (RimTalk.Data.Constant.Personalities != null)
+            {
+                var currentList = RimTalk.Data.Constant.Personalities as IEnumerable<RimTalk.Data.PersonalityData>;
+                if (currentList != null)
+                {
+                    OriginalVanillaCache = currentList.ToList();
+                    sourceList = OriginalVanillaCache;
                 }
+            }
 
-                // B. 导入 RimTalk 原版库 (智能提取标题)
-                try
+            if (sourceList != null)
+            {
+                foreach (var p in sourceList)
                 {
-                    // 获取 Constant.Personalities 属性 (Property)
-                    // 最新版 RimTalk 中，这是一个 Property，不再是 Field
-                    var propInfo = AccessTools.Property(typeof(Constant), "Personalities");
-                    if (propInfo != null)
+                    // 保护翻译和提取过程
+                    string translatedText = p.Persona;
+                    try { translatedText = p.Persona.Translate().Resolve(); } catch { }
+                    bool isBuiltIn = PresetLibrary.Defaults.Any(d => d.personaText == translatedText);
+                    if (!isBuiltIn && !userPresets.Any(existing => existing.personaText == translatedText))
                     {
-                        var vanillaList = propInfo.GetValue(null) as IEnumerable<PersonalityData>;
-                        if (vanillaList != null)
-                        {
-                            int count = 0;
-                            foreach (var p in vanillaList)
-                            {
-                                if (!userPresets.Any(existing => existing.personaText == p.Persona))
-                                {
-                                    // 同样使用智能提取
-                                    string smartLabel = ExtractLabelFromText(p.Persona);
-                                    if (string.IsNullOrEmpty(smartLabel)) smartLabel = $"Vanilla {++count}";
+                        string smartLabel = $"Vanilla {vanillaCount + 1}";
+                        try { smartLabel = ExtractLabelFromText(translatedText) ?? smartLabel; } catch { }
 
-                                    userPresets.Add(new CustomPreset
-                                    {
-                                        label = smartLabel,
-                                        personaText = p.Persona,
-                                        chattiness = p.Chattiness,
-                                        category = "Vanilla"
-                                    });
-                                }
-                            }
-                        }
+                        userPresets.Add(new CustomPreset
+                        {
+                            label = smartLabel,
+                            personaText = translatedText,
+                            chattiness = p.Chattiness,
+                            category = "Vanilla",
+                        });
+                        vanillaCount++;
                     }
                 }
-                catch (Exception ex)
-                {
-                    Log.Warning($"[Persona Director] Failed to read vanilla presets: {ex.Message}");
-                }
-                _chattinessMigratedV2 = true;
             }
+            Log.Message($"[Persona Director] -> InitLibrary: Loaded {vanillaCount} vanilla presets. Loading default rules...");
+            _chattinessMigratedV2 = true;
 
-            // 2. 填充规则库
-            if (assignmentRules.Count == 0)
-            {
-                AddDefaultRules();
-            }
+            // 3. 填充规则库
+            AddDefaultRules();
+            Log.Message("[Persona Director] -> InitLibrary: Default rules loaded. Syncing to RimTalk...");
             PresetSynchronizer.SyncToRimTalk();
+            Log.Message("[Persona Director] -> InitLibrary: Sync complete.");
+            Log.Message("[Persona Director] Library reset/initialized to defaults.");
+        
         }
 
         // ★★★ 辅助方法：智能提取标题 ★★★
-        private string ExtractLabelFromText(string text)
+        public string ExtractLabelFromText(string text)
         {
             if (string.IsNullOrEmpty(text)) return null;
 

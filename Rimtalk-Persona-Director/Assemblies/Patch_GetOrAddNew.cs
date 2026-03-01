@@ -12,6 +12,10 @@ namespace RimPersonaDirector
     [HarmonyPatch(typeof(Hediff_Persona), "GetOrAddNew")]
     public static class Patch_GetOrAddNew
     {
+	// 最近分配记录：<预设ID, 分配时间>
+        private static Dictionary<string, int> recentAssignments = new Dictionary<string, int>();
+        private const int CACHE_DURATION_TICKS = 600; // 10秒 = 600 ticks (60 ticks/秒)
+        private const int MAX_RETRY_ATTEMPTS = 2; // 最多重试2次，总共3次尝试
         static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             try
@@ -165,14 +169,70 @@ namespace RimPersonaDirector
             // 2. 如果无规则命中，使用全局池
             if (candidateIds.Count == 0)
             {
-                candidateIds.AddRange(settings.userPresets.Select(pr => pr.id));
+                // 只有被用户开启的预设才会随机给路人
+                candidateIds.AddRange(settings.userPresets
+                    .Where(pr => pr.enabled) // ★ 只取已启用的 ★
+                    .Select(pr => pr.id));
             }
 
             if (candidateIds.Count == 0) return null;
-
-            // 3. 随机抽取
-            string pickId = candidateIds.RandomElement();
+            // 3. 清理过期的缓存记录
+            CleanupExpiredCache();
+           // 4. 随机抽取（带重试机制避免短时间重复）
+            string pickId = null;
+            int currentTick = Find.TickManager.TicksGame;
+            
+            for (int attempt = 0; attempt <= MAX_RETRY_ATTEMPTS; attempt++)
+            {
+                // ★ 添加随机扰动，确保RNG状态被推进 ★
+                if (attempt > 0)
+                {
+                    // 在重试时，先做一些随机操作来"搅动"RNG状态
+                    Rand.Range(0, 1000); // 推进RNG状态
+                }
+                pickId = candidateIds.RandomElement();
+                
+                // 检查是否在最近使用过
+                if (!recentAssignments.ContainsKey(pickId))
+                {
+                    // 未被最近使用，可以分配
+                    break;
+                }
+                
+                // 如果是最后一次尝试，即使重复也接受
+                if (attempt == MAX_RETRY_ATTEMPTS)
+                {
+                    if (DirectorMod.Settings.EnableDebugLog)
+                        Log.Message($"[Director] Preset '{pickId}' was recently used, but accepting after {MAX_RETRY_ATTEMPTS + 1} attempts (pool size: {candidateIds.Count})");
+                    break;
+                }
+                
+                // 否则重试
+                if (DirectorMod.Settings.EnableDebugLog)
+                    Log.Message($"[Director] Preset '{pickId}' was recently used, retrying... (attempt {attempt + 1}/{MAX_RETRY_ATTEMPTS + 1})");
+            }
+            
+            // 5. 记录本次分配
+            recentAssignments[pickId] = currentTick;
+            
             return settings.userPresets.Find(x => x.id == pickId);
+        }
+
+        /// <summary>
+        /// 清理超过10秒的缓存记录
+        /// </summary>
+        private static void CleanupExpiredCache()
+        {
+            int currentTick = Find.TickManager.TicksGame;
+            var expiredKeys = recentAssignments
+                .Where(kvp => currentTick - kvp.Value > CACHE_DURATION_TICKS)
+                .Select(kvp => kvp.Key)
+                .ToList();
+            
+            foreach (var key in expiredKeys)
+            {
+                recentAssignments.Remove(key);
+            }
         }
 
         /// <summary>

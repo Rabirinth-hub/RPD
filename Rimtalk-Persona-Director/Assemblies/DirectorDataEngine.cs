@@ -1,4 +1,3 @@
-
 using HarmonyLib;
 using RimPersonaDirector;
 using RimTalk.Data;
@@ -15,14 +14,13 @@ using Verse;
 
 namespace RimPersonaDirector
 {
-	public class HistoryLine
-	{
-		public string name { get; set; }
-		public string target { get; set; }
-		public string text { get; set; }
-	}
-
-	public static class DirectorDataEngine
+    public class HistoryLine
+    {
+        public string name { get; set; }
+        public string target { get; set; }
+        public string text { get; set; }
+    }
+    public static class DirectorDataEngine
 	{
 		private static MethodInfo getPawnSocialStatusMethod;
 
@@ -100,7 +98,8 @@ namespace RimPersonaDirector
 
 		public static string GetBasicInfo(Pawn p)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+            if (p == null) return "";
+            StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("--- Basic Info ---");
 			stringBuilder.AppendLine("Name: " + p.LabelShortCap);
 			stringBuilder.AppendLine($"Gender: {p.gender}");
@@ -155,7 +154,8 @@ namespace RimPersonaDirector
 
 		public static string GetRaceInfo(Pawn p, bool includeDesc)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+            if (p == null) return "";
+            StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append("Race: " + p.def.label);
 			if (includeDesc)
 			{
@@ -182,7 +182,8 @@ namespace RimPersonaDirector
 
 		public static string GetGenesInfo(Pawn p, bool includeDesc)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+            if (p == null || p.genes == null) return "";
+            StringBuilder stringBuilder = new StringBuilder();
 			if (p.genes.Endogenes.Any())
 			{
 				stringBuilder.Append("[Endogenes (Natural)]: ");
@@ -222,7 +223,8 @@ namespace RimPersonaDirector
 
 		public static string GetBackstoryInfo(Pawn p, bool includeDesc)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+            if (p == null || p.story == null) return "";
+            StringBuilder stringBuilder = new StringBuilder();
 			if (p.story.Childhood != null)
 			{
 				stringBuilder.Append("Childhood: " + p.story.Childhood.TitleCapFor(p.gender));
@@ -270,7 +272,8 @@ namespace RimPersonaDirector
 
 		public static string GetRelationsInfo(Pawn p)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+            if (p == null || p.relations == null) return "";
+            StringBuilder stringBuilder = new StringBuilder();
 			StringBuilder stringBuilder2 = new StringBuilder();
 			foreach (Pawn relatedPawn in p.relations.RelatedPawns)
 			{
@@ -314,7 +317,8 @@ namespace RimPersonaDirector
 
 		public static string GetTraitsInfo(Pawn p, bool includeDesc)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+            if (p == null || p.story?.traits == null) return "";
+            StringBuilder stringBuilder = new StringBuilder();
 			foreach (Trait allTrait in p.story.traits.allTraits)
 			{
 				stringBuilder.Append(allTrait.Label);
@@ -332,7 +336,8 @@ namespace RimPersonaDirector
 
 		public static string GetIdeologyInfo(Pawn p, bool includeDesc)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+            if (p == null || p.Ideo == null) return "";
+            StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("Religion: " + p.Ideo.name);
 			foreach (MemeDef meme in p.Ideo.memes)
 			{
@@ -351,7 +356,8 @@ namespace RimPersonaDirector
 
 		public static string GetSkillsInfo(Pawn p, bool includeDesc)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+            if (p == null || p.skills == null) return "";
+            StringBuilder stringBuilder = new StringBuilder();
 			foreach (SkillRecord skill in p.skills.skills)
 			{
 				stringBuilder.Append(skill.def.label + ": ");
@@ -410,7 +416,8 @@ namespace RimPersonaDirector
 
 		public static string GetHealthInfo(Pawn p, bool includeDesc)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+            if (p == null || p.health?.hediffSet == null) return "";
+            StringBuilder stringBuilder = new StringBuilder();
 			List<Hediff> list = p.health.hediffSet.hediffs.Where((Hediff h) => h.Visible).ToList();
 			if (list.Any())
 			{
@@ -435,7 +442,8 @@ namespace RimPersonaDirector
 
 		public static string GetEquipmentInfo(Pawn p, bool simpleMode = false)
 		{
-			var sb = new StringBuilder();
+            if (p == null) return "";
+            var sb = new StringBuilder();
 			bool hasContent = false;
 
 			// 武器
@@ -470,8 +478,9 @@ namespace RimPersonaDirector
 		// 只包含：材质 + 物品名 + 品质 (例如：传奇级 合成纤维T恤衫)
 		private static string GetStableThingLabel(Thing t)
 		{
-			// GenLabel.ThingLabel 基础生成 (材质+名字)
-			string baseLabel = GenLabel.ThingLabel(t.def, t.Stuff).CapitalizeFirst();
+            if (t == null) return "";
+            // GenLabel.ThingLabel 基础生成 (材质+名字)
+            string baseLabel = GenLabel.ThingLabel(t.def, t.Stuff).CapitalizeFirst();
 
 			// 手动拼接品质 (如果存在)
 			if (t.TryGetComp<CompQuality>() is CompQuality qc)
@@ -485,7 +494,8 @@ namespace RimPersonaDirector
 
 		public static string GetInventoryInfo(Pawn p)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+            if (p == null) return "";
+            StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("\n--- Inventory ---");
 			foreach (Thing item in p.inventory.innerContainer)
 			{
@@ -496,22 +506,26 @@ namespace RimPersonaDirector
 
 		public static string GetRimPsycheInfo(Pawn p)
 		{
-			return DirectorUtils.GetMauxRimPsycheData(p);
+            if (p == null) return "";
+            return DirectorUtils.GetMauxRimPsycheData(p);
 		}
 
 		public static string GetMemoryInfo(Pawn p)
 		{
-			return DirectorUtils.GetExternalMemories(p, -1) ?? "";
+            if (p == null) return "";
+            return DirectorUtils.GetExternalMemories(p, -1) ?? "";
 		}
 
 		public static string GetCommonKnowledgeInfo(Pawn p, string context)
 		{
-			return DirectorUtils.GetCommonKnowledge(context, p) ?? "";
+            if (p == null) return "";
+            return DirectorUtils.GetCommonKnowledge(context, p) ?? "";
 		}
 
 		public static string GetEvolveStatusDiff(Pawn p)
 		{
-			var worldComp = Find.World.GetComponent<DirectorWorldComponent>();
+            if (p == null) return "";
+            var worldComp = Find.World.GetComponent<DirectorWorldComponent>();
 			if (worldComp == null) return "";
 
 			string oldSnapshot = worldComp.GetSnapshot(p); // 这是一个 Detailed 快照
@@ -532,7 +546,8 @@ namespace RimPersonaDirector
 
 		public static string GetEvolveMemories(Pawn p)
 		{
-			var worldComp = Find.World.GetComponent<DirectorWorldComponent>();
+            if (p == null) return "";
+            var worldComp = Find.World.GetComponent<DirectorWorldComponent>();
 			int lastTick = worldComp?.GetLastEvolveTick(p) ?? -1;
 
 			// 传入 lastTick，DirectorUtils.GetExternalMemories 会自动过滤掉旧记忆
@@ -555,6 +570,7 @@ namespace RimPersonaDirector
 			if (ageNow > ageThen) info += $" Aged {ageThen}->{ageNow}.";
 			return info;
 		}
+
 
         private static FieldInfo _rawHistoryDictField;
 
@@ -628,7 +644,7 @@ namespace RimPersonaDirector
         }
 
         // ★★★ 修改：返回 List<string> 而不是 string ★★★
-                private static List<string> ExtractHistoryForPawn(Pawn p, List<Pawn> contextPawns, int limit, HashSet<string> processedDialogues)
+        private static List<string> ExtractHistoryForPawn(Pawn p, List<Pawn> contextPawns, int limit, HashSet<string> processedDialogues)
         {
             var activeNames = new HashSet<string>();
             foreach (var cp in contextPawns) activeNames.Add(cp.LabelShort);
@@ -637,7 +653,7 @@ namespace RimPersonaDirector
             if (_rawHistoryDictField == null)
                 _rawHistoryDictField = AccessTools.Field(typeof(TalkHistory), "MessageHistory");
             if (_rawHistoryDictField == null) return null;
-            
+
             var historyDict = _rawHistoryDictField.GetValue(null) as IDictionary;
             if (historyDict == null || !historyDict.Contains(p.thingIDNumber)) return null;
             var fullList = historyDict[p.thingIDNumber] as IEnumerable;
@@ -655,7 +671,7 @@ namespace RimPersonaDirector
 
                 object entry = snapshotList[i];
                 var type = entry.GetType();
-                
+
                 // 这里的反射稍微优化一下，避免重复获取 FieldInfo，但这里先保持原样
                 string rawContent = (string)type.GetField("Item2").GetValue(entry);
                 string roleName = type.GetField("Item1").GetValue(entry).ToString();
@@ -667,7 +683,7 @@ namespace RimPersonaDirector
                     // 就直接跳过，继续往回找更早的记录。
                     if (processedDialogues.Contains(rawContent))
                     {
-                        continue; 
+                        continue;
                     }
 
                     try
@@ -700,7 +716,7 @@ namespace RimPersonaDirector
                             {
                                 // 插入结果
                                 resultLines.Insert(0, sessionSb.ToString().TrimEnd());
-                                
+
                                 // ★★★ 标记为已处理 ★★★
                                 processedDialogues.Add(rawContent);
                             }
@@ -712,6 +728,7 @@ namespace RimPersonaDirector
 
             return resultLines;
         }
+
 
         public static string GetActiveUIText(Pawn p)
         {

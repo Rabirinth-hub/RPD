@@ -21,6 +21,7 @@ namespace RimPersonaDirector
         {
             Settings = GetSettings<DirectorSettings>();
             _isRimPsycheLoaded = AccessTools.TypeByName("Maux36.RimPsyche.CompPsyche") != null;
+            LongEventHandler.ExecuteWhenFinished(DirectorStartup.Initialize);
         }
 
         public override string SettingsCategory() => "RimTalk: Persona Director";
@@ -63,7 +64,6 @@ namespace RimPersonaDirector
 
             list.CheckboxLabeled("RPD_Filter_DirectorNotes".Translate(), ref Settings.Context.Inc_DirectorNotes, "RPD_Tip_NotesDesc".Translate());
             list.CheckboxLabeled("RPD_Settings_EnableEvolve".Translate(), ref Settings.enableEvolveFeature, "RPD_Settings_EnableEvolveTip".Translate());
-
             list.CheckboxLabeled("RPD_Setting_DebugLog".Translate(), ref Settings.EnableDebugLog, "RPD_Setting_DebugLogDesc".Translate());
 
 

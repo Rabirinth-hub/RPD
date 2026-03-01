@@ -105,7 +105,7 @@ namespace RimPersonaDirector
             _defaults.Add(new CustomPreset
             {
                 label = label,
-                personaText = key.Translate(), // 这一步直接读取翻译文件的内容
+                personaText = key, // 这一步直接读取翻译文件的内容
                 chattiness = chat
             });
         }

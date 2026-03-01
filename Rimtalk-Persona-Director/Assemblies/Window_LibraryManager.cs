@@ -1,8 +1,9 @@
-﻿using UnityEngine;
-using Verse;
+﻿using RimTalk.Data;
 using RimWorld;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
+using Verse;
 
 namespace RimPersonaDirector
 {
@@ -133,10 +134,17 @@ namespace RimPersonaDirector
                 .Where(p => searchWidget.filter.Matches(p.label) && (selectedCategoryFilter == "All" || p.category == selectedCategoryFilter)).ToList();
 
             DrawLeftList(listRect, filtered,
-                            p => $"[{p.category}] {p.label}",
-                            p => selectedPreset = p,
-                            ref scrollLeft,
-                            selectedPreset); // 传入当前选中的，用于高亮
+                p => $"[{p.category}] {p.label}",
+                p => selectedPreset = p,
+                ref scrollLeft,
+                selectedPreset,
+                p => p.enabled,
+                (p, v) => {
+                    p.enabled = v;
+                    // ★ 切换开关后，立即同步到 RimTalk ★
+                    PresetSynchronizer.SyncToRimTalk();
+                }
+            );
 
             // 4. ★★★ 底部按钮行 1 (新增/删除) ★★★
             Rect bottomRow1 = new Rect(innerLeft.x, listRect.yMax + 5f, innerLeft.width, 30f);
@@ -145,7 +153,7 @@ namespace RimPersonaDirector
             // 新增 (左)
             if (Widgets.ButtonText(new Rect(bottomRow1.x, bottomRow1.y, btnWidth, 30f), "RPD_Library_CreatePreset".Translate()))
             {
-                var n = new CustomPreset("New Preset", "...") { category = "Custom" };
+                var n = new CustomPreset("New Preset", "...") { category = "Custom", enabled = true };
                 DirectorMod.Settings.userPresets.Add(n);
                 selectedPreset = n;
             }
@@ -163,11 +171,21 @@ namespace RimPersonaDirector
                 GUI.color = Color.white;
             }
 
-            // 5. ★★★ 底部按钮行 2 (导入) ★★★
+            // 5. ★★★ 底部按钮行 2 (管理菜单) ★★★
             Rect bottomRow2 = new Rect(innerLeft.x, bottomRow1.yMax + 5f, innerLeft.width, 30f);
-            if (Widgets.ButtonText(bottomRow2, "RPD_Library_ImportTemplate".Translate()))
+            float manageBtnWidth = (bottomRow2.width - 10f) / 2f;
+
+            // 左: Manage Vanilla
+            if (Widgets.ButtonText(new Rect(bottomRow2.x, bottomRow2.y, manageBtnWidth, 30f), "RPD_Library_ManageVanilla".Translate()))
             {
-                OpenImportFloatMenu();
+                OpenManageMenu("Vanilla", DirectorSettings.OriginalVanillaCache, null);
+            }
+
+            // 右: Manage Built-in
+            if (Widgets.ButtonText(new Rect(bottomRow2.x + manageBtnWidth + 10f, bottomRow2.y, manageBtnWidth, 30f), "RPD_Library_ManageBuiltin".Translate()))
+            {
+                // 修正：内置预设直接传库
+                OpenManageMenu("Built-in", null, PresetLibrary.Defaults);
             }
 
             // --- 右侧编辑器 ---
@@ -196,6 +214,115 @@ namespace RimPersonaDirector
             }
         }
 
+        private void OpenManageMenu(string targetCategory, List<RimTalk.Data.PersonalityData> vanillaSource = null, List<CustomPreset> builtInSource = null)
+        {
+            List<FloatMenuOption> opts = new List<FloatMenuOption>();
+            var userPresets = DirectorMod.Settings.userPresets;
+
+            // --- 1. 添加全部 ---
+            opts.Add(new FloatMenuOption("RPD_Library_AddAll".Translate(targetCategory.Translate()), () =>
+            {
+                int count = 0;
+                if (vanillaSource != null)
+                {
+                    foreach (var p in vanillaSource)
+                    {
+                        string text = p.Persona.Translate().Resolve();
+                        if (!userPresets.Any(x => x.personaText == text))
+                        {
+                            string label = ExtractLabelFromText(text) ?? $"{targetCategory} {++count}";
+                            userPresets.Add(new CustomPreset { label = label, personaText = text, chattiness = p.Chattiness, category = targetCategory, enabled = true });
+                            count++;
+                        }
+                    }
+                }
+                else if (builtInSource != null)
+                {
+                    foreach (var p in builtInSource)
+                    {
+                        // ★ 修正：确保内置内容在导入时被翻译 ★
+                        string text = p.personaText.Translate().Resolve();
+                        if (!userPresets.Any(x => x.personaText == text))
+                        {
+                            userPresets.Add(new CustomPreset { label = p.label, personaText = text, chattiness = p.chattiness, category = targetCategory, enabled = true });
+                            count++;
+                        }
+                    }
+                }
+                PresetSynchronizer.SyncToRimTalk();
+                Messages.Message("RPD_Library_MsgAdded".Translate(count), MessageTypeDefOf.PositiveEvent, false);
+            }));
+
+            // --- 2. 移除全部 ---
+            opts.Add(new FloatMenuOption("RPD_Library_RemoveAll".Translate(targetCategory.Translate()), () =>
+            {
+                int removed = userPresets.RemoveAll(p => p.category == targetCategory);
+                selectedPreset = null;
+                PresetSynchronizer.SyncToRimTalk();
+                Messages.Message("RPD_Library_MsgRemoved".Translate(removed), MessageTypeDefOf.NeutralEvent, false);
+            }));
+
+            // --- 3. 选择添加 (带悬浮窗预览) ---
+            opts.Add(new FloatMenuOption("RPD_Library_AddSpecific".Translate(), () =>
+            {
+                List<FloatMenuOption> subOpts = new List<FloatMenuOption>();
+
+                if (vanillaSource != null)
+                {
+                    foreach (var p in vanillaSource)
+                    {
+                        string text = p.Persona.Translate().Resolve();
+                        string label = ExtractLabelFromText(text) ?? "Vanilla Preset";
+                        if (!userPresets.Any(x => x.personaText == text))
+                        {
+                            // ★ 增加 tooltip 属性 ★
+                            var opt = new FloatMenuOption(label, () => {
+                                userPresets.Add(new CustomPreset { label = label, personaText = text, chattiness = p.Chattiness, category = targetCategory, enabled = true });
+                                PresetSynchronizer.SyncToRimTalk();
+                            });
+                            opt.tooltip = new TipSignal(text);
+                            subOpts.Add(opt);
+                        }
+                    }
+                }
+                else if (builtInSource != null)
+                {
+                    foreach (var p in builtInSource)
+                    {
+                        string text = p.personaText.Translate().Resolve();
+                        if (!userPresets.Any(x => x.personaText == text))
+                        {
+                            // ★ 增加 tooltip 属性 ★
+                            var opt = new FloatMenuOption(p.label, () => {
+                                userPresets.Add(new CustomPreset { label = p.label, personaText = text, chattiness = p.chattiness, category = targetCategory, enabled = true });
+                                PresetSynchronizer.SyncToRimTalk();
+                            });
+                            opt.tooltip = new TipSignal(text);
+                            subOpts.Add(opt);
+                        }
+                    }
+                }
+
+                if (subOpts.Count == 0) subOpts.Add(new FloatMenuOption("RPD_Library_AllAdded".Translate(), null));
+                Find.WindowStack.Add(new FloatMenu(subOpts));
+            }));
+
+            Find.WindowStack.Add(new FloatMenu(opts));
+        }
+
+        private string ExtractLabelFromText(string text)
+        {
+            // ... (复制之前的逻辑) ...
+            if (string.IsNullOrEmpty(text)) return null;
+            string[] separators = new[] { " - ", " – ", " — ", "：", ": " };
+            foreach (var sep in separators)
+            {
+                int index = text.IndexOf(sep);
+                if (index > 0 && index < 30) return text.Substring(0, index).Trim();
+            }
+            return null;
+        }
+
         private void DrawRulesTab(Rect rect)
         {
             // Mirror Presets layout exactly for consistent alignment
@@ -219,10 +346,13 @@ namespace RimPersonaDirector
                 .Where(r => searchWidget.filter.Matches(r.targetDefName ?? "")).ToList();
 
             DrawLeftList(listRect, filtered,
-                r => $"{TranslateRuleType(r.type)}: {r.targetDefName ?? "None"} (P:{r.priority})",
+                r => $"{r.type}: {r.targetDefName ?? "None"} (P:{r.priority})",
                 r => selectedRule = r,
                 ref scrollRight,
-                selectedRule);
+                selectedRule,
+                r => r.enabled,         // Get
+                (r, v) => r.enabled = v // Set
+            );
 
             // 底部按钮行：与 Presets 一样平分左右
             Rect bottomRow1 = new Rect(innerLeft.x, listRect.yMax + 5f, innerLeft.width, 30f);
@@ -308,7 +438,13 @@ namespace RimPersonaDirector
             }
         }
 
-        private void DrawLeftList<T>(Rect rect, List<T> list, System.Func<T, string> labelFunc, System.Action<T> onSelect, ref Vector2 scrollPos, T selectedItem) where T : class
+        private void DrawLeftList<T>(Rect rect, List<T> list,
+            System.Func<T, string> labelFunc,
+            System.Action<T> onSelect,
+            ref Vector2 scrollPos,
+            T selectedItem,
+            System.Func<T, bool> getEnabled, // 读取开关状态
+            System.Action<T, bool> setEnabled) // 写入开关状态
         {
             float viewHeight = list.Count * 30f;
             Rect viewRect = new Rect(0, 0, rect.width - 16f, viewHeight);
@@ -321,26 +457,35 @@ namespace RimPersonaDirector
                 T item = list[i];
                 Rect rowRect = new Rect(0, i * 30f, viewRect.width, 30f);
 
-                if (selectedItem == item)
+                if (i % 2 == 1) Widgets.DrawLightHighlight(rowRect);
+                if (selectedItem != null && item.Equals(selectedItem)) Widgets.DrawHighlightSelected(rowRect);
+
+                // --- 1. 绘制开关 (Checkbox) ---
+                bool isEnabled = getEnabled(item);
+                bool newEnabled = isEnabled;
+
+                // Checkbox 放在最左边 (24x24)
+                Rect checkRect = new Rect(rowRect.x + 2f, rowRect.y + 3f, 24f, 24f);
+                Widgets.Checkbox(checkRect.x, checkRect.y, ref newEnabled);
+
+                if (newEnabled != isEnabled)
                 {
-                    Widgets.DrawHighlightSelected(rowRect);
-                }
-                else if (i % 2 == 1)
-                {
-                    Widgets.DrawLightHighlight(rowRect);
+                    setEnabled(item, newEnabled); // 触发回调
                 }
 
-                if (Widgets.ButtonInvisible(rowRect)) onSelect(item);
+                // --- 2. 绘制点击区域 (剩下的部分) ---
+                Rect clickRect = new Rect(checkRect.xMax + 5f, rowRect.y, rowRect.width - 35f, rowRect.height);
+                if (Widgets.ButtonInvisible(clickRect)) onSelect(item);
 
-                Rect labelRect = rowRect;
-                labelRect.xMin += 5f;
-
+                // --- 3. 绘制 Label ---
+                Rect labelRect = clickRect;
                 string label = labelFunc(item);
+                if (label.Length > 35) label = label.Substring(0, 32) + "...";
 
-                // ★★★ 截断长度增加到 40 ★★★
-                if (label.Length > 40) label = label.Substring(0, 37) + "...";
-
+                // 如果禁用了，文字变灰
+                if (!newEnabled) GUI.color = Color.gray;
                 Widgets.Label(labelRect, label);
+                GUI.color = Color.white;
             }
 
             Widgets.EndScrollView();

@@ -89,20 +89,31 @@ namespace RimPersonaDirector
                     if (Widgets.ButtonText(evolveRect, "RPD_Button_Evolve".Translate()))
                     {
                         ClearEvolveState();
-
                         evolvingPawn = pawn;
-                        var (request, originalPersona) = DirectorUtils.PrepareEvolve(pawn, __instance);
+
+                        // 1. ★★★ 主线程准备数据 ★★★
+                        // 这一步必须在 Task.Run 之外执行！
+                        var (request, currentPersona) = DirectorUtils.PrepareEvolveRequest(pawn, __instance);
+
                         if (request != null)
                         {
-                            // ★★★ 2. 后台线程：只负责执行网络请求 ★★★
-                            evolveTask = Task.Run(() => DirectorUtils.ExecuteEvolve(request, originalPersona));
-
-                            // ★★★ 3. 任务完成后，将结果放入 evolveResult ★★★
-                            evolveTask.ContinueWith(task =>
+                            // 2. ★★★ 启动后台任务 ★★★
+                            // 此时 request 已经包含了所有数据字符串，不需要再访问 Pawn
+                            evolveTask = Task.Run(() =>
                             {
+                                var result = DirectorUtils.ExecuteEvolveTask(request);
+
+                                if (result != null && !string.IsNullOrEmpty(result.Persona))
+                                {
+                                    return result.Persona.Trim();
+                                }
+                                return null;
+                            });
+
+                            // 3. 结果处理
+                            evolveTask.ContinueWith(task => {
                                 if (task.IsCompleted && !task.IsFaulted)
                                 {
-                                    // 这里拿到的 task.Result 就是拼接好的完整新文本
                                     evolveResult = task.Result;
                                 }
                                 evolveTask = null;
@@ -110,8 +121,7 @@ namespace RimPersonaDirector
                         }
                         else
                         {
-                            // 准备阶段就失败了，直接恢复按钮
-                            ClearEvolveState();
+                            Messages.Message("Failed to prepare data.", MessageTypeDefOf.RejectInput, false);
                         }
                     }
                     TooltipHandler.TipRegion(evolveRect, "RPD_Tip_Evolve".Translate());

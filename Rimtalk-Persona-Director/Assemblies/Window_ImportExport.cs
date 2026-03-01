@@ -11,11 +11,42 @@ namespace RimPersonaDirector
     {
         private string _text = "";
 
+        // 默认的注释模板
+        private const string CommentedTemplate =
+@"<!-- 
+  Paste your library data here.
+  The data must be valid XML and include the <Data> and <UserPresets> tags.
+  Use Ctrl+A and DEL to delete this comment before importing.
+  Example Format:
+-->
+<!--
+<Data>
+  <UserPresets>
+    <li>
+      <label>The Optimist</label>
+      <personaText>An optimistic dreamer, full of imagination and hope.</personaText>
+      <chattiness>0.5</chattiness>
+      <category>Custom</category>
+    </li>
+    <li>
+      <label>The Cynic</label>
+      <personaText>A cynical realist who points out harsh truths.</personaText>
+      <chattiness>0.8</chattiness>
+      <category>Custom</category>
+    </li>
+  </UserPresets>
+</Data>
+-->
+<!--
+  Click 'Export...' to get your current library in this format.
+-->";
+
         public Window_ImportExport()
         {
             doCloseX = true;
             draggable = true;
             resizeable = true;
+            _text = CommentedTemplate;
         }
 
         public override Vector2 InitialSize => new Vector2(600f, 400f);

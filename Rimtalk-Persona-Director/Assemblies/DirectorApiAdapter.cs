@@ -1,4 +1,5 @@
 ﻿using RimTalk.API;
+using RimTalk.Data;
 using RimTalk.Prompt;
 using System;
 using System.Collections.Generic;
@@ -37,16 +38,59 @@ namespace RimPersonaDirector
             RimTalkPromptAPI.RegisterPawnVariable(ModId, "d_evolve_diff",
                 p => DirectorDataEngine.GetEvolveStatusDiff(p),
                 "Evolve: Status changes since 'Set Time'");
+
+            
             RimTalkPromptAPI.RegisterContextVariable(
                 ModId,
                 "director_notes", 
                 _ => DirectorMod.Settings.directorNotes, 
                 "Global notes from Persona Director" 
             );
+            
+
             RimTalkPromptAPI.RegisterContextVariable(ModId, "smart_history",
                             ctx => DirectorDataEngine.GetSmartHistory(ctx.CurrentPawn, ctx.Pawns, ctx.IsMonologue),
                             "Smart history: Dynamic quota & formatting based on context (Monologue/Dialogue).");
 
+            try
+                {
+                    // 1. 注册一个“覆盖”钩子
+                    RimTalkPromptAPI.RegisterPawnHook(
+                        ModId,
+                        ContextCategories.Pawn.Personality,
+                        ContextHookRegistry.HookOperation.Override,
+                        (pawn, originalValue) =>
+                        {
+
+                            string personaTemplate = Hediff_Persona.GetOrAddNew(pawn)?.Personality;
+                            if (string.IsNullOrEmpty(personaTemplate)) return originalValue;
+
+                            // ★★★ 核心修复：尝试获取捕获的完整 Pawn 列表 ★★★
+                            List<Pawn> allPawns = DirectorContextTracker.GetPawns();
+
+                            // 如果捕获到了列表，且当前 Pawn 在列表里，就用这个列表
+                            // 否则（比如单体生成时），就只用当前 Pawn
+                            if (allPawns == null || !allPawns.Contains(pawn))
+                            {
+                                allPawns = new List<Pawn> { pawn };
+                            }
+
+                            // ★★★ 使用完整列表创建 Context ★★★
+                            // 我们使用反射或直接调用 PromptContext(List<Pawn>) 构造函数
+                            var globalStore = RimTalk.Prompt.PromptManager.Instance.VariableStore;
+                            var tempContext = new RimTalk.Prompt.PromptContext(allPawns);
+
+                            // 确保 CurrentPawn 是当前正在处理的这个 pawn
+                            tempContext.CurrentPawn = pawn;
+
+                            // 渲染
+                            return RimTalk.Prompt.ScribanParser.Render(personaTemplate, tempContext);
+                        }
+                    );
+                }
+                catch
+                {
+             }
 
             // --- 基础信息 ---
             Reg("d_basic_name", p => p.LabelShortCap);

@@ -3,6 +3,7 @@ using RimTalk.Client;
 using RimTalk.Data;
 using RimTalk.Prompt;
 using RimTalk.Service;
+using RimTalk.Util;
 using RimWorld;
 using RimWorld.Planet;
 using System;
@@ -58,102 +59,94 @@ namespace RimPersonaDirector
            "\n\n[Character Data]\n" + dataContent;
         }
 
-        // ★★★ 新增：尝试从 RimTalk 预设渲染 Prompt ★★★
-        // ★★★ 纯反射版本：尝试从 RimTalk 预设渲染 ★★★
-        private static string TryRenderFromRimTalkPreset(Pawn p, string targetName)
+        private static async Task<PersonalityData> GenerateFromPreset(Pawn p, string presetName, bool isBatch)
         {
-            if (string.IsNullOrEmpty(targetName) || targetName == "None") return null;
+            // A. 查找预设
+            var presets = RimTalk.API.RimTalkPromptAPI.GetAllPresets();
+            var targetPreset = presets.FirstOrDefault(x => x.Name == presetName);
+            if (targetPreset == null) return null;
 
+            // B. 准备上下文 (反射)
+            object contextObj = null;
             try
             {
-                // 1. 查找预设
-                var presets = RimTalk.API.RimTalkPromptAPI.GetAllPresets();
-                var targetPreset = presets.FirstOrDefault(x => x.Name == targetName);
-
-                if (targetPreset == null)
-                {
-                    if (DirectorMod.Settings.EnableDebugLog)
-                        Log.Warning($"[Director] Preset '{targetName}' not found in RimTalk. Available: {string.Join(", ", presets.Select(x => x.Name))}");
-                    return null;
-                }
-
-                // 2. 获取模板内容
-                StringBuilder templateSb = new StringBuilder();
-                foreach (var entry in targetPreset.Entries)
-                {
-                    if (entry.Enabled) templateSb.AppendLine(entry.Content);
-                }
-                string rawTemplate = templateSb.ToString();
-
-                if (string.IsNullOrWhiteSpace(rawTemplate))
-                {
-                    if (DirectorMod.Settings.EnableDebugLog) Log.Warning($"[Director] Preset '{targetName}' is empty or all entries are disabled.");
-                    return null;
-                }
-
-                // 3. ★★★ 基于源码的精准反射 ★★★
-
-                // A. 获取类型
                 Type contextType = AccessTools.TypeByName("RimTalk.Prompt.PromptContext");
-                Type varStoreType = AccessTools.TypeByName("RimTalk.Prompt.VariableStore"); // 参数类型
-                Type parserType = AccessTools.TypeByName("RimTalk.Prompt.ScribanParser");
-
-                if (contextType == null || parserType == null)
-                {
-                    Log.Error("[Director] Critical: RimTalk Context or Parser types not found.");
-                    return null;
-                }
-
-                // B. 创建 Context 实例
-                // 目标构造函数: public PromptContext(Pawn pawn, VariableStore variableStore = null)
-                object contextObj = null;
-                try
-                {
-                    // 我们显式传入 null 作为 variableStore，利用它内部的默认逻辑
-                    contextObj = Activator.CreateInstance(contextType, new object[] { p, null });
-                }
-                catch (Exception createEx)
-                {
-                    Log.Warning($"[Director] Failed to create PromptContext(Pawn, null): {createEx.Message}");
-                    // 尝试备用方案：无参构造 + 属性赋值
-                    try
-                    {
-                        contextObj = Activator.CreateInstance(contextType);
-                        AccessTools.Property(contextType, "CurrentPawn").SetValue(contextObj, p);
-                        // 设置 AllPawns 为 List<Pawn>{p}
-                        var listType = typeof(List<>).MakeGenericType(typeof(Pawn));
-                        var list = Activator.CreateInstance(listType);
-                        listType.GetMethod("Add").Invoke(list, new object[] { p });
-                        AccessTools.Property(contextType, "AllPawns").SetValue(contextObj, list);
-                    }
-                    catch { }
-                }
-
-                if (contextObj == null) return null;
-
-                // C. 注入我们的自定义变量逻辑 (如果之前没有全局注册)
-                // 现在的架构是 DirectorApiAdapter 已经在全局注册了变量，
-                // 所以 ScribanParser.Render 应该能自动调用到我们的变量，不需要额外操作。
-
-                // D. 调用 Render
-                // 签名: public static string Render(string templateText, PromptContext context, bool logErrors = true)
-                MethodInfo renderMethod = AccessTools.Method(parserType, "Render", new[] { typeof(string), contextType, typeof(bool) });
-
-                if (renderMethod == null)
-                {
-                    Log.Error("[Director] ScribanParser.Render method not found.");
-                    return null;
-                }
-
-                string renderedText = (string)renderMethod.Invoke(null, new object[] { rawTemplate, contextObj, true });
-                return renderedText;
+                // 尝试最简单的构造函数
+                contextObj = Activator.CreateInstance(contextType, new object[] { p, null });
+                string contextData = RimTalk.Service.PromptService.CreatePawnContext(p, RimTalk.Service.PromptService.InfoLevel.Normal);
+                AccessTools.Property(contextType, "PawnContext").SetValue(contextObj, contextData);
             }
-            catch (Exception ex)
+            catch
             {
-                // 捕获所有异常并打印，方便调试
-                Log.Warning($"[Director] TryRenderFromRimTalkPreset Exception: {ex}");
+                // 如果失败，返回 null，外部会捕获并回退
+                if (DirectorMod.Settings.EnableDebugLog) Log.Warning("[Director] Failed to create Scriban Context.");
                 return null;
             }
+
+            Type parserType = AccessTools.TypeByName("RimTalk.Prompt.ScribanParser");
+            MethodInfo renderMethod = AccessTools.Method(parserType, "Render", new[] { typeof(string), contextObj.GetType(), typeof(bool) });
+
+            // C. 扁平化构建 (Flattening)
+            StringBuilder systemBuilder = new StringBuilder();
+            StringBuilder userBuilder = new StringBuilder();
+
+            foreach (var entry in targetPreset.Entries)
+            {
+                if (!entry.Enabled) continue;
+
+                string renderedText = (string)renderMethod.Invoke(null, new object[] { entry.Content, contextObj, true });
+                if (string.IsNullOrWhiteSpace(renderedText)) continue;
+
+                // 逻辑：System 角色放入 Context，其他角色放入 Prompt
+                // 这样能最大程度保留信息，同时适配 Query 接口
+                string roleStr = entry.Role.ToString();
+
+                if (roleStr == "System")
+                {
+                    if (systemBuilder.Length > 0) systemBuilder.AppendLine("\n");
+                    systemBuilder.Append(renderedText);
+                }
+                else
+                {
+                    // User, Assistant 等都放入 User 消息流
+                    if (userBuilder.Length > 0) userBuilder.AppendLine("\n");
+                    if (roleStr == "Assistant") userBuilder.Append("Assistant: "); // 简单标记一下 Assistant
+                    userBuilder.Append(renderedText);
+                }
+            }
+
+            if (systemBuilder.Length == 0 && userBuilder.Length == 0) return null;
+
+            // D. 注入 JSON 协议
+            string technicalProtocol = isBatch
+                ? DirectorSettings.HiddenTechnicalPrompt_Batch
+                : DirectorSettings.HiddenTechnicalPrompt_Single;
+
+            // 协议追加在 User 内容最后
+            userBuilder.AppendLine("\n" + technicalProtocol);
+
+            // E. 发送请求
+            // 使用标准的 AIService.Query
+            var request = new TalkRequest(userBuilder.ToString(), p)
+            {
+                Context = systemBuilder.ToString()
+            };
+
+            return await AIService.Query<PersonalityData>(request);
+        }
+
+
+        // JSON 清洗辅助方法 
+        private static string ExtractJsonSmart(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return "";
+            int startIndex = text.IndexOf('{');
+            int endIndex = text.LastIndexOf('}');
+            if (startIndex != -1 && endIndex != -1 && endIndex > startIndex)
+            {
+                return text.Substring(startIndex, endIndex - startIndex + 1);
+            }
+            return text;
         }
 
         /// 单体生成任务
@@ -161,44 +154,31 @@ namespace RimPersonaDirector
         {
             try
             {
-                // 1. 尝试使用 RimTalk 预设渲染
-                string renderedPrompt = TryRenderFromRimTalkPreset(pawn, DirectorMod.Settings.rimTalkPreset_Single);
-                TalkRequest request;
+                if (DirectorMod.Settings.EnableDebugLog)
+                    Log.Message($"[Director] Gen Data for {pawnNameForLog}...");
 
-                if (!string.IsNullOrEmpty(renderedPrompt))
+                // 优先尝试高级预设
+                string presetName = DirectorMod.Settings.rimTalkPreset_Single;
+                if (!string.IsNullOrEmpty(presetName) && presetName != "None (Use Internal)")
                 {
-                    // === 路径 A: 使用了 RimTalk 模板 ===
-                    // 此时 renderedPrompt 已经包含了所有数据（因为变量被解析了）
-                    // 我们只需要加上 JSON 协议即可
-                    string finalInstruction = renderedPrompt + "\n\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
-                    string triggerPrompt = "Generate persona based on the instructions.";
-                    request = new TalkRequest(triggerPrompt, pawn)
-                    {
-                        Context = finalInstruction
-                    };
-
-                    if (DirectorMod.Settings.EnableDebugLog)
-                        Log.Message($"[Director] Using RimTalk Preset '{DirectorMod.Settings.rimTalkPresetName}' for {pawnNameForLog}");
+                    var result = await GenerateFromPreset(pawn, presetName, false);
+                    if (result != null) return result;
                 }
-                else
+
+                // 回退到内置逻辑
+                string userPrompt = DirectorMod.Settings.GetActivePrompt(false);
+                if (string.IsNullOrEmpty(userPrompt)) userPrompt = DirectorSettings.DefaultPrompt_Standard;
+
+                string instruction = userPrompt.Replace("{LANG}", CurrentLanguage) + "\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
+                string data = $"[Character Data]\n{characterData}";
+
+                // 标准调用：数据在 Prompt，指令在 Context
+                var request = new TalkRequest(data, pawn)
                 {
-                    // === 路径 B: 回退到旧逻辑 (手动拼接) ===
-                    // 获取 Mod 设置里的 Prompt
-                    if (DirectorMod.Settings.EnableDebugLog)
-                        Log.Message($"[Director] Using internal prompt for {pawnNameForLog}");
+                    Context = instruction
+                };
 
-                    string userPrompt = DirectorMod.Settings.GetActivePrompt(false);
-                    if (string.IsNullOrEmpty(userPrompt)) userPrompt = DirectorSettings.DefaultPrompt_Standard;
-
-                    // 拼接
-                    string finalInstruction = userPrompt.Replace("{LANG}", CurrentLanguage) + "\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
-                    string finalData = $"[Character Data]\n{characterData}";
-                    
-                    request = new TalkRequest(finalData, pawn)
-                    {
-                        Context = finalInstruction
-                    };
-                }
+                // 直接调用 AIService，日志会自动记录
                 return await AIService.Query<PersonalityData>(request);
             }
             catch (Exception e)
@@ -207,6 +187,7 @@ namespace RimPersonaDirector
                 return new PersonalityData("Error generating persona.", 0.5f);
             }
         }
+
 
         /// 批量生成任务
         public static async Task<PersonalityData> GenerateBatchPersonaTask(string combinedData, Pawn representative)
@@ -690,161 +671,206 @@ namespace RimPersonaDirector
             }
         }
 
-        public static (TalkRequest request, string currentPersona) PrepareEvolve(Pawn p, Window editorWindow)
+        public static (TalkRequest request, string currentPersona) PrepareEvolveRequest(Pawn p, Window editorWindow)
         {
             try
             {
-                // 1. 从窗口获取当前正在编辑的文本
-                string currentPersona = GetWindowText(editorWindow) ?? "";
-
+                // A. 获取当前文本 (UI 操作)
+                string currentPersona = GetWindowText(editorWindow);
                 if (string.IsNullOrEmpty(currentPersona))
-            {
-                Messages.Message("RPD_Msg_NoPersona".Translate(), MessageTypeDefOf.RejectInput, false);
-                return (null, null);
-            }
-
-            // 2. 获取时间和数据
-            var worldComp = Find.World.GetComponent<DirectorWorldComponent>();
-            string timeInfo = "No previous update record.";
-            string comparisonBlock = "";
-            int lastTick = -1;
-
-            if (worldComp != null)
-            {
-                lastTick = worldComp.GetLastEvolveTick(p);
-                if (lastTick > 0)
                 {
-                    // 1. 计算时间差
-                    int daysPassed = (GenTicks.TicksGame - lastTick) / 60000;
-                    long ageThen = worldComp.GetLastEvolveBioAgeTicks(p) / 3600000;
-                    long ageNow = p.ageTracker.AgeBiologicalYears;
+                    var hediff = Hediff_Persona.GetOrAddNew(p);
+                    currentPersona = hediff?.Personality;
+                }
+                if (string.IsNullOrEmpty(currentPersona)) return (null, null);
 
-                    timeInfo = $"Time passed since last update: {daysPassed} days.";
-                    if (ageNow > ageThen)
-                    {
-                        timeInfo += $" Character aged from {ageThen} to {ageNow}.";
-                    }
+                // B. 设置临时缓存 (给 Scriban {{director_evolve_current_persona}} 使用)
+                DirectorDataEngine.TempCurrentPersona = currentPersona;
 
-                    // ★★★ 核心：数据对比逻辑 ★★★
-                    if (DirectorMod.Settings.Context.Inc_DataComparison)
+                // C. 决定使用哪种逻辑
+                string presetName = DirectorMod.Settings.rimTalkPreset_Evolve;
+                string finalPrompt = "";
+                string finalContext = "";
+
+                // --- 分支 1: 使用 RimTalk 高级预设 ---
+                if (!string.IsNullOrEmpty(presetName) && presetName != "None (Use Internal)")
+                {
+                    // 1. 查找预设
+                    var presets = RimTalk.API.RimTalkPromptAPI.GetAllPresets();
+                    var targetPreset = presets.FirstOrDefault(x => x.Name == presetName);
+
+                    if (targetPreset != null)
                     {
-                        string oldSnapshot = worldComp.GetSnapshot(p);
-                        if (!string.IsNullOrEmpty(oldSnapshot))
+                        // 2. 准备渲染上下文 (利用反射创建 Context)
+                        Type contextType = AccessTools.TypeByName("RimTalk.Prompt.PromptContext");
+                        Type parserType = AccessTools.TypeByName("RimTalk.Prompt.ScribanParser");
+
+                        // 创建 Context: new PromptContext(pawn, null)
+                        object contextObj = Activator.CreateInstance(contextType, new object[] { p, null });
+                        MethodInfo renderMethod = AccessTools.Method(parserType, "Render", new[] { typeof(string), contextType, typeof(bool) });
+
+                        StringBuilder systemSb = new StringBuilder();
+                        StringBuilder userSb = new StringBuilder();
+
+                        // 3. ★★★ 核心修复：遍历所有条目并渲染 ★★★
+                        foreach (var entry in targetPreset.Entries)
                         {
-                            string currentSnapshot = BuildCustomCharacterData(p, true);
+                            if (!entry.Enabled) continue;
 
-                            // ★★★ 调用差异比较器 ★★★
-                            string diffReport = GenerateDiffReport(oldSnapshot, currentSnapshot);
+                            // 渲染这一条的内容
+                            string renderedText = (string)renderMethod.Invoke(null, new object[] { entry.Content, contextObj, true });
 
-                            // 构建对比块
-                            comparisonBlock = $"\n[Status Changes (since last update)]:\n{diffReport}\n";
+                            if (string.IsNullOrWhiteSpace(renderedText)) continue;
+
+                            // 根据角色拼接到不同的缓冲区
+                            // RimTalk.Data.Role 枚举: System, User, AI
+                            // PromptEntry.Role 可能是字符串也可能是枚举，我们要判断
+                            string roleStr = entry.Role.ToString().ToLowerInvariant();
+
+                            if (roleStr == "system")
+                            {
+                                if (systemSb.Length > 0) systemSb.AppendLine("\n");
+                                systemSb.Append(renderedText);
+                            }
+                            else
+                            {
+                                // User 或 Assistant 都作为 Prompt 的一部分
+                                if (userSb.Length > 0) userSb.AppendLine("\n");
+                                userSb.Append(renderedText);
+                            }
+                        }
+
+                        // 4. 加上 JSON 协议 (这是硬性要求，必须加在最后)
+                        systemSb.AppendLine("\n" + DirectorSettings.HiddenTechnicalPrompt_Single);
+
+                        finalContext = systemSb.ToString();
+                        finalPrompt = userSb.ToString();
+
+                        if (DirectorMod.Settings.EnableDebugLog)
+                            Log.Message($"[Director] Advanced Preset Rendered.\nContext Len: {finalContext.Length}\nPrompt Len: {finalPrompt.Length}");
+                    }
+                    else
+                    {
+                        Log.Warning($"[Director] Preset '{presetName}' not found. Falling back to internal.");
+                    }
+                }
+
+                // --- 分支 2: 使用内置逻辑 (保底或默认) ---
+                if (string.IsNullOrEmpty(finalPrompt))
+                {
+                    // 准备内置数据
+                    var worldComp = Find.World.GetComponent<DirectorWorldComponent>();
+                    string timeInfo = "No previous update record.";
+                    string comparisonBlock = "";
+                    int lastTick = -1;
+
+                    if (worldComp != null)
+                    {
+                        lastTick = worldComp.GetLastEvolveTick(p);
+                        if (lastTick > 0)
+                        {
+                            int daysPassed = (GenTicks.TicksGame - lastTick) / 60000;
+                            long ageThen = worldComp.GetLastEvolveBioAgeTicks(p) / 3600000;
+                            long ageNow = p.ageTracker.AgeBiologicalYears;
+
+                            timeInfo = $"Time passed since last update: {daysPassed} days.";
+                            if (ageNow > ageThen) timeInfo += $" Character aged from {ageThen} to {ageNow}.";
+
+                            if (DirectorMod.Settings.Context.Inc_DataComparison)
+                            {
+                                string oldSnapshot = worldComp.GetSnapshot(p);
+                                if (!string.IsNullOrEmpty(oldSnapshot))
+                                {
+                                    string currentSnapshot = BuildCustomCharacterData(p, true);
+                                    string diffReport = GenerateDiffReport(oldSnapshot, currentSnapshot);
+                                    comparisonBlock = $"\n[Status Changes (since last update)]:\n{diffReport}\n";
+                                }
+                            }
                         }
                     }
+
+                    // 组装数据包
+                    StringBuilder contextSb = new StringBuilder();
+                    var ctx = DirectorMod.Settings.Context;
+
+                    contextSb.AppendLine("[Basic Info]");
+                    contextSb.AppendLine($"Name: {p.LabelShortCap}");
+                    contextSb.AppendLine($"Gender: {p.gender}");
+                    contextSb.AppendLine($"Age: {p.ageTracker.AgeBiologicalYears}");
+                    contextSb.AppendLine($"Status: {GetPawnSocialStatus(p)}");
+                    contextSb.AppendLine();
+
+                    contextSb.AppendLine($"[Previous Persona (The Starting Point)]\n{currentPersona}\n");
+                    contextSb.AppendLine($"[Time Context]\n{timeInfo}\n");
+
+                    if (!string.IsNullOrEmpty(comparisonBlock)) contextSb.AppendLine(comparisonBlock);
+
+                    if (ctx.Inc_DirectorNotes && !string.IsNullOrEmpty(DirectorMod.Settings.directorNotes))
+                        contextSb.AppendLine($"[Director's Notes]\n{DirectorMod.Settings.directorNotes}\n");
+
+                    string memories = GetExternalMemories(p, lastTick);
+                    if (!string.IsNullOrEmpty(memories))
+                        contextSb.AppendLine($"[New Memories]\n{memories}\n");
+                    else
+                        contextSb.AppendLine("[New Memories]\nNo new significant memories since last update.\n");
+
+                    if (ctx.Inc_CommonKnowledge)
+                    {
+                        StringBuilder searchSource = new StringBuilder();
+                        searchSource.Append($"{p.LabelShort} {p.gender} Age:{p.ageTracker.AgeBiologicalYears} ");
+                        searchSource.Append($"{GetPawnSocialStatus(p)} ");
+                        searchSource.Append($"{currentPersona} ");
+                        if (!string.IsNullOrEmpty(memories)) searchSource.Append($"{memories} ");
+                        if (!string.IsNullOrEmpty(DirectorMod.Settings.directorNotes)) searchSource.Append($"{DirectorMod.Settings.directorNotes} ");
+
+                        string ck = GetCommonKnowledge(searchSource.ToString(), p);
+                        if (!string.IsNullOrEmpty(ck))
+                            contextSb.AppendLine($"[Common Knowledge]\n{ck}\n");
+                    }
+
+                    // 组装最终结果
+                    string userInstruction = DirectorMod.Settings.presets[3].text.Replace("{LANG}", Constant.Lang);
+                    string technicalProtocol = DirectorSettings.HiddenTechnicalPrompt_Single;
+
+                    // 指令进 Context
+                    finalContext = userInstruction + "\n\n" + technicalProtocol;
+                    // 数据进 Prompt
+                    finalPrompt = "[Update Data]\n" + contextSb.ToString();
                 }
-            }
 
-            // 3. 构建 Context (数据部分)
-            StringBuilder contextSb = new StringBuilder();
-            var ctx = DirectorMod.Settings.Context;
-
-            // 基础信息
-            contextSb.AppendLine("[Basic Info]");
-            contextSb.AppendLine($"Name: {p.LabelShortCap}");
-            contextSb.AppendLine($"Gender: {p.gender}");
-            contextSb.AppendLine($"Age: {p.ageTracker.AgeBiologicalYears}");
-            contextSb.AppendLine($"Status: {GetPawnSocialStatus(p)}");
-            contextSb.AppendLine();
-
-            // [基础数据]
-            contextSb.AppendLine($"[Previous Persona (The Starting Point)]\n{currentPersona}\n");
-            contextSb.AppendLine($"[Time Context]\n{timeInfo}\n");
-
-            // ★★★ 注入差异报告 ★★★
-            if (!string.IsNullOrEmpty(comparisonBlock))
-            {
-                contextSb.AppendLine(comparisonBlock);
-            }
-
-            // [选项] 导演备注
-            if (ctx.Inc_DirectorNotes && !string.IsNullOrEmpty(DirectorMod.Settings.directorNotes))
+                // D. 构造 TalkRequest
+                // 必须在主线程构造
+                var request = new TalkRequest(finalPrompt, p)
                 {
-                    contextSb.AppendLine($"[Director's Notes]\n{DirectorMod.Settings.directorNotes}\n");
-                }
+                    Context = finalContext
+                };
 
-                // [选项] 记忆 
-                string memories = GetExternalMemories(p, lastTick);
-
-                if (!string.IsNullOrEmpty(memories))
-                {
-                    contextSb.AppendLine($"[New Memories]\n{memories}\n");
-                }
-                else
-                {
-                    // 即使没有新记忆，也要告诉 AI，否则它会困惑
-                    contextSb.AppendLine("[New Memories]\nNo new significant memories since last update.\n");
-                }
-
-            // [选项] 常识库
-            if (ctx.Inc_CommonKnowledge)
-            {
-                // ★★★ 核心优化：构建全量检索源 ★★★
-                StringBuilder searchSource = new StringBuilder();
-
-                // 1. 加入基础物理信息 (最重要)
-                searchSource.Append($"{p.LabelShort} {p.gender} Age:{p.ageTracker.AgeBiologicalYears} ");
-
-                // 2. 加入当前状态和身份
-                searchSource.Append($"{GetPawnSocialStatus(p)} ");
-
-                // 3. 加入现有人格 (提供语义参考)
-                searchSource.Append($"{currentPersona} ");
-
-                // 4. 加入新发生的记忆 (匹配近期事件常识)
-                if (!string.IsNullOrEmpty(memories)) searchSource.Append($"{memories} ");
-
-                // 5. 加入导演备注 (匹配玩家自设常识)
-                if (!string.IsNullOrEmpty(DirectorMod.Settings.directorNotes))
-                    searchSource.Append($"{DirectorMod.Settings.directorNotes} ");
-
-                // 6. 甚至可以加入特性标签 
-                if (p.story?.traits != null)
-                    foreach (var tr in p.story.traits.allTraits) searchSource.Append($"{tr.LabelCap} ");
-
-                // 执行匹配
-                string ck = GetCommonKnowledge(searchSource.ToString(), p);
-
-                if (!string.IsNullOrEmpty(ck))
-                {
-                    contextSb.AppendLine($"[Common Knowledge]\n{ck}\n");
-                }
-            }
-                // 设置临时缓存
-                DirectorDataEngine.TempCurrentPersona = currentPersona;
-                
-                TalkRequest request;
-                // 尝试渲染 (使用 Evolve 预设配置)
-                string renderedPrompt = TryRenderFromRimTalkPreset(p, DirectorMod.Settings.rimTalkPreset_Evolve);
-                // 清空缓存
-                DirectorDataEngine.TempCurrentPersona = "";
-                string dataPayload = contextSb.ToString();
-                if (!string.IsNullOrEmpty(renderedPrompt))
-                {
-                    string instruction = renderedPrompt + "\n\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
-                    request = new TalkRequest("Generate development based on data.", p) { Context = instruction };
-                }
-                else
-                {
-                    // --- 组装最终 Prompt ---
-                    string instruction = DirectorMod.Settings.presets[3].text.Replace("{LANG}", CurrentLanguage) + "\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
-                    string data = "[Update Data]\n" + dataPayload;
-                    request = new TalkRequest(data, p) { Context = instruction };
-                }
                 return (request, currentPersona);
             }
             catch (Exception ex)
             {
-                Log.Error($"[Director] Evolve preparation failed: {ex.Message}");
+                Log.Error($"[Director] PrepareEvolveRequest failed: {ex}");
                 return (null, null);
+            }
+            finally
+            {
+                // 确保缓存被清理
+                DirectorDataEngine.TempCurrentPersona = "";
+            }
+        }
+
+        public static PersonalityData ExecuteEvolveTask(TalkRequest request)
+        {
+            try
+            {
+                // 调用 AIService.Query (它内部是异步的，但在 Task.Run 里我们可以直接 .Result 阻塞等待)
+                var task = AIService.Query<PersonalityData>(request);
+                return task.Result;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[Director] AI Request failed: {ex.Message}");
+                return null;
             }
         }
 
@@ -1071,6 +1097,29 @@ namespace RimPersonaDirector
             windowTextField?.SetValue(window, text);
         }
 
+        private static Type _hospitalityCompType;
+        private static bool _hospitalityChecked = false;
+        private static bool IsHospitalityGuest(Pawn p)
+        {
+            // 1. 如果 Mod 没开，直接返回 false
+            if (!ModsConfig.IsActive("Orion.Hospitality")) return false;
+
+            // 2. 初始化反射类型 (只做一次)
+            if (!_hospitalityChecked)
+            {
+                _hospitalityCompType = AccessTools.TypeByName("Hospitality.CompGuest");
+                _hospitalityChecked = true;
+            }
+
+            // 3. 如果找不到类型，说明没装或者版本不对
+            if (_hospitalityCompType == null) return false;
+
+            // 4. 检查 Pawn 身上是否有这个组件
+            var comp = p.AllComps.FirstOrDefault(c => _hospitalityCompType.IsAssignableFrom(c.GetType()));
+
+            return comp != null;
+        }
+
         public static string GetPawnSocialStatus(Pawn p)
         {
             string socialStatus = "Unknown";
@@ -1131,7 +1180,6 @@ namespace RimPersonaDirector
                 else
                 {
                     // ★★★ 核心修复：通过 LordJob 判断访客意图 ★★★
-
                     // 获取控制这个 Pawn 的领主任务 (LordJob)
                     var lord = p.GetLord();
 
@@ -1149,10 +1197,13 @@ namespace RimPersonaDirector
                             socialStatus = "Trader Caravan Member";
                         }
                         // B. 访客 (Guest / Visitor)
-                        // LordJob_VisitColony 代表这群人是来串门的 (包括 Hospitality Mod)
+                        // LordJob_VisitColony 代表这群人是来串门的
                         else if (lord.LordJob is LordJob_VisitColony)
                         {
-                            socialStatus = "Guest / Visitor";
+                            if (IsHospitalityGuest(p))
+                                socialStatus = "Hospitality Guest";
+                            else
+                                socialStatus = "Visitor";
                         }
                         // C. 路人 (Traveler)
                         // LordJob_TravelAndExit 代表他们只是路过地图，不打算停留
@@ -1172,10 +1223,15 @@ namespace RimPersonaDirector
                             socialStatus = "Visitor";
                         }
                     }
+                    else if (IsHospitalityGuest(p))
+                    {
+                        // 只要有这个组件，无论他在干嘛，他就是 Hospitality 的客人
+                        socialStatus = "Hospitality Guest";
+                    }
                     else
                     {
                         // 没有 Lord 的散人
-                        socialStatus = "Visitor / Guest";
+                        socialStatus = "Visitor";
                     }
                 }
             }
@@ -1642,41 +1698,35 @@ namespace RimPersonaDirector
 
                 if (foundQuest != null)
                 {
-                    // 获取任务名
-                    string questName = foundQuest.name;
+                    // ★★★ 核心修复：增加空检查 ★★★
+                    string questName = foundQuest.name ?? "Unnamed Quest";
 
-                    // 获取并清洗任务描述 (Resolve生成文本, StripTags去除颜色代码, Replace去除换行符保持整洁)
-                    string questDesc = foundQuest.description.Resolve()
-                                        .StripTags()
-                                        .Replace("\n", " ")
-                                        .Replace("\r", "")
-                                        .Trim();
+                    // 确保 description 不是 null
+                    string questDesc = "";
+                    if (foundQuest.description != null)
+                    {
+                        questDesc = foundQuest.description.Resolve()
+                                         .StripTags()
+                                         .Replace("\n", " ")
+                                         .Replace("\r", "")
+                                         .Trim();
+                    }
 
-                    return $"Temporary member, here for quest (Quest: {questName})\n- Quest Context: {questDesc}";
+                    if (!string.IsNullOrEmpty(questDesc))
+                        return $"Temporary member, here for quest (Quest: {questName})\n- Quest Context: {questDesc}";
+                    else
+                        return $"Temporary member, here for quest (Quest: {questName})";
                 }
                 return "Temporary member (reason unknown, likely quest-related)";
             }
 
             // 2. 检查盟友协助
-            if (p.mindState?.duty?.def == DutyDefOf.Defend)
+            if (p.HasExtraHomeFaction() && p.GetExtraHomeFaction() != null)
             {
-                return "Ally Soldier, here to help defend the colony";
+                return $"Ally Helper (Lent by {p.GetExtraHomeFaction().Name})";
             }
 
-            // 3. 兼容 Hospitality Mod (反射)
-            Type hospitalityCompType = AccessTools.TypeByName("Hospitality.CompGuest");
-            if (hospitalityCompType != null)
-            {
-                foreach (var comp in p.AllComps)
-                {
-                    if (hospitalityCompType.IsAssignableFrom(comp.GetType()))
-                    {
-                        return "Guest (Hospitality)";
-                    }
-                }
-            }
-
-            return "Temporary Colonist / Ally";
+            return "Temporary Member";
         }
 
         // 获取简短的 Pawn 状态
@@ -1786,14 +1836,14 @@ namespace RimPersonaDirector
                 Type utilityType = AccessTools.TypeByName("Maux36.RimPsyche.Rimpsyche_Utility");
                 if (utilityType != null)
                 {
-                    MethodInfo method = AccessTools.Method(utilityType, "GetPersonalityDescriptionNumber", new Type[] { typeof(Pawn), typeof(int) });
+                    MethodInfo method = AccessTools.Method(utilityType, "GetPersonalityDescriptionWord", new Type[] { typeof(Pawn), typeof(int) });
                     if (method != null)
                     {
                         int limit = DirectorMod.Settings.Context.Inc_RimPsyche_All ? 0 : 5;
                         object result = method.Invoke(null, new object[] { p, limit });
                         if (result != null)
                         {
-                            psySb.AppendLine("- Personality Facets (Range: -1.0 to 1.0):");
+                            psySb.AppendLine("- Personality Profile:");
                             psySb.AppendLine((string)result);
                         }
                     }
@@ -1898,6 +1948,88 @@ namespace RimPersonaDirector
             }
             catch { }
         }
+        
+        
+        // ★★★ 新增：Scriban 渲染相关的反射缓存 ★★★
+        private static Type _contextType;
+        private static Type _parserType;
+        private static MethodInfo _renderMethod;
 
+        // ★★★ 新增：通用渲染方法 ★★★
+        // 放在类的任意位置，建议放在最后
+        public static string RenderScribanText(string rawText, Pawn p)
+        {
+            // 如果文本为空或不包含 {{，直接返回，省性能
+            if (string.IsNullOrEmpty(rawText) || !rawText.Contains("{{")) return rawText;
+
+            try
+            {
+                // 1. 初始化反射 (只做一次)
+                if (_contextType == null)
+                {
+                    _contextType = AccessTools.TypeByName("RimTalk.Prompt.PromptContext");
+                    _parserType = AccessTools.TypeByName("RimTalk.Prompt.ScribanParser");
+
+                    if (_parserType != null && _contextType != null)
+                    {
+                        // Render(string template, PromptContext context, bool logErrors)
+                        _renderMethod = AccessTools.Method(_parserType, "Render", new[] { typeof(string), _contextType, typeof(bool) });
+                    }
+                }
+
+                if (_renderMethod == null) return rawText;
+
+                // 2. 准备上下文数据
+                object contextObj = null;
+
+                // 尝试从 Tracker 获取当前所有在场角色 (支持 {{ for p in pawns }})
+                List<Pawn> allPawns = DirectorContextTracker.GetPawns();
+
+                // 3. 创建 PromptContext 实例
+                if (allPawns != null && allPawns.Contains(p))
+                {
+                    // 场景 A: 上下文中有其他人 (例如正在对话)
+                    // 构造函数: public PromptContext(List<Pawn> pawns, VariableStore store = null)
+                    try
+                    {
+                        // 传入 null 让它使用默认 VariableStore
+                        contextObj = Activator.CreateInstance(_contextType, new object[] { allPawns, null });
+
+                        // ★ 强制指定 CurrentPawn 为当前要渲染的 p ★
+                        // 否则默认可能是列表第一个人 (Initiator)，导致渲染错误
+                        AccessTools.Property(_contextType, "CurrentPawn").SetValue(contextObj, p);
+                    }
+                    catch { }
+                }
+
+                if (contextObj == null)
+                {
+                    // 场景 B: 只有自己 (例如单体生成) 或 构造失败
+                    // 构造函数: public PromptContext(Pawn pawn, VariableStore store = null)
+                    try
+                    {
+                        contextObj = Activator.CreateInstance(_contextType, new object[] { p, null });
+                    }
+                    catch
+                    {
+                        // 最后的保底：无参构造 + 属性赋值
+                        contextObj = Activator.CreateInstance(_contextType);
+                        AccessTools.Property(_contextType, "CurrentPawn").SetValue(contextObj, p);
+                    }
+                }
+
+                // 4. 调用 Render
+                // false = 不打印错误日志 (防止用户写错语法刷屏红字)
+                string result = (string)_renderMethod.Invoke(null, new object[] { rawText, contextObj, false });
+
+                return result;
+            }
+            catch (Exception)
+            {
+                // 如果解析崩了，返回原文，保证游戏不崩
+                return rawText;
+            }
+        }
+        
     }
 }
