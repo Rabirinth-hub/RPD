@@ -20,7 +20,7 @@ Persona Director（RPD）是 [RimTalk](https://github.com/jlibrary/RimTalk) 的�
 
 ### 1. 安装与第一次生成人格
 
-1. 使用 RimWorld **1.6**。启用 [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077) → [RimTalk](https://steamcommunity.com/sharedfiles/filedetails/?id=3551203752) → [Persona Director](https://steamcommunity.com/sharedfiles/filedetails/?id=3619548407)。仓库中的 C# 源码位于 `Source`，编译后的 `RPD.dll` 位于 `Assemblies`；源码构建方法见 [BUILDING.md](BUILDING.md)。同步 GitHub 仓库时应保留六个 Mod 目录、`RPD.csproj`、`RPD.sln`、`RPD.Local.props.example`、`.gitignore`、`BUILDING.md`、`plans/ai-runtime-test-outline.md` 和本 `README.md`。
+1. 使用 RimWorld **1.6**。启用 [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077) → [RimTalk](https://steamcommunity.com/sharedfiles/filedetails/?id=3551203752) → [Persona Director](https://steamcommunity.com/sharedfiles/filedetails/?id=3619548407)。仓库中的 C# 源码位于 `Source`，编译后的 `RPD.dll` 位于 `Assemblies`；源码构建方法见 [BUILDING.md](BUILDING.md)。同步 GitHub 仓库时应保留 `About/`、`Assemblies/`、`Defs/`、`Languages/`、`Source/` 和 `Textures/`，以及 `RPD.csproj`、`RPD.sln`、`RPD.Local.props.example`、`.gitignore`、`BUILDING.md` 和本 `README.md`。
 2. 在 RimTalk 的设置里配置并验证 AI 连接，随后载入存档。
 3. 打开 **选项 → 模组设置 → RimTalk: Persona Director**。先保留默认数据筛选，选第一个内置提示词槽位。
 4. 打开一个 Pawn 的 RimTalk 人格编辑窗口，使用 **Smart Gen／智能生成**。RPD 会按选中的资料和提示词向 AI 请求人格；查看候选结果，再选择想用的版本。
@@ -37,7 +37,7 @@ Rimtalk-Persona-Director/
 └── Textures/    # 界面与其他纹理资源
 ```
 
-`Source/`、工程文件、构建说明、测试大纲和本 `README.md` 属于源码仓库，不需要放进给玩家的 Mod 运行目录。普通玩家运行模组需要 `Assemblies/RPD.dll`，源码不能代替 DLL。Harmony 与 RimTalk 是需要另外安装的前置模组。
+`Source/`、工程文件、构建说明和本 `README.md` 属于源码仓库，不需要放进给玩家的 Mod 运行目录。普通玩家运行模组需要 `Assemblies/RPD.dll`，源码不能代替 DLL。Harmony 与 RimTalk 是需要另外安装的前置模组。
 
 ### 2. 预设库与自动分配
 
@@ -59,7 +59,7 @@ Rimtalk-Persona-Director/
 
 ### 4. 资料筛选与提示词
 
-RPD 设置页的“选择发送给 AI 的数据内容”控制人格生成用的资料：基础身份、种族与异种型、基因、童年和成年背景、亲属、特质、意识形态、技能与热情、健康、装备、背包，以及可选的 RimPsyche、记忆和常识。某些项目还有单独的“详细描述”开关。描述越多，请求越长；先保留身份、背景、关系、特质和技能，再按角色需要添加基因或健康描述。RimPsyche、记忆及常识选项会随相应扩展模组是否安装而出现。
+RPD 设置页的“选择发送给 AI 的数据内容”控制人格生成用的资料：基础身份、种族与异种型、基因、童年和成年背景、亲属、特质、意识形态、技能与热情、健康、装备、背包，以及可选的 RimPsyche、记忆和常识。某些项目还有单独的“详细描述”开关。描述越多，请求越长；先保留身份、背景、关系、特质和技能，再按角色需要添加基因或健康描述。RimPsyche、记忆及常识选项会随相应扩展模组是否安装而出现。相关 GitHub 仓库：[RimPsyche](https://github.com/jagerguy36/Rimpsyche)；[记忆拓展（记忆和常识）](https://github.com/sanguodxj-byte/RimTalk-ExpandMemory)。
 
 内置提示词有五个可编辑槽位：**Standard** 提供三种人格解读；**Story-Driven** 写单段故事；**Data-Driven** 严格连接童年与成年背景；另两个分别供演变“追加”与“覆盖”使用。用 Slot 下拉切换，修改名称或正文，**重置默认**仅重置当前槽位。`{LANG}` 表示游戏语言；返回格式协议由模组自动附加。普通单次生成若选到演变专用槽位，会改用 Standard。
 
@@ -358,7 +358,7 @@ Compared with RimTalk's native persona tools, RPD intercepts single-pawn Smart G
 
 ### 1. Install and create a first persona
 
-1. Use RimWorld **1.6**. Enable [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077) → [RimTalk](https://steamcommunity.com/sharedfiles/filedetails/?id=3551203752) → [Persona Director](https://steamcommunity.com/sharedfiles/filedetails/?id=3619548407). The repository stores C# source in `Source` and the compiled `RPD.dll` in `Assemblies`; see [BUILDING.md](BUILDING.md) to build from source. Keep all six mod folders, `RPD.csproj`, `RPD.sln`, `RPD.Local.props.example`, `.gitignore`, `BUILDING.md`, `plans/ai-runtime-test-outline.md`, and this `README.md` in the GitHub repository.
+1. Use RimWorld **1.6**. Enable [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077) → [RimTalk](https://steamcommunity.com/sharedfiles/filedetails/?id=3551203752) → [Persona Director](https://steamcommunity.com/sharedfiles/filedetails/?id=3619548407). The repository stores C# source in `Source` and the compiled `RPD.dll` in `Assemblies`; see [BUILDING.md](BUILDING.md) to build from source. Keep the `About/`, `Assemblies/`, `Defs/`, `Languages/`, `Source/`, and `Textures/` folders, plus `RPD.csproj`, `RPD.sln`, `RPD.Local.props.example`, `.gitignore`, `BUILDING.md`, and this `README.md` in the GitHub repository.
 2. Configure and verify an AI connection in RimTalk's settings, then load a save.
 3. Open **Options → Mod Settings → RimTalk: Persona Director**. Keep the default data filters for now and select the first built-in prompt slot.
 4. Open a Pawn's RimTalk persona editor and use **Smart Gen**. RPD requests a persona from AI using the selected data and prompt. Review the returned options and choose one.
@@ -375,7 +375,7 @@ Rimtalk-Persona-Director/
 └── Textures/    # UI and other texture assets
 ```
 
-`Source/`, the project files, build guide, test outline, and this `README.md` belong in the source repository, not the player's runtime mod folder. Players need the compiled `Assemblies/RPD.dll` to run the mod; source files do not replace it. Harmony and RimTalk are separate required dependencies.
+`Source/`, the project files, build guide, and this `README.md` belong in the source repository, not the player's runtime mod folder. Players need the compiled `Assemblies/RPD.dll` to run the mod; source files do not replace it. Harmony and RimTalk are separate required dependencies.
 
 ### 2. Preset library and assignment rules
 
@@ -397,7 +397,7 @@ The console can filter current-map pawns by colonist, prisoner, slave, visitor, 
 
 ### 4. Data filters and prompts
 
-RPD's **Select Data sent to AI** controls persona-generation material: identity, race/xenotype, genes, childhood and adulthood backstory, key relations, traits, ideology, skills and passions, health, equipment, inventory, and optional RimPsyche, memories, and common knowledge. Some fields have a separate description switch. Longer descriptions make longer requests. Start with identity, background, relations, traits, and skills; add detailed gene or health text only when useful. RimPsyche, memory, and common-knowledge controls appear when their corresponding expansion is installed.
+RPD's **Select Data sent to AI** controls persona-generation material: identity, race/xenotype, genes, childhood and adulthood backstory, key relations, traits, ideology, skills and passions, health, equipment, inventory, and optional RimPsyche, memories, and common knowledge. Some fields have a separate description switch. Longer descriptions make longer requests. Start with identity, background, relations, traits, and skills; add detailed gene or health text only when useful. RimPsyche, memory, and common-knowledge controls appear when their corresponding expansion is installed. GitHub repositories: [RimPsyche](https://github.com/jagerguy36/Rimpsyche) and [RimTalk-ExpandMemory (Memory and Common Sense)](https://github.com/sanguodxj-byte/RimTalk-ExpandMemory).
 
 There are five editable built-in prompt slots: **Standard** offers three interpretations; **Story-Driven** writes one narrative; **Data-Driven** links childhood and adult history more strictly; the last two are for evolution **Append** and **Overwrite**. Use the Slot menu to edit a title or prompt. **Reset Default** resets only the selected slot. `{LANG}` represents the active game language, and RPD appends its response-format rules automatically. Selecting an evolution-only slot for ordinary single generation falls back to Standard.
 
