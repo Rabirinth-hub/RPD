@@ -26,7 +26,7 @@ Persona Director（RPD）是 [RimTalk](https://github.com/jlibrary/RimTalk) 的�
 4. 打开一个 Pawn 的 RimTalk 人格编辑窗口，使用 **Smart Gen／智能生成**。RPD 会按选中的资料和提示词向 AI 请求人格；查看候选结果，再选择想用的版本。
 5. 要快速验证 RPD 的另一个入口，点击人格编辑窗口的 **Random Gen／随机生成**。它会打开预设浏览器：选分类与预设后点“应用所选”，或点“随机应用”。这一步直接套用已有文本。
 
-**完整的 Mod 文件结构：**游戏安装目录中的模组文件夹应包含以下运行文件：
+**完整的 Mod 文件结构**：游戏安装目录中的模组文件夹应包含以下运行文件：
 
 ```text
 Rimtalk-Persona-Director/
@@ -43,7 +43,7 @@ Rimtalk-Persona-Director/
 
 在 RPD 设置页点 **打开预设库**。首次空库会导入 RimTalk 原有和本项目内置的人格预设。**预设**页可搜索、筛选分类、创建或删除条目，编辑名称、正文和健谈度；“管理原版／管理内置”可把对应预设加入用户库。启用状态决定它是否同步给 RimTalk，以及无规则命中时是否进入全局随机池。
 
-**保存固定人设：**在“预设”页点“创建预设”，用角色名命名，把准备好的完整人格填入正文，再取消该条目的“启用”。预设保存在模组设置中，跨存档可用。以后在另一个存档遇到这个角色，打开其人格编辑窗口 → **Random Gen／随机生成**，找到该预设并点 **应用所选**，无需复制到外部保存，也不会为这次套用调用 AI。未启用的预设仍可在浏览器中手动选用；若只想手动调用，不要把它加入分配规则。浏览器的“随机应用”会从当前显示的预设中抽取，未启用项也可能被抽中。
+**保存固定人设**：在“预设”页点“创建预设”，用角色名命名，把准备好的完整人格填入正文，再取消该条目的“启用”。预设保存在模组设置中，跨存档可用。以后在另一个存档遇到这个角色，打开其人格编辑窗口 → **Random Gen／随机生成**，找到该预设并点 **应用所选**，无需复制到外部保存，也不会为这次套用调用 AI。未启用的预设仍可在浏览器中手动选用；若只想手动调用，不要把它加入分配规则。浏览器的“随机应用”会从当前显示的预设中抽取，未启用项也可能被抽中。
 
 在 **规则**页新建规则，选择派系、种族、异种型或年龄区间，设置优先级，并勾选允许抽取的预设。新的、尚无人格的人类 Pawn 上图时会套用匹配预设：取最高优先级；同级规则合并候选池；无规则命中则从全局启用池随机抽取。规则分配本身不向 AI 发送请求。
 
@@ -55,7 +55,7 @@ Rimtalk-Persona-Director/
 
 导演台可按殖民者、囚犯、奴隶、访客、敌人、动物等类别筛选当前地图角色，也可搜索、刷新、逐个勾选。每行的 **生成**调用 AI 并应用结果，**编辑**打开 RimTalk 人格编辑窗口，**谈话**打开 RimTalk 对话入口。选中多人后，底部的 **单独发送**会为每人分别请求；**合并发送**会把所选角色放在一次请求中，适合建立互相关联的背景。合并结果需要区分各角色 ID，格式错误的部分可能无法应用。
 
-**小巧思：**一队难民可先在全局备注中写共同逃亡经历，用合并发送建立联系，再逐个生成不同的心理反应。给海盗派系设置较高优先级规则，则可以让海盗偏向一组风格，而其他新 Pawn 仍用全局预设池。
+**小巧思**：一队难民可先在全局备注中写共同逃亡经历，用合并发送建立联系，再逐个生成不同的心理反应。给海盗派系设置较高优先级规则，则可以让海盗偏向一组风格，而其他新 Pawn 仍用全局预设池。
 
 ### 4. 资料筛选与提示词
 
@@ -65,7 +65,7 @@ RPD 设置页的“选择发送给 AI 的数据内容”控制人格生成用的
 
 设置页还能分别给单次生成和演变选择 **RimTalk 高级预设**；自动生成则可按角色类别单独选择。高级预设走另一条上下文路径，具体区别见本语言末尾的[附录](#附录人格上下文如何构建)。想明确控制 RPD 数据筛选时，先用内置模板验证结果，再切换高级预设。
 
-**高级预设实际怎么写：**在 RimTalk 的高级提示词编辑器中新建预设，启用一个 System 条目写人格任务与返回要求，再启用一个 User 条目放资料。把 `{{ pawn.d_full_profile }}` 写进 User 条目就能取到 RPD 的整合角色资料；把 `{{ director_notes }}` 单独写入可补上全局导演备注。选好预设后回 RPD 设置页将其指定给“单次生成”或对应自动生成类别。手动和自动更新都可引用现有人格、时间和状态差异；有时间记录时还可用 `pawn.d_evolve_memories` 读取此后的记忆。完整可粘贴模板、变量对照和精简格式的方法放在[附录 H](#h-scriban-高级预设与格式精简)。
+**高级预设实际怎么写**：在 RimTalk 的高级提示词编辑器中新建预设，启用一个 System 条目写人格任务与返回要求，再启用一个 User 条目放资料。把 `{{ pawn.d_full_profile }}` 写进 User 条目就能取到 RPD 的整合角色资料；把 `{{ director_notes }}` 单独写入可补上全局导演备注。选好预设后回 RPD 设置页将其指定给“单次生成”或对应自动生成类别。手动和自动更新都可引用现有人格、时间和状态差异；有时间记录时还可用 `pawn.d_evolve_memories` 读取此后的记忆。完整可粘贴模板、变量对照和精简格式的方法放在[附录 H](#h-scriban-高级预设与格式精简)。
 
 RPD 也把 `pawn.d_full_profile`、`pawn.d_memories`、`pawn.d_status_diff` 等人物变量和 `director_notes`、`smart_history` 等上下文变量注册给 RimTalk。Persona 文本可写 Scriban 条件，让同一角色在囚禁、殖民地生活等处境下呈现不同表达；这是人格文本的动态渲染，不是给每次对话重新生成一份 Persona。例如：
 
@@ -84,13 +84,13 @@ RPD 也把 `pawn.d_full_profile`、`pawn.d_memories`、`pawn.d_status_diff` 等�
 
 在 RPD 设置中勾选 **启用附加功能**并确认，然后分别配置：
 
-1. **自动生成：**勾选“启用自动生成”，点“配置”。殖民者、囚犯、奴隶、访客、敌人和其他角色分开控制，默认都关闭。每类可选择内置提示词或 RimTalk 高级预设；内置路径默认同步全局资料筛选，关闭“同步”后可单独选择数据。内置路径的自动生成备注支持 Scriban，并仅在该类别的有效上下文启用“导演备注”时发送；高级预设不会自动附上这份备注，目前也没有对应的 Scriban 变量，需把所需说明写进预设。新 Pawn 首次上图且具有初始人格基线时才会排队；读档重生不会重复触发。
-2. **自动更新：**开启总开关后，在名单中为每名 Pawn 开启状态并设置周期。`0` 或负数关闭定时更新，但身份和事件触发仍可运行；可批量启停、批量设置周期。可选身份变化，以及结婚、分手、生育、直系亲属死亡、新增特质等事件。自动更新不依赖自动生成的分类开关；身份变化勾选项由自动更新界面单独控制，仍需该 Pawn 的独立开关。若 Pawn 仍是规则或随机库分配的初始人设，且自动生成总开关及目标分类均已启用，则身份变化优先尝试自动生成；否则尝试自动更新。
-3. **更新方式：**手动与自动更新共用此模式：“追加”在原人格后补上发展段（默认）；“覆盖”重写整篇人格。还可选择静默或左上角通知，并设置倍速保护；默认达到 3 倍速时暂停新扫描和请求。
+1. **自动生成**：勾选“启用自动生成”，点“配置”。殖民者、囚犯、奴隶、访客、敌人和其他角色分开控制，默认都关闭。每类可选择内置提示词或 RimTalk 高级预设；内置路径默认同步全局资料筛选，关闭“同步”后可单独选择数据。内置路径的自动生成备注支持 Scriban，并仅在该类别的有效上下文启用“导演备注”时发送；高级预设不会自动附上这份备注，目前也没有对应的 Scriban 变量，需把所需说明写进预设。新 Pawn 首次上图且具有初始人格基线时才会排队；读档重生不会重复触发。
+2. **自动更新**：开启总开关后，在名单中为每名 Pawn 开启状态并设置周期。`0` 或负数关闭定时更新，但身份和事件触发仍可运行；可批量启停、批量设置周期。可选身份变化，以及结婚、分手、生育、直系亲属死亡、新增特质等事件。自动更新不依赖自动生成的分类开关；身份变化勾选项由自动更新界面单独控制，仍需该 Pawn 的独立开关。若 Pawn 仍是规则或随机库分配的初始人设，且自动生成总开关及目标分类均已启用，则身份变化优先尝试自动生成；否则尝试自动更新。
+3. **更新方式**：手动与自动更新共用此模式：“追加”在原人格后补上发展段（默认）；“覆盖”重写整篇人格。还可选择静默或左上角通知，并设置倍速保护；默认达到 3 倍速时暂停新扫描和请求。
 
 自动生成与自动更新共用请求协调器；实验功能关闭时等待任务失效。若发生超时或运行错误，设置页会显示熔断原因；排查后点 **清除错误**，再手动重新启用。自动更新要求 Pawn 存活、在地图上、有现成人格，且总开关与该 Pawn 的独立开关均已打开。
 
-**建议：**一般只启用殖民者、奴隶、囚犯的自动生成分类和自动更新身份触发。访客、敌人、其他分类仍可自行开启，但一批袭击者或商队可能同时造成大量自动生成请求与 API 开销；殖民者变成中立或敌对后通常也不再与玩家长期互动，自动更新收益有限。若确有相应剧情需求，可以按 Pawn 单独开启。
+**建议**：一般只启用殖民者、奴隶、囚犯的自动生成分类和自动更新身份触发。访客、敌人、其他分类仍可自行开启，但一批袭击者或商队可能同时造成大量自动生成请求与 API 开销；殖民者变成中立或敌对后通常也不再与玩家长期互动，自动更新收益有限。若确有相应剧情需求，可以按 Pawn 单独开启。
 
 ### 7. 常见问题
 
@@ -106,7 +106,9 @@ RPD 也把 `pawn.d_full_profile`、`pawn.d_memories`、`pawn.d_status_diff` 等�
 
 以下方括号标题和分隔符表示请求中的**实际格式**；尖括号是示意占位符。可选区块只在资料存在且相应设置允许时出现。Context 是请求的指令部分，Prompt 是数据／用户部分。RPD 的过滤器控制人格流程；RimTalk 日常对话的上下文由 RimTalk 自己管理。
 
-**A. 基础角色资料块。**手动单人、导演台和自动生成使用这类资料。开启的栏目按下列顺序组合；快照只保留角色状态资料，不含备注、记忆和常识。
+#### A. 基础角色资料块
+
+手动单人、导演台和自动生成使用这类资料。开启的栏目按下列顺序组合；快照只保留角色状态资料，不含备注、记忆和常识。
 
 ```text
 --- Basic Info ---
@@ -152,7 +154,7 @@ Adulthood: <标题及可选描述>
 
 基础身份可能增加奴隶来源派系或外部派系描述；关系只列关键关系。基因区分天然与植入，技能可标记无法从事的工作。备注、记忆和常识在快照模式下不附加。RimPsyche、记忆和常识等联动 Mod 栏目只有取得非空内容时才出现；不会输出空标题或“没有内容”的占位句。
 
-**B. 手动 Smart Gen／导演台单人“生成”（内置模板）。**
+#### B. 手动 Smart Gen／导演台单人“生成”（内置模板）
 
 ```text
 Context = <当前生成人格模板，{LANG} 已替换> + <单人 JSON 返回协议>
@@ -163,7 +165,9 @@ Prompt  =
 
 “导演备注”过滤项控制单人资料中是否出现备注。若选择 RimTalk 高级预设，则改为渲染其启用的 System 条目作为 Context、User/Assistant 条目作为 Prompt，并附加 JSON 协议；此分支使用 RimTalk 的 `PromptContext`／普通 Pawn 上下文，**不会自动附上 A 中的同一份 RPD 资料块**。因此模板应自行放入所需变量或资料。高级预设无法使用时回退内置模板。
 
-**C. 导演台合并发送。**单独发送仍是多次 B；合并发送则是一次请求：
+#### C. 导演台合并发送
+
+单独发送仍是多次 B；合并发送则是一次请求：
 
 ```text
 Context = <当前生成人格模板> + <批量 JSON 返回协议>
@@ -179,7 +183,9 @@ Prompt  = [Character Data]
 
 组上下文会放入全局导演备注；若 A 的“导演备注”也打开，每名角色的资料块中可能再次出现该备注。返回结果按 `[ID:<Pawn ID>]` 和 `---` 分段；解析器优先按 ID、再尝试按姓名对应角色。合并发送不使用单人 RimTalk 高级预设。
 
-**D. 自动生成（内置或高级预设）。**内置路径先按类别选定有效筛选器，渲染该 Pawn 的“自动生成备注”，再构建 A。新 Pawn 首次上图时没有触发附加块；因身份变化进入新类别时，在 A 尾部增加：
+#### D. 自动生成（内置或高级预设）
+
+内置路径先按类别选定有效筛选器，渲染该 Pawn 的“自动生成备注”，再构建 A。新 Pawn 首次上图时没有触发附加块；因身份变化进入新类别时，在 A 尾部增加：
 
 ```text
 [Trigger Event]
@@ -190,7 +196,9 @@ Role transition for <姓名> (with faction context):
 
 内置路径的 Prompt 以 `[Character Data]` 开头，随后是 A 和可选的 Trigger Event；Context 为该类别的内置模板加单人返回协议。**自动生成高级预设路径**只渲染已启用的 System/User/Assistant 条目；不会自动追加 A、自动生成备注或内置 JSON 返回协议。若需要身份变化事件，在模板中写 `{{ director_trigger_context }}`。预设不存在、渲染失败或没有有效条目时，该次请求会跳过，而不是回退内置路径。
 
-**E. 手动演变。**编辑窗口中的“设置时间”保存年龄和 A 的状态快照。手动点击“演变”时，内置模板发送：
+#### E. 手动演变
+
+编辑窗口中的“设置时间”保存年龄和 A 的状态快照。手动点击“演变”时，内置模板发送：
 
 ```text
 Context = <按追加／覆盖模式选择的演变模板> + <单人 JSON 返回协议>
@@ -208,9 +216,11 @@ Prompt  = [Update Data]
           [Common Knowledge]                         <有常识内容时>
 ```
 
-状态差异需要“数据比较”和有效快照；普通导演备注需要“导演备注”过滤项。手动高级预设会改为渲染 RimTalk 条目并附返回协议，**不会自动发送上述 `[Update Data]`**；请在模板中引用现有人格、时间、差异和记忆等需要的变量。手动结果按共用模式追加 `[Development]` 或覆盖编辑框内容。
+状态差异需要“数据比较”和有效快照；普通导演备注需要“导演备注”过滤项。手动高级预设会改为渲染 RimTalk 条目并附返回协议，**不会自动发送上述** `[Update Data]`；请在模板中引用现有人格、时间、差异和记忆等需要的变量。手动结果按共用模式追加 `[Development]` 或覆盖编辑框内容。
 
-**F. 自动更新：定时、身份和事件。**内置请求同样以 `[Update Data]` 开始，但使用**已存 Persona**及独立的“自动更新备注”；`[New Memories]` 仅在有记忆内容时出现。定时更新通常无事件块；触发更新则在 `[Time Context]` 后加入 `[Trigger Events]`，随后可选状态差异、备注和常识：
+#### F. 自动更新：定时、身份和事件
+
+内置请求同样以 `[Update Data]` 开始，但使用**已存 Persona**及独立的“自动更新备注”；`[New Memories]` 仅在有记忆内容时出现。定时更新通常无事件块；触发更新则在 `[Time Context]` 后加入 `[Trigger Events]`，随后可选状态差异、备注和常识：
 
 ```text
 [Update Data]
@@ -236,7 +246,9 @@ Prompt  = [Update Data]
 
 自动更新若选 RimTalk 高级预设，只会渲染其 System/User/Assistant 条目；**不会自动附上完整的 `[Update Data]`、触发事件文本或内置 JSON 返回协议**。模板须自行引用现有人格、时间、差异、新记忆、自动更新备注和 `director_trigger_context`。预设不存在、渲染失败或没有有效条目时请求会跳过。结果按“追加／覆盖”模式应用。历史面板保存的**更新上下文摘要**由时间、可选触发事件、状态变化和新记忆组成，它是回看记录，并非另一次 AI 请求。
 
-**G. Persona 在日常对话中的动态渲染。**RPD 可在 RimTalk 构建 Pawn 上下文时把 Persona 文本里的 Scriban 转为当前值，例如 `{{ pawn.d_status_diff }}`。该渲染只替换送入 RimTalk 上下文的 Persona 文本；不会改变 B–F 的请求结构，也不代表每次对话会重新生成人格。随机预设套用和规则分配同样没有生成请求。
+#### G. Persona 在日常对话中的动态渲染
+
+RPD 可在 RimTalk 构建 Pawn 上下文时把 Persona 文本里的 Scriban 转为当前值，例如 `{{ pawn.d_status_diff }}`。该渲染只替换送入 RimTalk 上下文的 Persona 文本；不会改变 B–F 的请求结构，也不代表每次对话会重新生成人格。随机预设套用和规则分配同样没有生成请求。
 
 #### H. Scriban 高级预设与格式精简
 
@@ -325,7 +337,7 @@ Adulthood: {{ pawn.d_backstory_adulthood_title }}
 
 这份示例主要适合**自动更新**。手动更新也能使用 `pawn.d_evolve_memories`；若未设置时间且仍想提供近期记忆，可改用 `pawn.d_memories`。手动预设还应把 `evolve_director_notes` 两处改成 `director_notes`，并删除触发事件段。`director_trigger_context` 只在对应自动触发请求中有值。`d_evolve_diff` 取快照差异，模板引用它时不受内置“数据比较”开关控制。模板模拟内置更新数据的主要栏目，但可选数据、时间叙述和状态差异仍以各变量的实际输出为准；完全复用内置请求时选内置提示词。
 
-**精简已有格式：**优先在 RPD 资料筛选中关闭无关栏目和描述；高级预设再对已取得的字符串做替换。普通替换适合已知固定标题，例如把装饰性标题缩短为标签：
+**精简已有格式**：优先在 RPD 资料筛选中关闭无关栏目和描述；高级预设再对已取得的字符串做替换。普通替换适合已知固定标题，例如把装饰性标题缩短为标签：
 
 ```scriban
 {{ pawn.d_full_profile | string.replace "--- Basic Info ---" "Identity:" }}
@@ -364,7 +376,7 @@ Compared with RimTalk's native persona tools, RPD intercepts single-pawn Smart G
 4. Open a Pawn's RimTalk persona editor and use **Smart Gen**. RPD requests a persona from AI using the selected data and prompt. Review the returned options and choose one.
 5. To try the other entry point, use **Random Gen** in the persona editor. RPD opens a preset browser. Choose a category and preset, then **Apply Selected** or **Apply Random**. This applies existing text directly.
 
-**Complete mod folder structure:** the mod folder installed in RimWorld should contain these runtime files:
+**Complete mod folder structure**: the mod folder installed in RimWorld should contain these runtime files:
 
 ```text
 Rimtalk-Persona-Director/
@@ -381,7 +393,7 @@ Rimtalk-Persona-Director/
 
 Choose **Open Preset Library** in RPD's settings. On an empty first run, RPD imports RimTalk's original presets and the add-on's built-in presets. The **Presets** tab supports search, categories, create/delete, and editing names, text, and chattiness. **Manage Vanilla / Manage Built-in** adds those collections to the user library. Enabled entries sync to RimTalk and join the global random pool used when no assignment rule matches.
 
-**Save a fixed persona for later:** in **Presets**, create an entry, name it after the character, paste the complete persona into its text field, then turn off **Enabled** for that entry. The library is stored in mod settings and is available across saves. When the character appears in another save, open their persona editor → **Random Gen**, find the entry, and click **Apply Selected**. There is no need to keep an external copy, and applying the saved text makes no AI request. Disabled entries remain available for manual selection in the browser. To keep one manual-only, leave it out of assignment rules; the browser's **Apply Random** can still draw from visible disabled entries.
+**Save a fixed persona for later**: in **Presets**, create an entry, name it after the character, paste the complete persona into its text field, then turn off **Enabled** for that entry. The library is stored in mod settings and is available across saves. When the character appears in another save, open their persona editor → **Random Gen**, find the entry, and click **Apply Selected**. There is no need to keep an external copy, and applying the saved text makes no AI request. Disabled entries remain available for manual selection in the browser. To keep one manual-only, leave it out of assignment rules; the browser's **Apply Random** can still draw from visible disabled entries.
 
 In **Rules**, create a rule for a faction, race, xenotype, or age range, set its priority, and choose its allowed presets. A newly spawned humanlike pawn without a persona receives a matching preset: the highest priority wins, tied rules combine their candidate pools, and a pawn with no matching rule draws from globally enabled entries. Rule assignment itself sends no AI request.
 
@@ -393,7 +405,7 @@ Use the RPD icon at the bottom of the screen: **left-click** opens Director Note
 
 The console can filter current-map pawns by colonist, prisoner, slave, visitor, enemy, animal, and other categories. Search, refresh, and select pawns there. Each row offers **Quick Gen** (AI generation and application), **Edit** (RimTalk persona editor), and **Talk** (RimTalk conversation entry). With multiple pawns selected, **Single Send** makes one request per pawn; **Batch Send** puts them in one request, which is useful for linked backstories. Batch output must identify each pawn, and malformed sections may fail to apply.
 
-**Practical idea:** write a refugee squad's shared escape in Director Notes, use Batch Send to establish connections, then generate individually to give each survivor a different reaction. A high-priority rule can reserve a set of styles for pirates while other new pawns use the global preset pool.
+**Practical idea**: write a refugee squad's shared escape in Director Notes, use Batch Send to establish connections, then generate individually to give each survivor a different reaction. A high-priority rule can reserve a set of styles for pirates while other new pawns use the global preset pool.
 
 ### 4. Data filters and prompts
 
@@ -403,7 +415,7 @@ There are five editable built-in prompt slots: **Standard** offers three interpr
 
 Separate **RimTalk advanced preset** selectors apply to single generation and evolution; Auto-Gen categories have their own selectors. Advanced presets follow different context paths, detailed in the [appendix](#appendix-how-persona-context-is-built). Start with an internal prompt when you need predictable RPD data filtering, then check what an advanced preset includes before switching.
 
-**Writing an advanced preset:** create one in RimTalk's advanced prompt editor. Enable a System entry for the persona task and response requirements, and a User entry for character data. Put `{{ pawn.d_full_profile }}` in User to import RPD's assembled profile, then add `{{ director_notes }}` separately for global Director Notes. Select the preset in RPD's single-generation setting or an Auto-Gen category. Manual and Auto-Evolve can import the current persona, time, and status difference; `pawn.d_evolve_memories` provides memories since the recorded time in either advanced Evolve workflow. The [Scriban recipes in Appendix H](#h-scriban-advanced-presets-and-format-cleanup) include paste-ready templates, variable mappings, and cleanup examples.
+**Writing an advanced preset**: create one in RimTalk's advanced prompt editor. Enable a System entry for the persona task and response requirements, and a User entry for character data. Put `{{ pawn.d_full_profile }}` in User to import RPD's assembled profile, then add `{{ director_notes }}` separately for global Director Notes. Select the preset in RPD's single-generation setting or an Auto-Gen category. Manual and Auto-Evolve can import the current persona, time, and status difference; `pawn.d_evolve_memories` provides memories since the recorded time in either advanced Evolve workflow. The [Scriban recipes in Appendix H](#h-scriban-advanced-presets-and-format-cleanup) include paste-ready templates, variable mappings, and cleanup examples.
 
 RPD also registers variables such as `pawn.d_full_profile`, `pawn.d_memories`, `pawn.d_status_diff`, `director_notes`, and `smart_history` with RimTalk. Persona text can use Scriban conditions to change expression by situation. This renders the saved persona dynamically; it does not regenerate a new persona for every conversation. For example:
 
@@ -422,13 +434,13 @@ With optional features enabled, click **History** for a pawn in the Auto-Evolve 
 
 Check **Enable Optional Features** in RPD settings and confirm. Then configure the two workflows separately:
 
-1. **Auto-Gen:** enable it and open **Configure**. Colonists, prisoners, slaves, visitors, enemies, and others each have an off-by-default category switch. Each category can use an internal prompt or a RimTalk advanced preset. The internal path shares the global RPD data filter by default; disable **Sync** to choose its own fields. Its Auto-Gen Notes support Scriban and are sent only when Director Notes is enabled in that category's effective context. The advanced path does not append these notes, and no Scriban variable currently exposes them; put the needed instruction directly in the preset. A new pawn is queued when it first appears on a map with an initial persona baseline; loading a save does not trigger it again.
-2. **Auto-Evolve:** enable the master switch, enable individual pawns in the list, and set intervals. `0` or a negative number disables timed updates but still permits role and event triggers. The list supports batch enable/disable and batch interval changes. Optional triggers include role changes, marriage, breakup, birth, direct-family death, and a new trait. Auto-Evolve does not depend on Auto-Gen category switches; the role-change checkboxes are controlled on the Auto-Evolve page and still require the pawn's individual switch. If the pawn still has an initial rule/random-library persona and both the Auto-Gen master and destination-category switches are on, a role change first attempts Auto-Gen; otherwise it attempts Auto-Evolve.
-3. **Update mode:** Manual and Auto-Evolve share this mode. **Append** adds a development section and is the default; **Overwrite** rewrites the persona. Choose silent or top-left notifications and speed protection. By default, new scans and requests pause at speeds of 3× or higher.
+1. **Auto-Gen**: enable it and open **Configure**. Colonists, prisoners, slaves, visitors, enemies, and others each have an off-by-default category switch. Each category can use an internal prompt or a RimTalk advanced preset. The internal path shares the global RPD data filter by default; disable **Sync** to choose its own fields. Its Auto-Gen Notes support Scriban and are sent only when Director Notes is enabled in that category's effective context. The advanced path does not append these notes, and no Scriban variable currently exposes them; put the needed instruction directly in the preset. A new pawn is queued when it first appears on a map with an initial persona baseline; loading a save does not trigger it again.
+2. **Auto-Evolve**: enable the master switch, enable individual pawns in the list, and set intervals. `0` or a negative number disables timed updates but still permits role and event triggers. The list supports batch enable/disable and batch interval changes. Optional triggers include role changes, marriage, breakup, birth, direct-family death, and a new trait. Auto-Evolve does not depend on Auto-Gen category switches; the role-change checkboxes are controlled on the Auto-Evolve page and still require the pawn's individual switch. If the pawn still has an initial rule/random-library persona and both the Auto-Gen master and destination-category switches are on, a role change first attempts Auto-Gen; otherwise it attempts Auto-Evolve.
+3. **Update mode**: Manual and Auto-Evolve share this mode. **Append** adds a development section and is the default; **Overwrite** rewrites the persona. Choose silent or top-left notifications and speed protection. By default, new scans and requests pause at speeds of 3× or higher.
 
 Auto-Gen and Auto-Evolve share a request coordinator. Turning optional features off invalidates pending work. If a timeout or runtime error trips the circuit breaker, read the reason shown in settings, resolve it, click **Clear Error**, and enable optional features again. Auto-Evolve requires a living, spawned pawn with an existing persona, with both its master and individual switches enabled.
 
-**Recommendation:** normally enable Auto-Gen categories and Auto-Evolve role triggers only for colonists, slaves, and prisoners. Visitor, enemy, and other categories remain optional, but a group of raiders or traders can cause many Auto-Gen requests and API usage at once. A former colonist who becomes neutral or hostile also usually has little reason to keep evolving for the player's colony. Enable those cases per pawn when they matter to your story.
+**Recommendation**: normally enable Auto-Gen categories and Auto-Evolve role triggers only for colonists, slaves, and prisoners. Visitor, enemy, and other categories remain optional, but a group of raiders or traders can cause many Auto-Gen requests and API usage at once. A former colonist who becomes neutral or hostile also usually has little reason to keep evolving for the player's colony. Enable those cases per pawn when they matter to your story.
 
 ### 7. Troubleshooting
 
@@ -444,7 +456,9 @@ Auto-Gen and Auto-Evolve share a request coordinator. Turning optional features 
 
 Bracketed headings and separators below represent the **actual request format**; angle-bracketed values are illustrative placeholders. Optional sections appear only when data exists and the relevant setting allows them. **Context** is the instruction part of a request; **Prompt** is its data/user part. RPD's filters govern persona workflows; RimTalk manages its own everyday-dialogue context.
 
-**A. Character data block.** Manual single generation, the Director Console, and Auto-Gen use this type of data. Enabled sections appear in this order. A snapshot keeps state fields but omits notes, memories, and common knowledge.
+#### A. Character data block
+
+Manual single generation, the Director Console, and Auto-Gen use this type of data. Enabled sections appear in this order. A snapshot keeps state fields but omits notes, memories, and common knowledge.
 
 ```text
 --- Basic Info ---
@@ -490,7 +504,7 @@ Adulthood: <title and optional description>
 
 Basic identity can include an enslaved pawn's origin faction or an external faction description. Relations are limited to key relationships. Genes distinguish endogenes from xenogenes; skills may be marked incapable. Snapshot mode omits notes, memories, and common knowledge. Linked-mod sections such as RimPsyche, memories, and common knowledge appear only when they contain data; empty headings and "no content" placeholders are omitted.
 
-**B. Manual Smart Gen / Director Console Quick Gen (internal prompt).**
+#### B. Manual Smart Gen / Director Console Quick Gen (internal prompt)
 
 ```text
 Context = <selected generation prompt with {LANG} resolved> + <single-persona JSON response rules>
@@ -501,7 +515,9 @@ Prompt  =
 
 The Director Notes filter controls whether notes appear in the single-pawn data. With a **RimTalk advanced preset**, RPD instead renders enabled System entries into Context and User/Assistant entries into Prompt, then appends response rules. This branch uses RimTalk's `PromptContext` and normal Pawn context; it **does not automatically include the same RPD data block A**. Include needed data or variables in the preset itself. An unusable advanced preset falls back to the internal prompt.
 
-**C. Director Console Batch Send.** Single Send means multiple B requests. Batch Send makes one request:
+#### C. Director Console Batch Send
+
+Single Send means multiple B requests. Batch Send makes one request:
 
 ```text
 Context = <selected generation prompt> + <batch JSON response rules>
@@ -517,7 +533,9 @@ Prompt  = [Character Data]
 
 Global Director Notes go into group context. If A's Director Notes switch is also enabled, they may appear again inside each pawn block. The result is segmented by `[ID:<Pawn ID>]` and `---`; RPD first matches ID, then tries name matching. Batch Send does not use the single-pawn RimTalk advanced preset.
 
-**D. Auto-Gen (internal or advanced preset).** The internal path selects the category's effective filter, renders Auto-Gen Notes for this pawn, then builds A. First map appearance has no trigger addendum. When the pawn changes to an enabled new role category, the following is appended to A:
+#### D. Auto-Gen (internal or advanced preset)
+
+The internal path selects the category's effective filter, renders Auto-Gen Notes for this pawn, then builds A. First map appearance has no trigger addendum. When the pawn changes to an enabled new role category, the following is appended to A:
 
 ```text
 [Trigger Event]
@@ -528,7 +546,9 @@ Role transition for <name> (with faction context):
 
 The internal Prompt begins with `[Character Data]`, followed by A and an optional Trigger Event; Context is the category's built-in prompt plus single-persona response rules. The **Auto-Gen advanced-preset branch** only renders enabled System/User/Assistant entries; it does not append A, Auto-Gen Notes, or the internal JSON response rules. Include `{{ director_trigger_context }}` in the template to receive a role-change event. A missing preset, failed rendering, or no usable entries causes that request to be skipped rather than falling back to the internal branch.
 
-**E. Manual Evolve.** **Set Time** stores age and an A-style state snapshot. Clicking Evolve sends this with the internal prompt:
+#### E. Manual Evolve
+
+**Set Time** stores age and an A-style state snapshot. Clicking Evolve sends this with the internal prompt:
 
 ```text
 Context = <Append or Overwrite evolution prompt, according to mode> + <single-persona JSON response rules>
@@ -548,7 +568,9 @@ Prompt  = [Update Data]
 
 Status differences need Data Comparison and a valid snapshot; ordinary Director Notes need that filter enabled. A manual advanced preset renders RimTalk entries and response rules instead; **the `[Update Data]` block above is not appended automatically**. Reference the current persona, time, differences, memories, and other needed variables in the template. Manual results append `[Development]` or overwrite the editor according to the shared mode.
 
-**F. Auto-Evolve: timed, role, and event triggers.** Its internal request also begins with `[Update Data]`, but uses the **stored persona** and separate **Auto-Evolve Notes**. `[New Memories]` appears only when memories are available. Timed updates usually have no event block. Triggered updates add `[Trigger Events]` after `[Time Context]`; optional differences, notes, and common knowledge follow:
+#### F. Auto-Evolve: timed, role, and event triggers
+
+Its internal request also begins with `[Update Data]`, but uses the **stored persona** and separate **Auto-Evolve Notes**. `[New Memories]` appears only when memories are available. Timed updates usually have no event block. Triggered updates add `[Trigger Events]` after `[Time Context]`; optional differences, notes, and common knowledge follow:
 
 ```text
 [Update Data]
@@ -574,7 +596,9 @@ The contents of `[Trigger Events]` depend on the event:
 
 With a RimTalk advanced preset, Auto-Evolve only renders its System/User/Assistant entries; **it does not append the full `[Update Data]` block, trigger text, or internal JSON response rules**. The template must reference the current persona, time, changes, new memories, Auto-Evolve Notes, and `director_trigger_context` itself. A missing preset, failed rendering, or no usable entries skips the request. Results are applied in Append or Overwrite mode. History stores a **summary** of time, optional trigger events, status changes, and new memories for review; that summary is not another AI request.
 
-**G. Dynamic persona rendering during regular dialogue.** When RimTalk builds Pawn context, RPD can render Scriban in the saved persona, such as `{{ pawn.d_status_diff }}`, into current values. This replaces persona text inside RimTalk's context. It does not change request paths B–F and does not regenerate the persona for every conversation. Applying a random preset or assigning one by rule also sends no generation request.
+#### G. Dynamic persona rendering during regular dialogue
+
+When RimTalk builds Pawn context, RPD can render Scriban in the saved persona, such as `{{ pawn.d_status_diff }}`, into current values. This replaces persona text inside RimTalk's context. It does not change request paths B–F and does not regenerate the persona for every conversation. Applying a random preset or assigning one by rule also sends no generation request.
 
 #### H. Scriban advanced presets and format cleanup
 
@@ -663,7 +687,7 @@ Use update data in a manual or Auto-Evolve User entry. `d_evolve_memories` retri
 
 This example is primarily for **Auto-Evolve**. Manual Evolve can also use `pawn.d_evolve_memories`; use `pawn.d_memories` instead if no time was recorded and you still want recent memories. For a manual preset, replace both instances of `evolve_director_notes` with `director_notes` and remove the trigger block. `director_trigger_context` is populated only during a matching Auto-Gen or Auto-Evolve trigger. `d_evolve_diff` reads the stored snapshot when referenced and is not gated by the internal Data Comparison switch. The template mirrors the main internal update sections, while optional data, time phrasing, and status changes follow the actual variable outputs. Select the internal prompt to use the exact internal request.
 
-**Clean up existing formatting:** first disable irrelevant sections and descriptions in RPD's data filter. In an advanced preset, apply replacements to the remaining text. A literal replacement is useful for a fixed decorative heading:
+**Clean up existing formatting**: first disable irrelevant sections and descriptions in RPD's data filter. In an advanced preset, apply replacements to the remaining text. A literal replacement is useful for a fixed decorative heading:
 
 ```scriban
 {{ pawn.d_full_profile | string.replace "--- Basic Info ---" "Identity:" }}
