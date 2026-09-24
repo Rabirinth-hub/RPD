@@ -1,0 +1,14 @@
+# Visual Studio and MSBuild outputs
+.vs/
+bin/
+obj/
+artifacts/
+TestResults/
+*.user
+*.suo
+
+# Machine-local game and mod assembly paths
+/RPD.Local.props
+
+# Temporary release archives
+/.release-tmp/

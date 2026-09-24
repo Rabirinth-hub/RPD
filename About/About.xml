@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>RimTalk: Persona Director</name>
+  <author>Rabirinth</author>
+  <packageId>RP.RimTalk.PersonaDirector</packageId> 
+  <supportedVersions>
+    <li>1.6</li>
+  </supportedVersions>
+  <modDependencies>
+    <li>
+       <packageId>brrainz.harmony</packageId>
+       <displayName>Harmony</displayName>
+       <steamWorkshopUrl>https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077</steamWorkshopUrl>
+    </li>
+    <li>
+	<packageId>cj.rimtalk</packageId>
+	<displayName>RimTalk</displayName>
+ 	<steamWorkshopUrl>https://steamcommunity.com/sharedfiles/filedetails/?id=3551203752</steamWorkshopUrl>
+    </li>
+  </modDependencies>
+  <loadAfter>
+    <li>brrainz.harmony</li>
+    <li>cj.RimTalk</li>
+  </loadAfter>
+  <description>
+    This is an add-on for RimTalk.
+
+    Features:
+    1. **Deep Data Extraction**: Reads Genes (Endo/Xeno),Skills, Relationships, and more.
+    2. **Director Mode**: Generate 3 distinct personality options based on rich data.
+    3. **Custom Context**: Add your own "Director Notes" to shape the character's memory.
+    4. **Fully Configurable**: Toggle every data field to save tokens or reduce noise.
+  </description>
+</ModMetaData>

@@ -20,11 +20,24 @@ Persona Director（RPD）是 [RimTalk](https://github.com/jlibrary/RimTalk) 的�
 
 ### 1. 安装与第一次生成人格
 
-1. 使用 RimWorld **1.6**。启用 [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077) → [RimTalk](https://steamcommunity.com/sharedfiles/filedetails/?id=3551203752) → [Persona Director](https://steamcommunity.com/sharedfiles/filedetails/?id=3619548407)。仓库中的 C# 源码位于 `Source`，编译后的 `RPD.dll` 位于 `Assemblies`。后续上传仅包含 `About`、`Languages`、`Source`、`Assemblies` 和本 `README.md`。
+1. 使用 RimWorld **1.6**。启用 [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077) → [RimTalk](https://steamcommunity.com/sharedfiles/filedetails/?id=3551203752) → [Persona Director](https://steamcommunity.com/sharedfiles/filedetails/?id=3619548407)。仓库中的 C# 源码位于 `Source`，编译后的 `RPD.dll` 位于 `Assemblies`；源码构建方法见 [BUILDING.md](BUILDING.md)。同步 GitHub 仓库时应保留六个 Mod 目录、`RPD.csproj`、`RPD.sln`、`RPD.Local.props.example`、`.gitignore`、`BUILDING.md`、`plans/ai-runtime-test-outline.md` 和本 `README.md`。
 2. 在 RimTalk 的设置里配置并验证 AI 连接，随后载入存档。
 3. 打开 **选项 → 模组设置 → RimTalk: Persona Director**。先保留默认数据筛选，选第一个内置提示词槽位。
 4. 打开一个 Pawn 的 RimTalk 人格编辑窗口，使用 **Smart Gen／智能生成**。RPD 会按选中的资料和提示词向 AI 请求人格；查看候选结果，再选择想用的版本。
 5. 要快速验证 RPD 的另一个入口，点击人格编辑窗口的 **Random Gen／随机生成**。它会打开预设浏览器：选分类与预设后点“应用所选”，或点“随机应用”。这一步直接套用已有文本。
+
+**完整的 Mod 文件结构：**游戏安装目录中的模组文件夹应包含以下运行文件：
+
+```text
+Rimtalk-Persona-Director/
+├── About/       # About.xml、图标、预览图和 PublishedFileId.txt
+├── Assemblies/  # RPD.dll
+├── Defs/        # 游戏定义
+├── Languages/   # 本地化文本
+└── Textures/    # 界面与其他纹理资源
+```
+
+`Source/`、工程文件、构建说明、测试大纲和本 `README.md` 属于源码仓库，不需要放进给玩家的 Mod 运行目录。普通玩家运行模组需要 `Assemblies/RPD.dll`，源码不能代替 DLL。Harmony 与 RimTalk 是需要另外安装的前置模组。
 
 ### 2. 预设库与自动分配
 
@@ -345,11 +358,24 @@ Compared with RimTalk's native persona tools, RPD intercepts single-pawn Smart G
 
 ### 1. Install and create a first persona
 
-1. Use RimWorld **1.6**. Enable [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077) → [RimTalk](https://steamcommunity.com/sharedfiles/filedetails/?id=3551203752) → [Persona Director](https://steamcommunity.com/sharedfiles/filedetails/?id=3619548407). The repository stores C# source in `Source` and the compiled `RPD.dll` in `Assemblies`. Future uploads should include only `About`, `Languages`, `Source`, `Assemblies`, and this `README.md`.
+1. Use RimWorld **1.6**. Enable [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077) → [RimTalk](https://steamcommunity.com/sharedfiles/filedetails/?id=3551203752) → [Persona Director](https://steamcommunity.com/sharedfiles/filedetails/?id=3619548407). The repository stores C# source in `Source` and the compiled `RPD.dll` in `Assemblies`; see [BUILDING.md](BUILDING.md) to build from source. Keep all six mod folders, `RPD.csproj`, `RPD.sln`, `RPD.Local.props.example`, `.gitignore`, `BUILDING.md`, `plans/ai-runtime-test-outline.md`, and this `README.md` in the GitHub repository.
 2. Configure and verify an AI connection in RimTalk's settings, then load a save.
 3. Open **Options → Mod Settings → RimTalk: Persona Director**. Keep the default data filters for now and select the first built-in prompt slot.
 4. Open a Pawn's RimTalk persona editor and use **Smart Gen**. RPD requests a persona from AI using the selected data and prompt. Review the returned options and choose one.
 5. To try the other entry point, use **Random Gen** in the persona editor. RPD opens a preset browser. Choose a category and preset, then **Apply Selected** or **Apply Random**. This applies existing text directly.
+
+**Complete mod folder structure:** the mod folder installed in RimWorld should contain these runtime files:
+
+```text
+Rimtalk-Persona-Director/
+├── About/       # About.xml, icon, preview, and PublishedFileId.txt
+├── Assemblies/  # RPD.dll
+├── Defs/        # Game definitions
+├── Languages/   # Localization files
+└── Textures/    # UI and other texture assets
+```
+
+`Source/`, the project files, build guide, test outline, and this `README.md` belong in the source repository, not the player's runtime mod folder. Players need the compiled `Assemblies/RPD.dll` to run the mod; source files do not replace it. Harmony and RimTalk are separate required dependencies.
 
 ### 2. Preset library and assignment rules
 

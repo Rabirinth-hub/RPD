@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <MainButtonDef>
+    <defName>PersonaDirector</defName>
+    
+    <label>Director</label>
+    <description>Left-Click: Open Director Notes.\nRight-Click: Open List Mode.\nShift+Click: Open Settings.</description>
+    <workerClass>RimPersonaDirector.MainButtonWorker_Director</workerClass>
+    
+    <iconPath>UI/Buttons/DirectorNotes</iconPath>
+    
+    <order>79</order>
+    <minimized>True</minimized>
+  </MainButtonDef>
+</Defs>
