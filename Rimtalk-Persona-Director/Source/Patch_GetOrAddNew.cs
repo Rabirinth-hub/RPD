@@ -3,138 +3,61 @@ using Verse;
 using RimTalk.Data;
 using System.Linq;
 using System.Collections.Generic;
-using System.Reflection.Emit;
-using System.Reflection;
-using System; // 用于 Exception
+using RimWorld;
 
 namespace RimPersonaDirector
 {
-    [HarmonyPatch(typeof(Hediff_Persona), "GetOrAddNew")]
-    public static class Patch_GetOrAddNew
+    [HarmonyPatch(typeof(Pawn), nameof(Pawn.SpawnSetup), new[] { typeof(Map), typeof(bool) })]
+    public static class Patch_NewPawnPersona
     {
-	// 最近分配记录：<预设ID, 分配时间>
+        // 最近分配记录：<预设ID, 分配时间>
         private static Dictionary<string, int> recentAssignments = new Dictionary<string, int>();
         private const int CACHE_DURATION_TICKS = 600; // 10秒 = 600 ticks (60 ticks/秒)
         private const int MAX_RETRY_ATTEMPTS = 2; // 最多重试2次，总共3次尝试
-        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+
+        [HarmonyPostfix]
+        private static void AssignPersonaToSpawnedPawn(Pawn __instance, bool respawningAfterLoad)
         {
-            try
+            Pawn pawn = __instance;
+            if (respawningAfterLoad
+                || pawn == null
+                || pawn.Destroyed
+                || pawn.Dead
+                || pawn.RaceProps == null
+                || !pawn.RaceProps.Humanlike
+                || !pawn.Spawned
+                || pawn.Map == null)
             {
-                // 1. 精确锁定目标方法 (更稳健的查找)
-                MethodInfo targetMethod = null;
-
-                // 首先尝试常规方式
-                try
-                {
-                    targetMethod = AccessTools.Method(
-                        typeof(GenCollection),
-                        nameof(GenCollection.RandomElement),
-                        generics: new[] { typeof(PersonalityData) },
-                        parameters: new[] { typeof(IEnumerable<PersonalityData>) }
-                    );
-                }
-                catch
-                {
-                    targetMethod = null;
-                }
-
-                // 如果常规方式失败，退回到手动扫描并构造泛型方法
-                if (targetMethod == null)
-                {
-                    var methods = typeof(GenCollection).GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-                    foreach (var m in methods)
-                    {
-                        if (m.Name != "RandomElement") continue;
-                        if (!m.IsGenericMethodDefinition) continue;
-                        var pars = m.GetParameters();
-                        if (pars.Length != 1) continue;
-                        var ptype = pars[0].ParameterType;
-                        if (!ptype.IsGenericType) continue;
-                        if (ptype.GetGenericTypeDefinition() != typeof(IEnumerable<>)) continue;
-
-                        try
-                        {
-                            targetMethod = m.MakeGenericMethod(typeof(PersonalityData));
-                            break;
-                        }
-                        catch
-                        {
-                            // 忽略并继续查找
-                        }
-                    }
-                }
-
-                if (targetMethod == null)
-                {
-                    Log.Error("[Persona Director] Transpiler failed: Could not find target method GenCollection.RandomElement<PersonalityData>(IEnumerable). Auto-assignment will be disabled.");
-                    return instructions;
-                }
-
-                // 2. 找到替换方法
-                var replacementMethod = AccessTools.Method(typeof(Patch_GetOrAddNew), nameof(AssignViaRulesOrRandom));
-
-                // 3. 遍历和替换
-                var codes = new List<CodeInstruction>(instructions);
-                bool patched = false;
-                for (int i = 0; i < codes.Count; i++)
-                {
-                    if (codes[i].Calls(targetMethod))
-                    {
-                        // a. 插入 pawn 参数 (GetOrAddNew 的第一个参数)
-                        codes.Insert(i, new CodeInstruction(OpCodes.Ldarg_0)); // pawn
-
-                        // b. 替换调用指令
-                        codes[i + 1] = new CodeInstruction(OpCodes.Call, replacementMethod);
-
-                        patched = true;
-                        break;
-                    }
-                }
-
-                if (!patched)
-                {
-                    Log.Warning("[Persona Director] Transpiler WARNING: Could not find call to RandomElement in Hediff_Persona.GetOrAddNew. Auto-assignment will not work.");
-                }
-
-                return codes.AsEnumerable();
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"[Persona Director] Transpiler CRITICAL ERROR: {ex.Message}. Auto-assignment is disabled.");
-                return instructions; // 发生任何错误都返回原始代码，保证游戏能运行
-            }
-        }
-
-        /// <summary>
-        /// 我们的替换方法。它接收原版随机池和 Pawn，返回一个我们选择的 PersonalityData。
-        /// </summary>
-        public static PersonalityData AssignViaRulesOrRandom(IEnumerable<PersonalityData> vanillaPool, Pawn pawn)
-        {
-            // 在我们的规则逻辑执行前，先做一个基础安全检查
-            if (pawn == null || !pawn.RaceProps.Humanlike)
-            {
-                // 对于非人类，直接使用原版逻辑
-                return vanillaPool.RandomElement();
+                return;
             }
 
-            // 执行我们的规则
+            HediffDef personaDef = DefDatabase<HediffDef>.GetNamed("RimTalk_PersonaData", false)
+                ?? DefDatabase<HediffDef>.GetNamed("RimTalk_Persona", false);
+            Hediff_Persona existingPersona = personaDef == null
+                ? null
+                : pawn.health?.hediffSet?.GetFirstHediffOfDef(personaDef) as Hediff_Persona;
+            if (!string.IsNullOrWhiteSpace(existingPersona?.Personality)) return;
+
             CustomPreset preset = FindPresetFor(pawn);
+            if (preset == null) return;
 
-            // 如果我们的规则找到了一个预设
-            if (preset != null)
+            DirectorUtils.ApplyPersonalityToPawn(
+                pawn,
+                new PersonalityData(preset.personaText, preset.chattiness),
+                false);
+
+            string applied = PersonaService.GetPersonality(pawn)?.Trim() ?? "";
+            string initial = preset.personaText?.Trim() ?? "";
+            if (!string.IsNullOrEmpty(initial)
+                && string.Equals(applied, initial, System.StringComparison.Ordinal))
             {
-                if (DirectorMod.Settings.EnableDebugLog)
-                    Log.Message($"[Director] Auto-assigned '{preset.label}' to {pawn.Name} via rule or global pool.");
-
-                // 返回一个新的 PersonalityData 实例
-                return new PersonalityData(preset.personaText, preset.chattiness);
+                Find.World?.GetComponent<DirectorWorldComponent>()?.RecordInitialPersona(
+                    pawn,
+                    initial);
             }
 
-            // 如果我们的规则系统什么都没找到（比如库是空的），就回退到原版随机池
             if (DirectorMod.Settings.EnableDebugLog)
-                Log.Message($"[Director] No presets found for {pawn.Name}. Falling back to vanilla random pool.");
-
-            return vanillaPool.RandomElement();
+                Log.Message($"[Director] Assigned initial persona '{preset.label}' to newly spawned pawn {pawn.Name}.");
         }
 
         /// <summary>
@@ -143,28 +66,9 @@ namespace RimPersonaDirector
         public static CustomPreset FindPresetFor(Pawn p)
         {
             var settings = DirectorMod.Settings;
-            if (settings.userPresets == null || !settings.userPresets.Any()) return null;
+            if (settings?.userPresets == null || !settings.userPresets.Any()) return null;
 
-            List<string> candidateIds = new List<string>();
-
-            // 1. 尝试匹配规则
-            if (settings.assignmentRules != null && settings.assignmentRules.Any())
-            {
-                var matchingRules = settings.assignmentRules.Where(r => r.enabled && IsMatch(p, r)).ToList();
-                if (matchingRules.Any())
-                {
-                    int maxPriority = matchingRules.Max(r => r.priority);
-                    var activeRules = matchingRules.Where(r => r.priority == maxPriority);
-
-                    // 合并池子
-                    HashSet<string> ruleIds = new HashSet<string>();
-                    foreach (var rule in activeRules)
-                        if (rule.allowedPresetIds != null)
-                            foreach (var id in rule.allowedPresetIds) ruleIds.Add(id);
-
-                    candidateIds.AddRange(ruleIds);
-                }
-            }
+            List<string> candidateIds = FindMatchingRulePresetIds(p);
 
             // 2. 如果无规则命中，使用全局池
             if (candidateIds.Count == 0)
@@ -176,11 +80,52 @@ namespace RimPersonaDirector
             }
 
             if (candidateIds.Count == 0) return null;
-            // 3. 清理过期的缓存记录
+            return PickPreset(candidateIds);
+        }
+
+        internal static bool IsPersonaFromCurrentAssignmentPools(Pawn pawn, string persona)
+        {
+            DirectorSettings settings = DirectorMod.Settings;
+            if (settings?.userPresets == null || string.IsNullOrWhiteSpace(persona)) return false;
+
+            string current = persona.Trim();
+            List<string> candidateIds = FindMatchingRulePresetIds(pawn);
+            IEnumerable<CustomPreset> candidates = candidateIds.Count > 0
+                ? settings.userPresets.Where(preset => candidateIds.Contains(preset.id))
+                : settings.userPresets.Where(preset => preset.enabled);
+
+            return candidates.Any(preset => string.Equals(
+                preset.personaText?.Trim() ?? "",
+                current,
+                System.StringComparison.Ordinal));
+        }
+
+        private static List<string> FindMatchingRulePresetIds(Pawn pawn)
+        {
+            var settings = DirectorMod.Settings;
+            if (settings?.assignmentRules == null || pawn == null) return new List<string>();
+
+            var matchingRules = settings.assignmentRules.Where(r => r.enabled && IsMatch(pawn, r)).ToList();
+            if (matchingRules.Count == 0) return new List<string>();
+
+            int maxPriority = matchingRules.Max(r => r.priority);
+            return matchingRules
+                .Where(r => r.priority == maxPriority && r.allowedPresetIds != null)
+                .SelectMany(r => r.allowedPresetIds)
+                .Distinct()
+                .Where(id => settings.userPresets.Any(p => p.id == id))
+                .ToList();
+        }
+
+        private static CustomPreset PickPreset(List<string> candidateIds)
+        {
+            if (candidateIds == null || candidateIds.Count == 0) return null;
+
+            // 清理过期的缓存记录
             CleanupExpiredCache();
-           // 4. 随机抽取（带重试机制避免短时间重复）
+            // 随机抽取（带重试机制避免短时间重复）
             string pickId = null;
-            int currentTick = Find.TickManager.TicksGame;
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
             
             for (int attempt = 0; attempt <= MAX_RETRY_ATTEMPTS; attempt++)
             {
@@ -212,10 +157,10 @@ namespace RimPersonaDirector
                     Log.Message($"[Director] Preset '{pickId}' was recently used, retrying... (attempt {attempt + 1}/{MAX_RETRY_ATTEMPTS + 1})");
             }
             
-            // 5. 记录本次分配
+            // 记录本次分配
             recentAssignments[pickId] = currentTick;
             
-            return settings.userPresets.Find(x => x.id == pickId);
+            return DirectorMod.Settings.userPresets.Find(x => x.id == pickId);
         }
 
         /// <summary>
@@ -223,7 +168,7 @@ namespace RimPersonaDirector
         /// </summary>
         private static void CleanupExpiredCache()
         {
-            int currentTick = Find.TickManager.TicksGame;
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
             var expiredKeys = recentAssignments
                 .Where(kvp => currentTick - kvp.Value > CACHE_DURATION_TICKS)
                 .Select(kvp => kvp.Key)
@@ -240,6 +185,12 @@ namespace RimPersonaDirector
         /// </summary>
         private static bool IsMatch(Pawn p, AssignmentRule rule)
         {
+            if (rule.type == RuleType.Age)
+            {
+                // 年龄规则：targetDefName无意义，判断pawn年龄是否在区间
+                int pawnAge = (int)p.ageTracker.AgeBiologicalYears;
+                return pawnAge >= rule.minAge && pawnAge <= rule.maxAge;
+            }
             if (string.IsNullOrEmpty(rule.targetDefName)) return false;
             switch (rule.type)
             {

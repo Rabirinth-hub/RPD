@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+  <RPD_ReleaseNotice_Title>Persona Director: Important Update</RPD_ReleaseNotice_Title>
+  <RPD_ReleaseNotice_Body>This release contains important changes. Back up your saves before continuing.&#10;&#10;The Workshop mod is usually under your Steam library at steamapps\workshop\content\294100\3619548407. Your Steam library may be on another drive.&#10;&#10;A local copy does not inherit the Workshop mod's settings. Before switching, back up your persona library, assignment rules, and built-in prompts. The library export includes only the first two; save the built-in prompts separately.&#10;&#10;An older DLL is included with this mod. To roll back, first copy the entire mod to a local mod. In that local copy, replace Assemblies/RPD.dll with Backup/RPD.dll. Then enable only the local copy, not the Workshop version as well.&#10;&#10;Do not edit the Workshop files directly. A save written by the new version may not be fully readable by the older DLL.</RPD_ReleaseNotice_Body>
+  <RPD_ReleaseNotice_Acknowledge>I Understand</RPD_ReleaseNotice_Acknowledge>
+
+  <RPD_Experimental_Enable>Enable Optional Features</RPD_Experimental_Enable>
+  <RPD_Experimental_EnableTip>Master switch for Auto-Gen, persona history, Auto-Evolve, and role-change features. Turning it off immediately invalidates pending optional work and keeps the stable core behavior.</RPD_Experimental_EnableTip>
+  <RPD_Experimental_EnableConfirm>Optional features are isolated from the stable core but have less runtime coverage. Enable them?</RPD_Experimental_EnableConfirm>
+  <RPD_Experimental_CoreMode>Compatibility mode: only the stable core is active.</RPD_Experimental_CoreMode>
+  <RPD_Experimental_FuseReason>Optional features were disabled automatically: {0}</RPD_Experimental_FuseReason>
+  <RPD_Experimental_ClearError>Clear Error</RPD_Experimental_ClearError>
+  <RPD_Experimental_PatchRegistrationFailed>Optional feature patches could not be registered.</RPD_Experimental_PatchRegistrationFailed>
+  <RPD_Experimental_UnpatchFailed>Optional feature patches could not be fully removed. Restart the game to complete safe mode.</RPD_Experimental_UnpatchFailed>
+  <RPD_Experimental_AutoGenRuntimeFailed>Auto-Gen encountered an internal error.</RPD_Experimental_AutoGenRuntimeFailed>
+  <RPD_Experimental_AutoGenTimeout>Auto-Gen timed out.</RPD_Experimental_AutoGenTimeout>
+  <RPD_Experimental_AutoEvolveRuntimeFailed>Auto-Evolve encountered an internal error.</RPD_Experimental_AutoEvolveRuntimeFailed>
+  <RPD_Experimental_AutoEvolveTimeout>Auto-Evolve timed out.</RPD_Experimental_AutoEvolveTimeout>
+  <RPD_History_MaxRecords>History limit:</RPD_History_MaxRecords>
+  <RPD_History_MaxRecordsTip>Maximum history records per pawn; 0 removes the record-count limit.</RPD_History_MaxRecordsTip>
+  <RPD_AutoEvolve_InternalPromptNotice>Both modes share the advanced preset; otherwise each uses its built-in prompt.</RPD_AutoEvolve_InternalPromptNotice>
+
+</LanguageData>

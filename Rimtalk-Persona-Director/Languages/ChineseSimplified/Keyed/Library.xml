@@ -10,6 +10,9 @@
   
   <!-- Presets Tab -->
   <RPD_Library_Category>分类: {0}</RPD_Library_Category>
+  <RPD_Library_CategoryAll>全部</RPD_Library_CategoryAll>
+  <RPD_Library_CategoryVanilla>原版</RPD_Library_CategoryVanilla>
+  <RPD_Library_CategoryBuiltIn>内置</RPD_Library_CategoryBuiltIn>
   <RPD_Library_CreatePreset>+ 新预设</RPD_Library_CreatePreset>
   <RPD_Library_DeletePreset>删除</RPD_Library_DeletePreset>
   <RPD_Library_ImportTemplate>导入模板</RPD_Library_ImportTemplate>
@@ -19,7 +22,17 @@
   <RPD_Library_Chattiness>Chattiness: {0}</RPD_Library_Chattiness>
   <RPD_Library_Description>介绍:</RPD_Library_Description>
   <RPD_Library_I_E>导入/导出</RPD_Library_I_E>
+  <RPD_Library_ManageVanilla>管理原版</RPD_Library_ManageVanilla>
+  <RPD_Library_ManageBuiltin>管理内置</RPD_Library_ManageBuiltin>
+  <RPD_Library_AddAll>添加所有“{0}”预设</RPD_Library_AddAll>
+  <RPD_Library_RemoveAll>移除所有“{0}”预设</RPD_Library_RemoveAll>
+  <RPD_Library_AddSpecific>选择添加...</RPD_Library_AddSpecific>
+  <RPD_Library_AllAdded>(全部已在库中)</RPD_Library_AllAdded>
 
+  <!-- 反馈消息 -->
+  <RPD_Library_MsgAdded>已成功添加 {0} 条预设。</RPD_Library_MsgAdded>
+  <RPD_Library_MsgRemoved>已成功移除 {0} 条预设。</RPD_Library_MsgRemoved>
+  
   <!-- Rules Tab -->
   <RPD_Library_CreateRule>+ 新规则</RPD_Library_CreateRule>
   <RPD_Library_DeleteRule>删除</RPD_Library_DeleteRule>
@@ -32,13 +45,16 @@
   <RPD_Library_TargetMissing>警告: Def 缺失! (缺少mod?)</RPD_Library_TargetMissing>
   <RPD_Library_PresetsPool>允许的预设池 (随机选择):</RPD_Library_PresetsPool>
   <RPD_Library_NoDefsFound>没有找到适合的 Def</RPD_Library_NoDefsFound>
-
+  <RPD_RuleType_Age>年龄</RPD_RuleType_Age>
+  <RPD_Library_AgeRange>年龄区间</RPD_Library_AgeRange>
+  <RPD_Library_SelectAll>全选</RPD_Library_SelectAll>
+  <RPD_Library_UnselectAll>全不选</RPD_Library_UnselectAll>
   <!-- Preset Browser Window -->
   <RPD_Browser_ApplySelected>应用所选</RPD_Browser_ApplySelected>
   <RPD_Browser_ApplyRandom>应用随机</RPD_Browser_ApplyRandom>
   <RPD_Browser_NoPresetsInCategory>该分类下没有预设</RPD_Browser_NoPresetsInCategory>
   <RPD_Browser_AppliedSuccess>已应用预设: {0}</RPD_Browser_AppliedSuccess>
-
+  <RPD_Browser_Disabled>(已禁用)</RPD_Browser_Disabled>
 <!-- Rule Type Names -->
   <RPD_RuleType_FactionDef>派系</RPD_RuleType_FactionDef>
   <RPD_RuleType_RaceDef>种族</RPD_RuleType_RaceDef>

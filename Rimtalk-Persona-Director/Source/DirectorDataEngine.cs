@@ -83,15 +83,18 @@ namespace RimPersonaDirector
 			}
 			if (context.Inc_RimPsyche)
 			{
-				stringBuilder.AppendLine(GetRimPsycheInfo(p));
+				string psyche = GetRimPsycheInfo(p);
+				if (!string.IsNullOrWhiteSpace(psyche)) stringBuilder.AppendLine(psyche);
 			}
 			if (context.Inc_Memories)
 			{
-				stringBuilder.AppendLine(GetMemoryInfo(p));
+				string memories = GetMemoryInfo(p);
+				if (!string.IsNullOrWhiteSpace(memories)) stringBuilder.AppendLine(memories);
 			}
 			if (context.Inc_CommonKnowledge)
 			{
-				stringBuilder.AppendLine(GetCommonKnowledgeInfo(p, stringBuilder.ToString()));
+				string knowledge = GetCommonKnowledgeInfo(p, stringBuilder.ToString());
+				if (!string.IsNullOrWhiteSpace(knowledge)) stringBuilder.AppendLine(knowledge);
 			}
 			return stringBuilder.ToString();
 		}
@@ -507,7 +510,8 @@ namespace RimPersonaDirector
 		public static string GetRimPsycheInfo(Pawn p)
 		{
             if (p == null) return "";
-            return DirectorUtils.GetMauxRimPsycheData(p);
+            string psyche = DirectorUtils.GetMauxRimPsycheData(p);
+            return string.IsNullOrWhiteSpace(psyche) ? "" : psyche;
 		}
 
 		public static string GetMemoryInfo(Pawn p)
@@ -519,7 +523,8 @@ namespace RimPersonaDirector
 		public static string GetCommonKnowledgeInfo(Pawn p, string context)
 		{
             if (p == null) return "";
-            return DirectorUtils.GetCommonKnowledge(context, p) ?? "";
+            string knowledge = DirectorUtils.GetCommonKnowledge(context, p);
+            return string.IsNullOrWhiteSpace(knowledge) ? "" : knowledge;
 		}
 
 		public static string GetEvolveStatusDiff(Pawn p)
@@ -547,12 +552,13 @@ namespace RimPersonaDirector
 		public static string GetEvolveMemories(Pawn p)
 		{
             if (p == null) return "";
-            var worldComp = Find.World.GetComponent<DirectorWorldComponent>();
+			var worldComp = Find.World?.GetComponent<DirectorWorldComponent>();
 			int lastTick = worldComp?.GetLastEvolveTick(p) ?? -1;
 
-			// 传入 lastTick，DirectorUtils.GetExternalMemories 会自动过滤掉旧记忆
-			// 如果 lastTick 是 -1，它会返回最近的几条（作为保底）
-			return DirectorUtils.GetExternalMemories(p, lastTick) ?? "No new memories.";
+			// No recorded update time: use d_memories for recent memories instead.
+			if (lastTick < 0) return "";
+			// Only include memories recorded since the last update.
+			return DirectorUtils.GetExternalMemories(p, lastTick) ?? "";
 		}
 
 		public static string GetTimeInfo(Pawn p)

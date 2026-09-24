@@ -9,12 +9,17 @@
   <RPD_Setting_FilterLabel>Select Data sent to AI (Left: Name, Right: Description):</RPD_Setting_FilterLabel>
   <RPD_Settings_EnableEvolve>Enable Evolve Feature</RPD_Settings_EnableEvolve>
   <RPD_Settings_EnableEvolveTip>Shows Evolve and Set Time buttons in the persona editor, allowing for character development over time based on memories. Please be sure to refer to the usage instructions provided on the Workshop page.</RPD_Settings_EnableEvolveTip>
-
+<RPD_Setting_Slot>Slot {0}</RPD_Setting_Slot>
   <!-- Groups -->
   <RPD_Group_Bio>Biology &amp; Background</RPD_Group_Bio>
   <RPD_Group_Traits>Traits &amp; Status</RPD_Group_Traits>
   <RPD_Group_ExternalData>Expand Info</RPD_Group_ExternalData>
-
+  <!-- Settings: RimTalk Integration -->
+  <RPD_Setting_RimTalkIntegration>Integration with RimTalk Presets</RPD_Setting_RimTalkIntegration>
+  <RPD_Setting_RimTalkIntegrationDesc>If a preset is selected below, it overrides the internal prompts.</RPD_Setting_RimTalkIntegrationDesc>
+  <RPD_Setting_NoneInternal>None (Use Internal)</RPD_Setting_NoneInternal>
+  <RPD_Setting_ForSingleGen>For Single Generation:</RPD_Setting_ForSingleGen>
+  <RPD_Setting_ForEvolve>Evolve preset:</RPD_Setting_ForEvolve>
   <!-- Filters -->
   <RPD_Filter_Basic>Basic Info</RPD_Filter_Basic>
   <RPD_Filter_Race>Race</RPD_Filter_Race>
@@ -62,7 +67,7 @@
   <RPD_Tip_NoNotes>Click to edit</RPD_Tip_NoNotes>
   <RPD_MainButton_Label>Notes</RPD_MainButton_Label>
   <RPD_Button_Evolve>Evolve</RPD_Button_Evolve>
-  <RPD_Tip_Evolve>Append new character development based on recent memories and time passed.</RPD_Tip_Evolve>
+  <RPD_Tip_Evolve>Update the persona from memories and elapsed time using the Append or Overwrite mode set on the Auto-Evolve page.</RPD_Tip_Evolve>
   
   <RPD_Button_SetTime>Set Time</RPD_Button_SetTime>
   <RPD_Button_TimeAgo>{0}d ago</RPD_Button_TimeAgo> <!-- {0} is days number -->
@@ -77,6 +82,7 @@
   <RPD_Batch_Filter_Label>Filter:</RPD_Batch_Filter_Label>
   <RPD_Batch_SelectAll>All</RPD_Batch_SelectAll>
   <RPD_Batch_Refresh>Refresh</RPD_Batch_Refresh>
+  <RPD_Batch_SearchTip>Search the currently visible pawn list by name.</RPD_Batch_SearchTip>
   <RPD_Faction_None>No Faction</RPD_Faction_None>
 
 <!-- Checkbox Filters -->
@@ -85,6 +91,7 @@
   <RPD_Filter_Slaves>Slaves</RPD_Filter_Slaves>
   <RPD_Filter_Visitors>Visitors</RPD_Filter_Visitors>
   <RPD_Filter_Enemies>Enemies</RPD_Filter_Enemies>
+  <RPD_Filter_Other>Other</RPD_Filter_Other>
   <RPD_Filter_Animals>Animals</RPD_Filter_Animals>
   <RPD_Filter_Mechs>Mechs</RPD_Filter_Mechs>
   <RPD_Filter_Anomalies>Anomaly</RPD_Filter_Anomalies>
@@ -131,5 +138,84 @@
   <RPD_Msg_NoPersona>No existing persona to update.</RPD_Msg_NoPersona>
   <RPD_Msg_UpdatedSuccess>Persona updated successfully.</RPD_Msg_UpdatedSuccess>
   <RPD_Msg_UpdateFailed>Update failed or no changes detected.</RPD_Msg_UpdateFailed>
+<!-- Window_PersonaHistory -->
+  <RPD_History_Title>{0}'s History</RPD_History_Title>
+  <RPD_History_Record>Record {0} of {1}</RPD_History_Record>
+  <RPD_History_NoRecords>No history records found.</RPD_History_NoRecords>
+  <RPD_History_Context>Update Context ({0} days ago):</RPD_History_Context>
+  <RPD_History_NoContext>No update context recorded.</RPD_History_NoContext>
+  <RPD_History_BeforePersona>Persona Before Update</RPD_History_BeforePersona>
+  <RPD_History_AfterPersona>Persona After Update</RPD_History_AfterPersona>
+  <RPD_History_CurrentPersona>Current Persona</RPD_History_CurrentPersona>
+  <RPD_History_Empty>Empty.</RPD_History_Empty>
+  <RPD_History_RestoreButton>Restore This Version</RPD_History_RestoreButton>
+  <RPD_History_RestoreBeforeConfirm>Overwrite the current persona with the version from before this update?</RPD_History_RestoreBeforeConfirm>
+  <RPD_History_RestoreAfterConfirm>Overwrite the current persona with the version from after this update?</RPD_History_RestoreAfterConfirm>
+  <RPD_History_RestoreSuccess>Restored {0}'s persona to an older version.</RPD_History_RestoreSuccess> 
+  <RPD_History_SystemRestore>[System]: User restored a previous version.</RPD_History_SystemRestore>
+  <!-- Window_BatchDirector - Tabs -->
+  <RPD_Tab_ManualGeneration>Manual Generation</RPD_Tab_ManualGeneration>
+  <RPD_Tab_AutoEvolution>Auto-Evolve</RPD_Tab_AutoEvolution>
+  <!-- Window_BatchDirector - Auto-Evolve Settings -->
+  <RPD_AutoEvolve_Enable>Enable Auto-Evolve</RPD_AutoEvolve_Enable>
+  <RPD_AutoEvolve_EnableTooltip>Auto-Evolve master switch. Also enable "Enable Optional Features" in the main mod settings; Auto-Evolve does not run if either switch is off.</RPD_AutoEvolve_EnableTooltip>
+  <RPD_AutoEvolve_DefaultEnabled>Enable for New Pawns by Default</RPD_AutoEvolve_DefaultEnabled>
+  <RPD_AutoEvolve_DefaultEnabledTip>Sets the initial Auto-Evolve state for newly generated pawns. Existing pawn settings are not changed.</RPD_AutoEvolve_DefaultEnabledTip>
+  <RPD_AutoEvolve_Triggers>Role / Event Triggers</RPD_AutoEvolve_Triggers>
+  <RPD_AutoEvolve_RoleTriggers>Role changes</RPD_AutoEvolve_RoleTriggers>
+  <RPD_AutoEvolve_EventTriggers>Events</RPD_AutoEvolve_EventTriggers>
+  <RPD_AutoEvolve_TriggersTip>Identity category checkboxes control role changes. Optional events are merged per pawn before an Auto-Evolve request.</RPD_AutoEvolve_TriggersTip>
+  <RPD_AutoEvolve_RoleChangeTip>When a map pawn enters this role, prefer Auto-Gen if it still has its initial persona and both the Auto-Gen master and category switches are on. Otherwise, attempt Auto-Evolve if its master and pawn switches allow it. Auto-Evolve does not depend on the Auto-Gen category switch.</RPD_AutoEvolve_RoleChangeTip>
+  <RPD_AutoEvolve_EventMarriage>Marriage</RPD_AutoEvolve_EventMarriage>
+  <RPD_AutoEvolve_EventMarriageTip>Run Auto-Evolve for both eligible partners after a marriage.</RPD_AutoEvolve_EventMarriageTip>
+  <RPD_AutoEvolve_EventBreakup>Divorce / Breakup</RPD_AutoEvolve_EventBreakup>
+  <RPD_AutoEvolve_EventBreakupTip>Run Auto-Evolve for both eligible partners after a divorce or breakup.</RPD_AutoEvolve_EventBreakupTip>
+  <RPD_AutoEvolve_EventBirth>Childbirth</RPD_AutoEvolve_EventBirth>
+  <RPD_AutoEvolve_EventBirthTip>Run Auto-Evolve once per birth batch for eligible parents. Fathers are included only when the parents are lovers, fiancés, or spouses. World pawns are ignored.</RPD_AutoEvolve_EventBirthTip>
+  <RPD_AutoEvolve_EventDirectFamilyDeath>Direct Family Death</RPD_AutoEvolve_EventDirectFamilyDeath>
+  <RPD_AutoEvolve_EventDirectFamilyDeathTip>Run Auto-Evolve for eligible surviving spouses, parents, and children after a direct family member dies.</RPD_AutoEvolve_EventDirectFamilyDeathTip>
+  <RPD_AutoEvolve_EventTraitAdded>New Trait</RPD_AutoEvolve_EventTraitAdded>
+  <RPD_AutoEvolve_EventTraitAddedTip>Run Auto-Evolve when a pawn gains a new active trait after generation.</RPD_AutoEvolve_EventTraitAddedTip>
+  <RPD_AutoEvolve_Mode>Mode</RPD_AutoEvolve_Mode>
+  <RPD_AutoEvolve_ModeTooltip>Manual and Auto-Evolve share this mode.\nAppend: Adds new events to the end.\nOverwrite: Rewrites the entire persona.</RPD_AutoEvolve_ModeTooltip>
+  <RPD_AutoEvolve_Notify>Notify</RPD_AutoEvolve_Notify>
+  <RPD_AutoEvolve_ModeAppend>Append</RPD_AutoEvolve_ModeAppend>
+  <RPD_AutoEvolve_ModeOverwrite>Overwrite</RPD_AutoEvolve_ModeOverwrite>
+  <RPD_AutoEvolve_NotifySilent>Silent</RPD_AutoEvolve_NotifySilent>
+  <RPD_AutoEvolve_NotifyTopLeftMessage>Top-Left Message</RPD_AutoEvolve_NotifyTopLeftMessage>
+  <RPD_AutoEvolve_SpeedProtectOff>Speed Protect: Off</RPD_AutoEvolve_SpeedProtectOff>
+  <RPD_AutoEvolve_SpeedProtect>Skip if Speed >= </RPD_AutoEvolve_SpeedProtect>
+  <RPD_AutoEvolve_SpeedProtectTooltip>Prevents API spam when you are fast-forwarding the game.</RPD_AutoEvolve_SpeedProtectTooltip>
+  <RPD_AutoEvolve_AdvancedPreset>Advanced Preset</RPD_AutoEvolve_AdvancedPreset>
+  <RPD_AutoEvolve_AdvancedPresetTooltip>Advanced presets receive no automatic update data, event, or JSON instruction; reference variables and request persona JSON yourself. "None" uses the built-in prompt for each mode.</RPD_AutoEvolve_AdvancedPresetTooltip>
+  <RPD_AutoEvolve_SpeedDisabled>Always run</RPD_AutoEvolve_SpeedDisabled>
+  <RPD_AutoEvolve_Speed2X>Stop at >=2x speed</RPD_AutoEvolve_Speed2X>
+  <RPD_AutoEvolve_Speed3X>Stop at >=3x speed</RPD_AutoEvolve_Speed3X>
+  <RPD_AutoEvolve_Speed4X>Stop at >=4x speed</RPD_AutoEvolve_Speed4X>
+  <!-- Window_BatchDirector - Auto-Evolve List Headers -->
+  <RPD_AutoEvolve_HeaderName>Name</RPD_AutoEvolve_HeaderName>
+  <RPD_AutoEvolve_HeaderRace>Race</RPD_AutoEvolve_HeaderRace>
+  <RPD_AutoEvolve_HeaderFaction>Faction</RPD_AutoEvolve_HeaderFaction>
+  <RPD_AutoEvolve_HeaderTag>Tag</RPD_AutoEvolve_HeaderTag>
+  <RPD_AutoEvolve_HeaderAuto>Status</RPD_AutoEvolve_HeaderAuto>
+  <RPD_AutoEvolve_HeaderAutoTip>This pawn's independent Auto-Evolve switch.</RPD_AutoEvolve_HeaderAutoTip>
+  <RPD_AutoEvolve_HeaderCycle>Cycle(d)</RPD_AutoEvolve_HeaderCycle>
+  <RPD_AutoEvolve_HeaderNext>Next (days)</RPD_AutoEvolve_HeaderNext>
+  <RPD_AutoEvolve_HeaderActions>Actions</RPD_AutoEvolve_HeaderActions>
+  <RPD_AutoEvolve_Pending>Pending...</RPD_AutoEvolve_Pending> 
+  <RPD_AutoEvolve_ScheduleDisabled>Cycle off</RPD_AutoEvolve_ScheduleDisabled>
+  <RPD_AutoEvolve_NextIn>{0} days</RPD_AutoEvolve_NextIn>
+  <RPD_AutoEvolve_ButtonEdit>Edit</RPD_AutoEvolve_ButtonEdit> 
+  <RPD_AutoEvolve_ButtonHistory>History</RPD_AutoEvolve_ButtonHistory>
+  <RPD_AutoEvolve_SelectedCount>Selected: {0}</RPD_AutoEvolve_SelectedCount>
+  <RPD_AutoEvolve_EnableSelected>Enable</RPD_AutoEvolve_EnableSelected>
+  <RPD_AutoEvolve_DisableSelected>Disable</RPD_AutoEvolve_DisableSelected>
+  <RPD_AutoEvolve_BatchInterval>Cycle days:</RPD_AutoEvolve_BatchInterval>
+  <RPD_AutoEvolve_ApplyInterval>Apply</RPD_AutoEvolve_ApplyInterval>
+  <RPD_AutoEvolve_ClearSelection>Clear selection</RPD_AutoEvolve_ClearSelection>
+  <RPD_AutoEvolve_BatchIntervalTip>Apply the cycle to selected pawns. Zero or a negative value disables scheduled Auto-Evolve while keeping role and event triggers available.</RPD_AutoEvolve_BatchIntervalTip>
+  <!-- Patch_ManualSave -->
+  <RPD_ManualEdit>[Manual Edit]</RPD_ManualEdit>
+  <RPD_History_AutoGen>[AI Auto-Gen]</RPD_History_AutoGen>
 
 </LanguageData>

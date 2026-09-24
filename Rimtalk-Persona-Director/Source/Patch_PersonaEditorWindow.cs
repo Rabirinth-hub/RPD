@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using RimTalk.UI;
 using RimWorld;
+using System;
 using System.Threading.Tasks;
 using UnityEngine;
 using Verse;
@@ -15,12 +16,16 @@ namespace RimPersonaDirector
         private static Task<string> evolveTask = null;
         private static string evolveResult = null;
         private static Pawn evolvingPawn = null;
+        private static Window evolvingWindow = null;
+        private static AutoEvolveMode evolvingMode = AutoEvolveMode.Append;
 
         private static void ClearEvolveState()
         {
             evolveTask = null;
             evolveResult = null;
             evolvingPawn = null;
+            evolvingWindow = null;
+            evolvingMode = AutoEvolveMode.Append;
         }
 
         public static void Postfix(Rect inRect, Window __instance)
@@ -28,16 +33,40 @@ namespace RimPersonaDirector
             Pawn pawn = (Pawn)AccessTools.Field(typeof(PersonaEditorWindow), "_pawn").GetValue(__instance);
             if (pawn == null) return;
 
+            if (evolveTask != null
+                && evolveTask.IsCompleted
+                && ReferenceEquals(evolvingWindow, __instance))
+            {
+                try
+                {
+                    if (!evolveTask.IsCanceled)
+                        evolveResult = evolveTask.GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning("[Persona Director] Manual Evolve request failed: " + ex.Message);
+                }
+                finally
+                {
+                    evolveTask = null;
+                }
+            }
+
             // 检查并应用结果
-            if (evolveResult != null && evolvingPawn == pawn)
+            if (evolveResult != null
+                && evolvingPawn == pawn
+                && ReferenceEquals(evolvingWindow, __instance))
             {
                 string currentText = DirectorUtils.GetWindowText(__instance);
-                string newText = $"{currentText}\n\n[Development]: {evolveResult}";
+                string newText = evolvingMode == AutoEvolveMode.Overwrite
+                    ? evolveResult
+                    : $"{currentText}\n\n[Development]: {evolveResult}";
                 DirectorUtils.SetWindowText(__instance, newText);
 
                 // 清理结果，防止重复应用
                 evolveResult = null;
                 evolvingPawn = null;
+                evolvingWindow = null;
             }
 
             // --- 1. 布局参数 ---
@@ -90,6 +119,8 @@ namespace RimPersonaDirector
                     {
                         ClearEvolveState();
                         evolvingPawn = pawn;
+                        evolvingWindow = __instance;
+                        evolvingMode = DirectorMod.Settings.autoMode;
 
                         // 1. ★★★ 主线程准备数据 ★★★
                         // 这一步必须在 Task.Run 之外执行！
@@ -99,7 +130,7 @@ namespace RimPersonaDirector
                         {
                             // 2. ★★★ 启动后台任务 ★★★
                             // 此时 request 已经包含了所有数据字符串，不需要再访问 Pawn
-                            evolveTask = Task.Run(() =>
+                            Task<string> requestTask = Task.Run(() =>
                             {
                                 var result = DirectorUtils.ExecuteEvolveTask(request);
 
@@ -109,15 +140,7 @@ namespace RimPersonaDirector
                                 }
                                 return null;
                             });
-
-                            // 3. 结果处理
-                            evolveTask.ContinueWith(task => {
-                                if (task.IsCompleted && !task.IsFaulted)
-                                {
-                                    evolveResult = task.Result;
-                                }
-                                evolveTask = null;
-                            });
+                            evolveTask = requestTask;
                         }
                         else
                         {

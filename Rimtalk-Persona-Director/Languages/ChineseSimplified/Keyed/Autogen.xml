@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+  <!-- 自动生成设置（模组设置） -->
+  <RPD_Settings_EnableAutoGen>启用自动生成</RPD_Settings_EnableAutoGen>
+  <RPD_Settings_EnableAutoGenTip>当新角色来到殖民地时自动生成人设。在配置窗口中设置分类和预设。</RPD_Settings_EnableAutoGenTip>
+  <RPD_Settings_ConfigAutoGen>配置</RPD_Settings_ConfigAutoGen>
+  <RPD_Settings_ConfigAutoGenTip>打开自动生成配置窗口，设置分类、预设和上下文选项。</RPD_Settings_ConfigAutoGenTip>
+
+  <!-- 自动生成配置窗口 -->
+  <RPD_AutoGen_ConfigTitle>自动生成配置</RPD_AutoGen_ConfigTitle>
+  <RPD_AutoGen_QueueStatus>队列：{0} 个角色</RPD_AutoGen_QueueStatus>
+  <RPD_AutoGen_Generating>生成中</RPD_AutoGen_Generating>
+  <RPD_AutoGen_Enable>启用</RPD_AutoGen_Enable>
+  <RPD_AutoGen_EnableTip>允许此分类的 Pawn 在首次出现或满足身份变化条件时自动生成。此开关不控制自动更新。</RPD_AutoGen_EnableTip>
+  <RPD_AutoGen_OnlyOnRoleChange>角色变更时</RPD_AutoGen_OnlyOnRoleChange>
+  <RPD_AutoGen_OnlyOnRoleChangeShort>变更</RPD_AutoGen_OnlyOnRoleChangeShort>
+  <RPD_AutoGen_OnlyOnRoleChangeTip>Pawn 在地图上变为此身份分类时，尝试自动生成或自动更新。自动生成还需开启总开关及此分类；自动更新使用自己的总开关和 Pawn 独立开关。所有身份触发默认关闭。</RPD_AutoGen_OnlyOnRoleChangeTip>
+  <RPD_AutoGen_SyncModSettings>同步模组设置</RPD_AutoGen_SyncModSettings>
+  <RPD_AutoGen_SyncModSettingsShort>同步</RPD_AutoGen_SyncModSettingsShort>
+  <RPD_AutoGen_SyncModSettingsTip>使用全局模组设置的上下文，而不是该分类的自定义上下文</RPD_AutoGen_SyncModSettingsTip>
+  <RPD_AutoGen_EditContext>上下文选项</RPD_AutoGen_EditContext>
+  <RPD_AutoGen_EditContextTip>先关闭“同步”，再选择该分类 AutoGen 会发送哪些 Pawn 数据。</RPD_AutoGen_EditContextTip>
+  <RPD_AutoGen_ContextTitle>{0}：AutoGen 上下文</RPD_AutoGen_ContextTitle>
+  <RPD_AutoGen_Preset>预设：</RPD_AutoGen_Preset>
+  <RPD_AutoGen_AdvancedPreset>高级</RPD_AutoGen_AdvancedPreset>
+  <RPD_AutoGen_AdvancedPresetTooltip>为此分类使用 RimTalk 高级预设。不会自动追加资料、事件或 JSON 指令；请在预设中自行引用变量并要求返回 persona JSON。选择“无”则使用内置提示词。</RPD_AutoGen_AdvancedPresetTooltip>
+
+  <!-- 自动生成笔记编辑器 -->
+  <RPD_AutoGen_NotesLabel>自动生成笔记（Scriban 模板）</RPD_AutoGen_NotesLabel>
+  <RPD_AutoGen_InsertTemplate>插入模板...</RPD_AutoGen_InsertTemplate>
+  <RPD_AutoGen_InsertTemplateTip>点击插入条件模板。可选择殖民者、囚犯、奴隶、派系或种族模板。</RPD_AutoGen_InsertTemplateTip>
+  <RPD_AutoGen_InsertRace>插入种族模板...</RPD_AutoGen_InsertRace>
+  <RPD_AutoGen_InsertColonist>殖民者模板</RPD_AutoGen_InsertColonist>
+  <RPD_AutoGen_InsertPrisoner>囚犯模板</RPD_AutoGen_InsertPrisoner>
+  <RPD_AutoGen_InsertSlave>奴隶模板</RPD_AutoGen_InsertSlave>
+  <RPD_AutoGen_InsertFactionTemplate>派系模板...</RPD_AutoGen_InsertFactionTemplate>
+  <RPD_AutoGen_NotesHint>仅内置模式会在勾选“导演备注”时附加此内容；高级预设的内容完全由用户在 RimTalk 中编写。</RPD_AutoGen_NotesHint>
+  
+  <!-- 模板内容 -->
+  <RPD_AutoGen_Template_Colonist>{{- if pawn.IsColonist -}}
+填入殖民者相关内容
+{{- end -}}</RPD_AutoGen_Template_Colonist>
+  
+  <RPD_AutoGen_Template_Prisoner>{{- if pawn.IsPrisoner -}}
+  {{- if pawn.d_basic_status == "Quest Prisoner" -}}
+填入任务囚犯相关内容
+  {{- else -}}
+其他情况，可能是在敌方据点生成
+  {{- end -}}
+{{- end -}}</RPD_AutoGen_Template_Prisoner>
+  
+  <RPD_AutoGen_Template_Slave>{{- if pawn.IsSlave -}}
+  {{- if pawn.Map.IsPlayerHome -}}
+商人带来的奴隶
+  {{- else -}}
+其他情况，可能是从大地图购买的奴隶
+  {{- end -}}
+{{- end -}}</RPD_AutoGen_Template_Slave>
+  
+  <RPD_AutoGen_Template_Faction>{{- if pawn.Faction.def.def_name == "{0}" -}}
+填入派系相关内容
+{{- end -}}</RPD_AutoGen_Template_Faction>
+  
+  <RPD_AutoGen_Template_Race>{{- if pawn.def.def_name == "{0}" -}}
+填入种族相关内容
+{{- end -}}</RPD_AutoGen_Template_Race>
+
+  <!-- 自动生成分类名称 -->
+  <RPD_AutoGen_CategoryColonist>殖民者</RPD_AutoGen_CategoryColonist>
+  <RPD_AutoGen_CategoryPrisoner>囚犯</RPD_AutoGen_CategoryPrisoner>
+  <RPD_AutoGen_CategorySlave>奴隶</RPD_AutoGen_CategorySlave>
+  <RPD_AutoGen_CategoryVisitor>访客</RPD_AutoGen_CategoryVisitor>
+  <RPD_AutoGen_CategoryEnemy>敌人</RPD_AutoGen_CategoryEnemy>
+  <RPD_AutoGen_CategoryOther>其他</RPD_AutoGen_CategoryOther>
+
+  <!-- 自动演变笔记编辑器 -->
+  <RPD_AutoEvolve_NotesLabel>自动更新备注</RPD_AutoEvolve_NotesLabel>
+  <RPD_AutoEvolve_NotesHint>内置模式会自动使用此备注；高级预设需自行引用 evolve_director_notes 变量。支持 Scriban 语法。</RPD_AutoEvolve_NotesHint>
+
+  <!-- 批量导演笔记提示 -->
+  <RPD_Batch_SceneNotesHint>这些备注将包含在生成提示中。支持 Scriban 语法实现动态内容。使用 {%raw%}...{%endraw%} 转义代码示例。</RPD_Batch_SceneNotesHint>
+
+</LanguageData>

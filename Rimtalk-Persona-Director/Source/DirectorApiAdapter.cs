@@ -10,7 +10,13 @@ namespace RimPersonaDirector
     [StaticConstructorOnStartup]
     public static class DirectorApiAdapter
     {
-        private const string ModId = "director";
+        // RimTalk 1.2.10+ cleans registrations whose source mod is not installed.
+        // This must match About.xml's packageId or our variables/hooks can be removed.
+        private const string ModId = "RP.RimTalk.PersonaDirector";
+        [ThreadStatic]
+        internal static string AdvancedTriggerContext;
+        [ThreadStatic]
+        internal static bool RenderingAdvancedEvolve;
 
         static DirectorApiAdapter()
         {
@@ -35,6 +41,8 @@ namespace RimPersonaDirector
             Reg("d_status_diff", p => DirectorDataEngine.GetDailyStatusDiff(p), "Daily Status Changes");
             Reg("d_evolve_current_persona", p => DirectorDataEngine.GetActiveUIText(p), "Evolve: Text currently in editor window (or hediff)");
             Reg("d_evolve_time_info", p => DirectorDataEngine.GetTimeInfo(p), "Evolve: Time passed since last update");
+            Reg("d_evolve_memories", p => RenderingAdvancedEvolve
+                ? DirectorDataEngine.GetEvolveMemories(p) : "", "Evolve: Memories since recorded time (manual or auto)");
             RimTalkPromptAPI.RegisterPawnVariable(ModId, "d_evolve_diff",
                 p => DirectorDataEngine.GetEvolveStatusDiff(p),
                 "Evolve: Status changes since 'Set Time'");
@@ -45,6 +53,22 @@ namespace RimPersonaDirector
                 "director_notes", 
                 _ => DirectorMod.Settings.directorNotes, 
                 "Global notes from Persona Director" 
+            );
+
+            RimTalkPromptAPI.RegisterContextVariable(
+                ModId,
+                "evolve_director_notes",
+                context => DirectorUtils.RenderScribanText(
+                    DirectorMod.Settings?.autoEvolveNotes ?? "",
+                    context?.CurrentPawn) ?? "",
+                "Auto-Evolve notes from Persona Director"
+            );
+
+            RimTalkPromptAPI.RegisterContextVariable(
+                ModId,
+                "director_trigger_context",
+                _ => AdvancedTriggerContext ?? "",
+                "Current Auto-Gen or Auto-Evolve trigger event"
             );
             
 
@@ -88,9 +112,10 @@ namespace RimPersonaDirector
                         }
                     );
                 }
-                catch
+                catch (Exception ex)
                 {
-             }
+                    Log.Error($"[Persona Director] Failed to register RimTalk personality hook: {ex}");
+                }
 
             // --- 基础信息 ---
             Reg("d_basic_name", p => p.LabelShortCap);

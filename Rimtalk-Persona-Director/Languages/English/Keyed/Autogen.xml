@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+  <!-- Auto-Generation Settings (ModSettings) -->
+  <RPD_Settings_EnableAutoGen>Enable Auto-Gen</RPD_Settings_EnableAutoGen>
+  <RPD_Settings_EnableAutoGenTip>Auto-Gen creates personas for new pawns when they join your colony. Configure categories and presets in the config window.</RPD_Settings_EnableAutoGenTip>
+  <RPD_Settings_ConfigAutoGen>Configure</RPD_Settings_ConfigAutoGen>
+  <RPD_Settings_ConfigAutoGenTip>Open the Auto-Gen configuration window to set up categories, presets, and context settings.</RPD_Settings_ConfigAutoGenTip>
+
+  <!-- Auto-Generation Config Window -->
+  <RPD_AutoGen_ConfigTitle>Auto-Gen Configuration</RPD_AutoGen_ConfigTitle>
+  <RPD_AutoGen_QueueStatus>Queue: {0} pawns</RPD_AutoGen_QueueStatus>
+  <RPD_AutoGen_Generating>generating</RPD_AutoGen_Generating>
+  <RPD_AutoGen_Enable>Enable</RPD_AutoGen_Enable>
+  <RPD_AutoGen_EnableTip>Allow Auto-Gen for pawns in this category on first appearance or an eligible role change. This switch does not control Auto-Evolve.</RPD_AutoGen_EnableTip>
+  <RPD_AutoGen_OnlyOnRoleChange>On Role Change</RPD_AutoGen_OnlyOnRoleChange>
+  <RPD_AutoGen_OnlyOnRoleChangeShort>Change</RPD_AutoGen_OnlyOnRoleChangeShort>
+  <RPD_AutoGen_OnlyOnRoleChangeTip>When a map pawn enters this role, attempt Auto-Gen or Auto-Evolve. Auto-Gen also requires its master and category switches; Auto-Evolve uses its own master and pawn switches. All role triggers are off by default.</RPD_AutoGen_OnlyOnRoleChangeTip>
+  <RPD_AutoGen_SyncModSettings>Sync with ModSettings</RPD_AutoGen_SyncModSettings>
+  <RPD_AutoGen_SyncModSettingsShort>Sync</RPD_AutoGen_SyncModSettingsShort>
+  <RPD_AutoGen_SyncModSettingsTip>Use global ModSettings context instead of custom context for this category</RPD_AutoGen_SyncModSettingsTip>
+  <RPD_AutoGen_EditContext>Context Options</RPD_AutoGen_EditContext>
+  <RPD_AutoGen_EditContextTip>Turn off Sync first, then choose which pawn data this category sends to Auto-Gen.</RPD_AutoGen_EditContextTip>
+  <RPD_AutoGen_ContextTitle>{0}: Auto-Gen Context</RPD_AutoGen_ContextTitle>
+  <RPD_AutoGen_Preset>Preset:</RPD_AutoGen_Preset>
+  <RPD_AutoGen_AdvancedPreset>Advanced</RPD_AutoGen_AdvancedPreset>
+  <RPD_AutoGen_AdvancedPresetTooltip>Use a RimTalk advanced preset for this category. No pawn data, event, or JSON instruction is added automatically; reference variables and request persona JSON in the preset. "None" uses the built-in prompt.</RPD_AutoGen_AdvancedPresetTooltip>
+
+  <!-- Auto-Gen Notes Editor -->
+  <RPD_AutoGen_NotesLabel>Auto-Gen Notes (Scriban Template)</RPD_AutoGen_NotesLabel>
+  <RPD_AutoGen_InsertTemplate>Insert Template...</RPD_AutoGen_InsertTemplate>
+  <RPD_AutoGen_InsertTemplateTip>Click to insert a conditional template. Choose from colonist, prisoner, slave, faction, or race templates.</RPD_AutoGen_InsertTemplateTip>
+  <RPD_AutoGen_InsertRace>Insert Race Template...</RPD_AutoGen_InsertRace>
+  <RPD_AutoGen_InsertColonist>Colonist Template</RPD_AutoGen_InsertColonist>
+  <RPD_AutoGen_InsertPrisoner>Prisoner Template</RPD_AutoGen_InsertPrisoner>
+  <RPD_AutoGen_InsertSlave>Slave Template</RPD_AutoGen_InsertSlave>
+  <RPD_AutoGen_InsertFactionTemplate>Faction Template...</RPD_AutoGen_InsertFactionTemplate>
+  <RPD_AutoGen_NotesHint>Built-in mode adds these notes only when Director Notes is enabled. Advanced presets are written entirely by the user in RimTalk.</RPD_AutoGen_NotesHint>
+  
+  <!-- Template Content -->
+  <RPD_AutoGen_Template_Colonist>{{- if pawn.IsColonist -}}
+Fill in colonist-related content
+{{- end -}}</RPD_AutoGen_Template_Colonist>
+  
+  <RPD_AutoGen_Template_Prisoner>{{- if pawn.IsPrisoner -}}
+  {{- if pawn.d_basic_status == "Quest Prisoner" -}}
+Fill in quest prisoner content
+  {{- else -}}
+Other cases, possibly spawned at enemy bases
+  {{- end -}}
+{{- end -}}</RPD_AutoGen_Template_Prisoner>
+  
+  <RPD_AutoGen_Template_Slave>{{- if pawn.IsSlave -}}
+  {{- if pawn.Map.IsPlayerHome -}}
+Slaves brought by traders
+  {{- else -}}
+Other cases, possibly bought from world map
+  {{- end -}}
+{{- end -}}</RPD_AutoGen_Template_Slave>
+  
+  <RPD_AutoGen_Template_Faction>{{- if pawn.Faction.def.def_name == "{0}" -}}
+Fill in faction-related content
+{{- end -}}</RPD_AutoGen_Template_Faction>
+  
+  <RPD_AutoGen_Template_Race>{{- if pawn.def.def_name == "{0}" -}}
+Fill in race-related content
+{{- end -}}</RPD_AutoGen_Template_Race>
+
+  <!-- Auto-Gen Category Names -->
+  <RPD_AutoGen_CategoryColonist>Colonist</RPD_AutoGen_CategoryColonist>
+  <RPD_AutoGen_CategoryPrisoner>Prisoner</RPD_AutoGen_CategoryPrisoner>
+  <RPD_AutoGen_CategorySlave>Slave</RPD_AutoGen_CategorySlave>
+  <RPD_AutoGen_CategoryVisitor>Visitor</RPD_AutoGen_CategoryVisitor>
+  <RPD_AutoGen_CategoryEnemy>Enemy</RPD_AutoGen_CategoryEnemy>
+  <RPD_AutoGen_CategoryOther>Other</RPD_AutoGen_CategoryOther>
+
+  <!-- Auto-Evolve Notes Editor -->
+  <RPD_AutoEvolve_NotesLabel>Auto-Evolve Notes (Scriban Template)</RPD_AutoEvolve_NotesLabel>
+  <RPD_AutoEvolve_NotesHint>Built-in mode uses these notes automatically. Advanced presets must explicitly reference evolve_director_notes. Scriban syntax is supported.</RPD_AutoEvolve_NotesHint>
+
+  <!-- Batch Director Notes Hints -->
+  <RPD_Batch_SceneNotesHint>These notes will be included in generation prompts. Supports Scriban syntax for dynamic content. Use {%raw%}...{%endraw%} to escape code examples.</RPD_Batch_SceneNotesHint>
+
+</LanguageData>

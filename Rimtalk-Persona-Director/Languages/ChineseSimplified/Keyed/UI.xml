@@ -11,12 +11,17 @@
   <RPD_Setting_FilterLabel>选择发送给 AI 的数据内容 (左: 名称, 右: 详细描述):</RPD_Setting_FilterLabel>
   <RPD_Settings_EnableEvolve>启用人设更新功能</RPD_Settings_EnableEvolve>
   <RPD_Settings_EnableEvolveTip>在人设编辑窗口显示更新和设置时间按钮，详细用法见创意工坊页面或者贴吧</RPD_Settings_EnableEvolveTip>
-  
+ <RPD_Setting_Slot>Slot {0}</RPD_Setting_Slot>
   <!-- 分组标题 -->
   <RPD_Group_Bio>生物与背景</RPD_Group_Bio>
   <RPD_Group_Traits>特征与状态</RPD_Group_Traits>
   <RPD_Group_ExternalData>拓展信息</RPD_Group_ExternalData>
-
+<!-- Settings: RimTalk Integration -->
+  <RPD_Setting_RimTalkIntegration>RimTalk预设提示词</RPD_Setting_RimTalkIntegration>
+  <RPD_Setting_RimTalkIntegrationDesc>使用RimTalk高级模式中的预设提示词覆盖本mod的提示词</RPD_Setting_RimTalkIntegrationDesc>
+  <RPD_Setting_NoneInternal>无 (使用内置提示词)</RPD_Setting_NoneInternal>
+  <RPD_Setting_ForSingleGen>单次生成:</RPD_Setting_ForSingleGen>
+  <RPD_Setting_ForEvolve>更新功能:</RPD_Setting_ForEvolve>
   <!-- 过滤器选项 -->
   <RPD_Filter_Basic>基础</RPD_Filter_Basic>
   <RPD_Filter_Race>种族</RPD_Filter_Race>
@@ -62,7 +67,7 @@
   <RPD_Tip_NoNotes>点击编辑</RPD_Tip_NoNotes>
   <RPD_MainButton_Label>备注</RPD_MainButton_Label>
   <RPD_Button_Evolve>更新</RPD_Button_Evolve>
-  <RPD_Tip_Evolve>根据最近的记忆和时间的流逝，添加新的角色发展</RPD_Tip_Evolve>
+  <RPD_Tip_Evolve>根据记忆和经过时间更新人设；按自动更新界面的模式追加或覆盖。</RPD_Tip_Evolve>
   
   <RPD_Button_SetTime>设置时间</RPD_Button_SetTime>
   <RPD_Button_TimeAgo>{0}天前</RPD_Button_TimeAgo> <!-- {0} is days number -->
@@ -77,6 +82,7 @@
   <RPD_Batch_Filter_Label>筛选角色:</RPD_Batch_Filter_Label>
   <RPD_Batch_SelectAll>全选</RPD_Batch_SelectAll>
   <RPD_Batch_Refresh>刷新</RPD_Batch_Refresh>
+  <RPD_Batch_SearchTip>按名称搜索当前可见的 Pawn 列表。</RPD_Batch_SearchTip>
 
   <!-- 复选框筛选器 -->
   <RPD_Filter_Colonists>殖民者</RPD_Filter_Colonists>
@@ -84,6 +90,7 @@
   <RPD_Filter_Slaves>奴隶</RPD_Filter_Slaves>
   <RPD_Filter_Visitors>访客</RPD_Filter_Visitors>
   <RPD_Filter_Enemies>敌人</RPD_Filter_Enemies>
+  <RPD_Filter_Other>其他</RPD_Filter_Other>
   <RPD_Filter_Animals>动物</RPD_Filter_Animals>
   <RPD_Filter_Mechs>机械体</RPD_Filter_Mechs>
   <RPD_Filter_Anomalies>异象</RPD_Filter_Anomalies>
@@ -132,4 +139,86 @@
   <RPD_Msg_NoPersona>没有需要更新的人设</RPD_Msg_NoPersona>
   <RPD_Msg_UpdatedSuccess>成功更新人设</RPD_Msg_UpdatedSuccess>
   <RPD_Msg_UpdateFailed>更新失败或没有检测到变化</RPD_Msg_UpdateFailed>
+
+  <!-- Window_PersonaHistory -->
+  <RPD_History_Title>{0}的历史记录</RPD_History_Title>
+  <RPD_History_Record>记录 {0} / {1}</RPD_History_Record>
+  <RPD_History_NoRecords>未找到历史记录。</RPD_History_NoRecords>
+  <RPD_History_Context>更新上下文（{0}天前）：</RPD_History_Context>
+  <RPD_History_NoContext>未记录更新上下文。</RPD_History_NoContext> 
+  <RPD_History_BeforePersona>更新前 Persona</RPD_History_BeforePersona>
+  <RPD_History_AfterPersona>更新后 Persona</RPD_History_AfterPersona>
+  <RPD_History_CurrentPersona>当前 Persona</RPD_History_CurrentPersona>
+  <RPD_History_Empty>空。</RPD_History_Empty>
+  <RPD_History_RestoreButton>恢复此版本</RPD_History_RestoreButton>
+  <RPD_History_RestoreBeforeConfirm>确定要用更新前 Persona 覆盖当前人设吗？</RPD_History_RestoreBeforeConfirm>
+  <RPD_History_RestoreAfterConfirm>确定要用更新后 Persona 覆盖当前人设吗？</RPD_History_RestoreAfterConfirm>
+  <RPD_History_RestoreSuccess>已将{0}的人设恢复到旧版本。</RPD_History_RestoreSuccess>
+  <RPD_History_SystemRestore>[系统]：用户恢复了先前版本。</RPD_History_SystemRestore>
+
+  <!-- Window_BatchDirector - Tabs -->
+  <RPD_Tab_ManualGeneration>手动生成</RPD_Tab_ManualGeneration>
+  <RPD_Tab_AutoEvolution>自动更新</RPD_Tab_AutoEvolution>
+
+  <!-- Window_BatchDirector - Auto-Evolve Settings -->
+  <RPD_AutoEvolve_Enable>启用自动更新</RPD_AutoEvolve_Enable>
+  <RPD_AutoEvolve_EnableTooltip>自动更新总开关。还需在 Mod 总设置中开启「启用附加功能」；关闭任一开关，自动更新都不会运行。</RPD_AutoEvolve_EnableTooltip>
+  <RPD_AutoEvolve_DefaultEnabled>新 Pawn 默认启用</RPD_AutoEvolve_DefaultEnabled>
+  <RPD_AutoEvolve_DefaultEnabledTip>决定新生成 Pawn 的自动更新初始状态，不会覆盖已有 Pawn 的独立设置。</RPD_AutoEvolve_DefaultEnabledTip>
+  <RPD_AutoEvolve_Triggers>身份／事件触发</RPD_AutoEvolve_Triggers>
+  <RPD_AutoEvolve_RoleTriggers>身份变化</RPD_AutoEvolve_RoleTriggers>
+  <RPD_AutoEvolve_EventTriggers>事件</RPD_AutoEvolve_EventTriggers>
+  <RPD_AutoEvolve_TriggersTip>身份分类选项控制身份变化；可选事件会按 Pawn 合并后再请求更新。</RPD_AutoEvolve_TriggersTip>
+  <RPD_AutoEvolve_RoleChangeTip>地图上的 Pawn 变为此身份时：若仍在使用初始人设且自动生成总开关与此分类均已启用，则优先自动生成；否则在自动更新总开关及该 Pawn 独立开关允许时尝试自动更新。自动更新不受自动生成分类开关限制。</RPD_AutoEvolve_RoleChangeTip>
+  <RPD_AutoEvolve_EventMarriage>结婚</RPD_AutoEvolve_EventMarriage>
+  <RPD_AutoEvolve_EventMarriageTip>结婚后更新双方中符合条件的 Pawn。</RPD_AutoEvolve_EventMarriageTip>
+  <RPD_AutoEvolve_EventBreakup>离婚／分手</RPD_AutoEvolve_EventBreakup>
+  <RPD_AutoEvolve_EventBreakupTip>离婚或分手后更新双方中符合条件的 Pawn。</RPD_AutoEvolve_EventBreakupTip>
+  <RPD_AutoEvolve_EventBirth>生育</RPD_AutoEvolve_EventBirth>
+  <RPD_AutoEvolve_EventBirthTip>每批出生只更新一次符合条件的父母，并忽略后台世界 Pawn。</RPD_AutoEvolve_EventBirthTip>
+  <RPD_AutoEvolve_EventDirectFamilyDeath>直系亲属死亡</RPD_AutoEvolve_EventDirectFamilyDeath>
+  <RPD_AutoEvolve_EventDirectFamilyDeathTip>配偶、父母或子女死亡时，更新仍存活且符合条件的 Pawn。</RPD_AutoEvolve_EventDirectFamilyDeathTip>
+  <RPD_AutoEvolve_EventTraitAdded>新增特质</RPD_AutoEvolve_EventTraitAdded>
+  <RPD_AutoEvolve_EventTraitAddedTip>Pawn 在生成完成后获得新的生效特质时进行更新。</RPD_AutoEvolve_EventTraitAddedTip>
+  <RPD_AutoEvolve_Mode>模式</RPD_AutoEvolve_Mode>
+  <RPD_AutoEvolve_ModeTooltip>手动与自动更新共用此模式。\n追加：在末尾添加新事件。\n覆盖：重写整个人设。</RPD_AutoEvolve_ModeTooltip>
+  <RPD_AutoEvolve_Notify>通知</RPD_AutoEvolve_Notify> 
+  <RPD_AutoEvolve_ModeAppend>追加</RPD_AutoEvolve_ModeAppend>
+  <RPD_AutoEvolve_ModeOverwrite>覆盖</RPD_AutoEvolve_ModeOverwrite>
+  <RPD_AutoEvolve_NotifySilent>静默</RPD_AutoEvolve_NotifySilent>
+  <RPD_AutoEvolve_NotifyTopLeftMessage>左上角消息</RPD_AutoEvolve_NotifyTopLeftMessage>
+  <RPD_AutoEvolve_SpeedProtectOff>倍速时跳过：关闭</RPD_AutoEvolve_SpeedProtectOff> 
+  <RPD_AutoEvolve_SpeedProtect>倍速时跳过</RPD_AutoEvolve_SpeedProtect>
+  <RPD_AutoEvolve_SpeedProtectTooltip>防止快进游戏时API请求过多。</RPD_AutoEvolve_SpeedProtectTooltip>
+  <RPD_AutoEvolve_AdvancedPreset>高级预设</RPD_AutoEvolve_AdvancedPreset>
+  <RPD_AutoEvolve_AdvancedPresetTooltip>高级预设不会自动追加更新资料、事件或 JSON 指令；请自行引用变量并要求返回 persona JSON。选择“无”则使用内置提示词。</RPD_AutoEvolve_AdvancedPresetTooltip>
+  <RPD_AutoEvolve_SpeedDisabled>始终运行</RPD_AutoEvolve_SpeedDisabled>
+  <RPD_AutoEvolve_Speed2X>>=2倍速时停止</RPD_AutoEvolve_Speed2X>
+  <RPD_AutoEvolve_Speed3X>>=3倍速时停止</RPD_AutoEvolve_Speed3X>
+  <RPD_AutoEvolve_Speed4X>>=4倍速时停止</RPD_AutoEvolve_Speed4X>
+  <!-- Window_BatchDirector - Auto-Evolve List Headers -->
+  <RPD_AutoEvolve_HeaderName>名字</RPD_AutoEvolve_HeaderName>
+  <RPD_AutoEvolve_HeaderRace>种族</RPD_AutoEvolve_HeaderRace>
+  <RPD_AutoEvolve_HeaderFaction>派系</RPD_AutoEvolve_HeaderFaction>
+  <RPD_AutoEvolve_HeaderTag>标签</RPD_AutoEvolve_HeaderTag>
+  <RPD_AutoEvolve_HeaderAuto>状态</RPD_AutoEvolve_HeaderAuto>
+  <RPD_AutoEvolve_HeaderAutoTip>该 Pawn 的独立自动更新开关。</RPD_AutoEvolve_HeaderAutoTip>
+  <RPD_AutoEvolve_HeaderCycle>周期(天)</RPD_AutoEvolve_HeaderCycle>
+  <RPD_AutoEvolve_HeaderNext>下次更新(天)</RPD_AutoEvolve_HeaderNext>
+  <RPD_AutoEvolve_HeaderActions>操作</RPD_AutoEvolve_HeaderActions>
+  <RPD_AutoEvolve_Pending>等待中...</RPD_AutoEvolve_Pending>
+  <RPD_AutoEvolve_ScheduleDisabled>定时更新关闭</RPD_AutoEvolve_ScheduleDisabled>
+  <RPD_AutoEvolve_NextIn>{0} 天后</RPD_AutoEvolve_NextIn>
+  <RPD_AutoEvolve_ButtonEdit>编辑</RPD_AutoEvolve_ButtonEdit>
+  <RPD_AutoEvolve_ButtonHistory>历史</RPD_AutoEvolve_ButtonHistory>
+  <RPD_AutoEvolve_SelectedCount>已选：{0}</RPD_AutoEvolve_SelectedCount>
+  <RPD_AutoEvolve_EnableSelected>启用</RPD_AutoEvolve_EnableSelected>
+  <RPD_AutoEvolve_DisableSelected>禁用</RPD_AutoEvolve_DisableSelected>
+  <RPD_AutoEvolve_BatchInterval>周期天数：</RPD_AutoEvolve_BatchInterval>
+  <RPD_AutoEvolve_ApplyInterval>应用</RPD_AutoEvolve_ApplyInterval>
+  <RPD_AutoEvolve_ClearSelection>清除选择</RPD_AutoEvolve_ClearSelection>
+  <RPD_AutoEvolve_BatchIntervalTip>将周期应用到已选 Pawn。输入 0 或负数会关闭定时更新，但仍允许身份与事件触发。</RPD_AutoEvolve_BatchIntervalTip>
+  <!-- Patch_ManualSave -->
+  <RPD_ManualEdit>[手动编辑]</RPD_ManualEdit>
+  <RPD_History_AutoGen>[AI 自动生成]</RPD_History_AutoGen>
 </LanguageData>

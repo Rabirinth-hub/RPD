@@ -11,8 +11,7 @@ namespace RimPersonaDirector
     {
         static Patcher()
         {
-            var harmony = new Harmony("com.yourname.rimtalk.director");
-            harmony.PatchAll();
+            DirectorPatchRegistry.ApplyCorePatches();
         }
     }
 

@@ -21,6 +21,11 @@ namespace RimPersonaDirector
 {
     public static class DirectorUtils
     {
+        public static bool UsesGlobalPlayerPersona(Pawn pawn)
+        {
+            return pawn != null && PawnUtil.IsPlayer(pawn);
+        }
+
         // Helper: normalize chattiness to new 0..1 scale by halving values > 1.0
         public static float NormalizeChattiness(float chattiness)
         {
@@ -183,7 +188,7 @@ namespace RimPersonaDirector
             }
             catch (Exception e)
             {
-                Log.Error($"[Director] Generation failed: {e.Message}");
+                Log.Error($"[Director] Generation failed: {UnwrapInvocationException(e)}");
                 return new PersonalityData("Error generating persona.", 0.5f);
             }
         }
@@ -213,23 +218,62 @@ namespace RimPersonaDirector
             }
             catch (Exception e)
             {
-                Log.Error($"[Director] Batch Gen failed: {e.Message}");
+                Log.Error($"[Director] Batch Gen failed: {UnwrapInvocationException(e)}");
                 return null;
             }
         }
 
+        private static Exception UnwrapInvocationException(Exception exception)
+        {
+            while (exception is TargetInvocationException && exception.InnerException != null)
+            {
+                exception = exception.InnerException;
+            }
+            return exception;
+        }
+
         //  2. 应用逻辑
 
-        public static void ApplyPersonalityToPawn(Pawn pawn, PersonalityData data)
+        public static void ApplyPersonalityToPawn(
+            Pawn pawn,
+            PersonalityData data,
+            bool recordHistory = true)
         {
             if (pawn == null || pawn.Destroyed || data == null) return;
 
             try
             {
+                string target = data.Persona?.Trim();
+                if (string.IsNullOrEmpty(target)) return;
+
+                bool personaApplied;
+                if (recordHistory
+                    && DirectorFeatureGate.ExperimentalEnabled
+                    && !UsesGlobalPlayerPersona(pawn))
+                {
+                    string snapshot = BuildCustomCharacterData(pawn, true, false);
+                    string context = "RPD_ManualEdit".Translate() + "\n\n" + snapshot;
+                    personaApplied = DirectorHistoryService.ApplyWithHistory(
+                        pawn,
+                        target,
+                        context,
+                        true);
+                }
+                else
+                {
+                    personaApplied = DirectorHistoryService.ApplyWithoutHistory(pawn, target);
+                }
+
+                if (!personaApplied) return;
+
+                if (recordHistory)
+                {
+                    Find.World?.GetComponent<DirectorWorldComponent>()?.MarkAsProcessed(pawn);
+                }
+
                 var hediff = Hediff_Persona.GetOrAddNew(pawn);
                 if (hediff != null)
                 {
-                    hediff.Personality = data.Persona.Trim();
                     // 状态激活
                     hediff.Severity = 1.0f;
 
@@ -413,9 +457,29 @@ namespace RimPersonaDirector
             }
         }
 
-        private static FieldInfo contentField;
-        private static FieldInfo timestampField;
-        private static FieldInfo typeField;
+        private static Type memoryMemberType;
+        private static MemberInfo contentMember;
+        private static MemberInfo timestampMember;
+        private static MemberInfo typeMember;
+        private static MemberInfo ageStringMember;
+
+        private static MemberInfo FindMemoryMember(Type type, params string[] names)
+        {
+            foreach (string name in names)
+            {
+                MemberInfo member = (MemberInfo)AccessTools.Property(type, name) ?? AccessTools.Field(type, name);
+                if (member != null) return member;
+            }
+            return null;
+        }
+
+        private static object ReadMemoryMember(MemberInfo member, object entry)
+        {
+            if (member is PropertyInfo property) return property.GetValue(entry, null);
+            if (member is FieldInfo field) return field.GetValue(entry);
+            return null;
+        }
+
         /// 辅助方法：读取记忆列表，并根据时间戳过滤“新”记忆
         /// </summary>
         /// <param name="lastTick">上次更新的时间 (TicksGame)。如果为 -1，则不进行时间过滤，直接取最新的。</param>
@@ -427,10 +491,21 @@ namespace RimPersonaDirector
 
             var firstEntryType = rawEntries[0].GetType();
 
-            // 初始化反射字段 (保持不变)
-            if (contentField == null) contentField = AccessTools.Field(firstEntryType, "content");
-            if (timestampField == null) timestampField = AccessTools.Field(firstEntryType, "timestamp");
-            if (typeField == null) typeField = AccessTools.Field(firstEntryType, "type");
+            if (memoryMemberType != firstEntryType)
+            {
+                memoryMemberType = firstEntryType;
+                contentMember = FindMemoryMember(firstEntryType, "Content", "content");
+                timestampMember = FindMemoryMember(firstEntryType, "GameTick", "timestamp");
+                typeMember = FindMemoryMember(firstEntryType, "Type", "type", "TypeName");
+                ageStringMember = FindMemoryMember(firstEntryType, "AgeString", "TimeAgoString");
+            }
+
+            if (contentMember == null)
+            {
+                if (DirectorMod.Settings.EnableDebugLog)
+                    Log.Warning($"[Director] Expand Memory entry '{firstEntryType.FullName}' has no compatible content member.");
+                return;
+            }
 
             var newMemoryLines = new List<string>();
 
@@ -439,23 +514,23 @@ namespace RimPersonaDirector
                 if (newMemoryLines.Count >= limit) break;
 
                 // --- 时间戳过滤 ---
-                int memTick = (timestampField != null) ? (int)timestampField.GetValue(entry) : 0;
+                object tickValue = ReadMemoryMember(timestampMember, entry);
+                int memTick = tickValue != null ? Convert.ToInt32(tickValue) : 0;
                 if (lastTick > 0 && memTick <= lastTick) break;
 
-                string content = (string)contentField?.GetValue(entry);
+                string content = ReadMemoryMember(contentMember, entry) as string;
                 if (string.IsNullOrEmpty(content)) continue;
 
                 // --- 类型名称 ---
                 string typeName = "Memory";
-                if (typeField != null)
+                if (typeMember != null)
                 {
-                    object typeEnum = typeField.GetValue(entry);
+                    object typeEnum = ReadMemoryMember(typeMember, entry);
                     if (typeEnum != null) typeName = typeEnum.ToString();
                 }
 
-                // ★★★ 核心修复：自己计算时间，生成英文描述 ★★★
-                string timeAgo = "";
-                if (memTick > 0)
+                string timeAgo = ReadMemoryMember(ageStringMember, entry) as string;
+                if (string.IsNullOrEmpty(timeAgo) && memTick > 0)
                 {
                     int ticksElapsed = GenTicks.TicksGame - memTick;
                     int daysElapsed = ticksElapsed / GenDate.TicksPerDay;
@@ -493,9 +568,6 @@ namespace RimPersonaDirector
         private static Type _memoryCompType;
         private static Type _memoryEntryType;
         private static PropertyInfo longTermProp, midTermProp, shortTermProp;
-        private static FieldInfo _contentField;
-        private static PropertyInfo _timeAgoProp; // TimeAgoString 是属性
-        private static PropertyInfo _typeNameProp; // TypeName 是属性
 
         public static string GetExternalMemories(Pawn p, int lastTick)
         {
@@ -515,13 +587,6 @@ namespace RimPersonaDirector
                         longTermProp = AccessTools.Property(_memoryCompType, "ArchiveMemories");
                         midTermProp = AccessTools.Property(_memoryCompType, "EventLogMemories");
                         shortTermProp = AccessTools.Property(_memoryCompType, "SituationalMemories");
-                    }
-
-                    if (_memoryEntryType != null)
-                    {
-                        _contentField = AccessTools.Field(_memoryEntryType, "content");
-                        _timeAgoProp = AccessTools.Property(_memoryEntryType, "TimeAgoString");
-                        _typeNameProp = AccessTools.Property(_memoryEntryType, "TypeName");
                     }
                 }
 
@@ -712,32 +777,41 @@ namespace RimPersonaDirector
                         StringBuilder systemSb = new StringBuilder();
                         StringBuilder userSb = new StringBuilder();
 
-                        // 3. ★★★ 核心修复：遍历所有条目并渲染 ★★★
-                        foreach (var entry in targetPreset.Entries)
+                        // Only expose update-specific variables while rendering this Evolve request.
+                        bool previousEvolveRendering = DirectorApiAdapter.RenderingAdvancedEvolve;
+                        try
                         {
-                            if (!entry.Enabled) continue;
-
-                            // 渲染这一条的内容
-                            string renderedText = (string)renderMethod.Invoke(null, new object[] { entry.Content, contextObj, true });
-
-                            if (string.IsNullOrWhiteSpace(renderedText)) continue;
-
-                            // 根据角色拼接到不同的缓冲区
-                            // RimTalk.Data.Role 枚举: System, User, AI
-                            // PromptEntry.Role 可能是字符串也可能是枚举，我们要判断
-                            string roleStr = entry.Role.ToString().ToLowerInvariant();
-
-                            if (roleStr == "system")
+                            DirectorApiAdapter.RenderingAdvancedEvolve = true;
+                            foreach (var entry in targetPreset.Entries)
                             {
-                                if (systemSb.Length > 0) systemSb.AppendLine("\n");
-                                systemSb.Append(renderedText);
+                                if (!entry.Enabled) continue;
+
+                                // 渲染这一条的内容
+                                string renderedText = (string)renderMethod.Invoke(null, new object[] { entry.Content, contextObj, true });
+
+                                if (string.IsNullOrWhiteSpace(renderedText)) continue;
+
+                                // 根据角色拼接到不同的缓冲区
+                                // RimTalk.Data.Role 枚举: System, User, AI
+                                // PromptEntry.Role 可能是字符串也可能是枚举，我们要判断
+                                string roleStr = entry.Role.ToString().ToLowerInvariant();
+
+                                if (roleStr == "system")
+                                {
+                                    if (systemSb.Length > 0) systemSb.AppendLine("\n");
+                                    systemSb.Append(renderedText);
+                                }
+                                else
+                                {
+                                    // User 或 Assistant 都作为 Prompt 的一部分
+                                    if (userSb.Length > 0) userSb.AppendLine("\n");
+                                    userSb.Append(renderedText);
+                                }
                             }
-                            else
-                            {
-                                // User 或 Assistant 都作为 Prompt 的一部分
-                                if (userSb.Length > 0) userSb.AppendLine("\n");
-                                userSb.Append(renderedText);
-                            }
+                        }
+                        finally
+                        {
+                            DirectorApiAdapter.RenderingAdvancedEvolve = previousEvolveRendering;
                         }
 
                         // 4. 加上 JSON 协议 (这是硬性要求，必须加在最后)
@@ -809,10 +883,8 @@ namespace RimPersonaDirector
                         contextSb.AppendLine($"[Director's Notes]\n{DirectorMod.Settings.directorNotes}\n");
 
                     string memories = GetExternalMemories(p, lastTick);
-                    if (!string.IsNullOrEmpty(memories))
+                    if (!string.IsNullOrWhiteSpace(memories))
                         contextSb.AppendLine($"[New Memories]\n{memories}\n");
-                    else
-                        contextSb.AppendLine("[New Memories]\nNo new significant memories since last update.\n");
 
                     if (ctx.Inc_CommonKnowledge)
                     {
@@ -824,12 +896,13 @@ namespace RimPersonaDirector
                         if (!string.IsNullOrEmpty(DirectorMod.Settings.directorNotes)) searchSource.Append($"{DirectorMod.Settings.directorNotes} ");
 
                         string ck = GetCommonKnowledge(searchSource.ToString(), p);
-                        if (!string.IsNullOrEmpty(ck))
+                        if (!string.IsNullOrWhiteSpace(ck))
                             contextSb.AppendLine($"[Common Knowledge]\n{ck}\n");
                     }
 
                     // 组装最终结果
-                    string userInstruction = DirectorMod.Settings.presets[3].text.Replace("{LANG}", Constant.Lang);
+                    int presetIndex = DirectorMod.Settings.autoMode == AutoEvolveMode.Overwrite ? 4 : 3;
+                    string userInstruction = DirectorMod.Settings.presets[presetIndex].text.Replace("{LANG}", Constant.Lang);
                     string technicalProtocol = DirectorSettings.HiddenTechnicalPrompt_Single;
 
                     // 指令进 Context
@@ -1250,8 +1323,23 @@ namespace RimPersonaDirector
         // ★ 核心修改：无差别的通用数据提取器 ★
         public static string BuildCustomCharacterData(Pawn p, bool isSnapshot = false, bool simpleEquipment = false)
         {
+            return BuildCustomCharacterData(
+                p,
+                DirectorMod.Settings?.Context,
+                DirectorMod.Settings?.directorNotes,
+                isSnapshot,
+                simpleEquipment);
+        }
+
+        internal static string BuildCustomCharacterData(
+            Pawn p,
+            ContextSettings context,
+            string directorNotes,
+            bool isSnapshot,
+            bool simpleEquipment)
+        {
             StringBuilder sb = new StringBuilder();
-            var ctx = DirectorMod.Settings.Context;
+            ContextSettings ctx = context ?? new ContextSettings();
             string data = DirectorDataEngine.BuildCompleteData(p, simpleEquipment);
 
             try
@@ -1638,8 +1726,8 @@ namespace RimPersonaDirector
             {
                 if (ctx.Inc_RimPsyche)
                 {
-                    string psyData = GetMauxRimPsycheData(p);
-                    if (!string.IsNullOrEmpty(psyData))
+                    string psyData = GetMauxRimPsycheData(p, ctx.Inc_RimPsyche_All);
+                    if (!string.IsNullOrWhiteSpace(psyData))
                     {
                         sb.AppendLine("\n--- RimPsyche ---");
                         sb.Append(psyData);
@@ -1652,10 +1740,10 @@ namespace RimPersonaDirector
             {
                 try
                 {
-                    if (ctx.Inc_DirectorNotes && !string.IsNullOrEmpty(DirectorMod.Settings.directorNotes))
+                    if (ctx.Inc_DirectorNotes && !string.IsNullOrEmpty(directorNotes))
                     {
                         sb.AppendLine("\n--- Director's Notes (Custom Context) ---");
-                        sb.AppendLine(DirectorMod.Settings.directorNotes);
+                        sb.AppendLine(directorNotes);
                     }
                 }
                 catch { }
@@ -1665,7 +1753,7 @@ namespace RimPersonaDirector
                     // 传入 -1，表示不根据时间过滤，直接读取最新的几条
                     string mems = GetExternalMemories(p, -1);
 
-                    if (!string.IsNullOrEmpty(mems))
+                    if (!string.IsNullOrWhiteSpace(mems))
                     {
                         sb.AppendLine("\n--- Memories ---");
                         sb.AppendLine(mems);
@@ -1677,7 +1765,7 @@ namespace RimPersonaDirector
                 {
                     // ★ 传入 p ★
                     string ck = GetCommonKnowledge(sb.ToString(), p);
-                    if (!string.IsNullOrEmpty(ck))
+                    if (!string.IsNullOrWhiteSpace(ck))
                     {
                         sb.AppendLine("\n--- Common Knowledge ---");
                         sb.AppendLine(ck);
@@ -1828,6 +1916,12 @@ namespace RimPersonaDirector
 
         public static string GetMauxRimPsycheData(Pawn p)
         {
+            bool showAll = DirectorMod.Settings?.Context?.Inc_RimPsyche_All ?? false;
+            return GetMauxRimPsycheData(p, showAll);
+        }
+
+        private static string GetMauxRimPsycheData(Pawn p, bool showAll)
+        {
             StringBuilder psySb = new StringBuilder();
             object comp = p.AllComps.FirstOrDefault(c => c.GetType().FullName.Contains("RimPsyche") || c.GetType().Name.Contains("Psyche"));
             if (comp == null) return "";
@@ -1839,12 +1933,13 @@ namespace RimPersonaDirector
                     MethodInfo method = AccessTools.Method(utilityType, "GetPersonalityDescriptionWord", new Type[] { typeof(Pawn), typeof(int) });
                     if (method != null)
                     {
-                        int limit = DirectorMod.Settings.Context.Inc_RimPsyche_All ? 0 : 5;
+                        int limit = showAll ? 0 : 5;
                         object result = method.Invoke(null, new object[] { p, limit });
-                        if (result != null)
+                        string profile = result as string;
+                        if (!string.IsNullOrWhiteSpace(profile))
                         {
                             psySb.AppendLine("- Personality Profile:");
-                            psySb.AppendLine((string)result);
+                            psySb.AppendLine(profile);
                         }
                     }
                 }
@@ -1880,7 +1975,6 @@ namespace RimPersonaDirector
                                 string key = entry.Key.ToString();
                                 float score = Convert.ToSingle(entry.Value);
                                 bool isSignificant = score > 20f || score < -20f;
-                                bool showAll = DirectorMod.Settings.Context.Inc_RimPsyche_All;
                                 if (showAll || isSignificant)
                                 {
                                     string detail = GetInterestDetails(key);

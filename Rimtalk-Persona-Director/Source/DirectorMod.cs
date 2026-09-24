@@ -30,8 +30,8 @@ namespace RimPersonaDirector
         {
             // --- 1. 计算内容总高度 (预估) ---
             // 标题(30) + 按钮(30) + 开关(24*4) + 过滤器(200+) + 模板选择(60) + Prompt编辑(300+)
-            // 给一个足够大的高度，或者动态计算。这里给 1200f 足够了。
-            float contentHeight = 1200f;
+            // 给一个足够大的高度，或者动态计算。为附加功能安全面板预留空间。
+            float contentHeight = 1300f;
             Rect viewRect = new Rect(0, 0, inRect.width - 16f, contentHeight);
 
             // --- 2. 开始全局滚动视图 ---
@@ -60,6 +60,16 @@ namespace RimPersonaDirector
             // ==========================================
             //  B. 全局开关
             // ==========================================
+            DrawExperimentalSafetySettings(list);
+
+            if (DirectorFeatureGate.ExperimentalEnabled)
+            {
+                DrawAutoGenSettings(list);
+                DrawAutoEvolveSettings(list);
+            }
+
+            list.GapLine();
+
             list.CheckboxLabeled("RPD_Settings_ShowMainButton".Translate(), ref Settings.ShowMainButton, "RPD_Settings_ShowMainButtonTip".Translate());
 
             list.CheckboxLabeled("RPD_Filter_DirectorNotes".Translate(), ref Settings.Context.Inc_DirectorNotes, "RPD_Tip_NotesDesc".Translate());
@@ -137,14 +147,125 @@ namespace RimPersonaDirector
 
             list.End();
             Widgets.EndScrollView();
+        }
 
-            Settings.Write();
+        private void DrawExperimentalSafetySettings(Listing_Standard list)
+        {
+            bool currentValue = DirectorFeatureGate.ExperimentalEnabled;
+            bool requestedValue = currentValue;
+
+            GUI.enabled = !Settings.experimentalCircuitBroken;
+            list.CheckboxLabeled(
+                "RPD_Experimental_Enable".Translate(),
+                ref requestedValue,
+                "RPD_Experimental_EnableTip".Translate());
+            GUI.enabled = true;
+
+            if (requestedValue != currentValue)
+            {
+                if (requestedValue)
+                {
+                    Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation(
+                        "RPD_Experimental_EnableConfirm".Translate(),
+                        () => DirectorFeatureGate.SetEnabled(true),
+                        destructive: false));
+                }
+                else
+                {
+                    DirectorFeatureGate.SetEnabled(false);
+                }
+            }
+
+            if (!DirectorFeatureGate.ExperimentalEnabled)
+            {
+                GUI.color = Color.gray;
+                Text.Font = GameFont.Tiny;
+                list.Label("RPD_Experimental_CoreMode".Translate());
+                Text.Font = GameFont.Small;
+                GUI.color = Color.white;
+            }
+
+            if (Settings.experimentalCircuitBroken)
+            {
+                string reason = Settings.experimentalCircuitBreakReason ?? "";
+                if (reason.StartsWith("RPD_", StringComparison.Ordinal))
+                {
+                    reason = reason.Translate();
+                }
+
+                GUI.color = new Color(1f, 0.5f, 0.5f);
+                list.Label("RPD_Experimental_FuseReason".Translate(reason));
+                GUI.color = Color.white;
+
+                if (list.ButtonText("RPD_Experimental_ClearError".Translate()))
+                {
+                    DirectorFeatureGate.ClearCircuitBreak();
+                }
+            }
+        }
+
+        private void DrawAutoGenSettings(Listing_Standard list)
+        {
+            Rect rowRect = list.GetRect(24f);
+            Rect toggleRect = rowRect.LeftPart(0.72f);
+            Rect buttonRect = rowRect.RightPart(0.25f);
+
+            bool requestedValue = Settings.autoGenEnabled;
+            Widgets.CheckboxLabeled(
+                toggleRect,
+                "RPD_Settings_EnableAutoGen".Translate(),
+                ref requestedValue);
+            TooltipHandler.TipRegion(toggleRect, "RPD_Settings_EnableAutoGenTip".Translate());
+
+            if (requestedValue != Settings.autoGenEnabled)
+            {
+                Settings.autoGenEnabled = requestedValue;
+                DirectorFeatureGate.ResetTransientWork();
+                Settings.Write();
+            }
+
+            if (Widgets.ButtonText(buttonRect, "RPD_Settings_ConfigAutoGen".Translate()))
+            {
+                Settings.EnsureAutoGenCategories();
+                Find.WindowStack.Add(new Window_AutoGenConfig());
+            }
+            TooltipHandler.TipRegion(buttonRect, "RPD_Settings_ConfigAutoGenTip".Translate());
+        }
+
+        private void DrawAutoEvolveSettings(Listing_Standard list)
+        {
+            Rect rowRect = list.GetRect(24f);
+            Rect toggleRect = rowRect.LeftPart(0.72f);
+            Rect buttonRect = rowRect.RightPart(0.25f);
+
+            bool enabled = Settings.globalAutoEvolveEnabled;
+            Widgets.CheckboxLabeled(
+                toggleRect,
+                "RPD_AutoEvolve_Enable".Translate(),
+                ref enabled);
+            TooltipHandler.TipRegion(toggleRect, "RPD_AutoEvolve_EnableTooltip".Translate());
+
+            if (enabled != Settings.globalAutoEvolveEnabled)
+            {
+                Settings.globalAutoEvolveEnabled = enabled;
+                DirectorFeatureGate.ResetTransientWork();
+                Settings.Write();
+            }
+
+            if (Widgets.ButtonText(buttonRect, "RPD_Tab_AutoEvolution".Translate()))
+            {
+                Find.WindowStack.Add(new Window_AutoEvolveConfig());
+            }
         }
 
         private void DrawPromptSection(Listing_Standard list, float width)
         {
             var settings = Settings;
-            if (settings.presets == null || settings.presets.Count < 4) settings.InitPresets();
+            if (settings.presets == null || settings.presets.Count < 5) settings.InitPresets();
+            settings.selectedPresetIndex = Mathf.Clamp(
+                settings.selectedPresetIndex,
+                0,
+                settings.presets.Count - 1);
 
             var currentPreset = settings.presets[settings.selectedPresetIndex];
 
@@ -158,6 +279,7 @@ namespace RimPersonaDirector
                 else if (settings.selectedPresetIndex == 1) { currentPreset.label = "Simple (One Shot)"; currentPreset.text = DirectorSettings.DefaultPrompt_Simple; }
                 else if (settings.selectedPresetIndex == 2) { currentPreset.label = "Strict (Backstory)"; currentPreset.text = DirectorSettings.DefaultPrompt_Strict; }
                 else if (settings.selectedPresetIndex == 3) { currentPreset.label = "Evolution (Update Only)"; currentPreset.text = DirectorSettings.DefaultPrompt_Evolve; }
+                else if (settings.selectedPresetIndex == 4) { currentPreset.label = "Evolution (Overwrite)"; currentPreset.text = DirectorSettings.DefaultPrompt_Overwrite; }
             }
 
             GUI.color = Color.gray;
@@ -218,132 +340,11 @@ namespace RimPersonaDirector
 
         private void DrawContextFilterSettings(Listing_Standard listingStandard)
         {
-            var ctx = Settings.Context;
-
-            listingStandard.Label("RPD_Setting_FilterLabel".Translate());
-            listingStandard.Gap(5f);
-
-            // 3. 计算列宽
-            const float colGap = 10f; // 稍微紧凑一点
-            int colCount = 3;
-            // 总宽度减去间隙，除以列数
-            float colWidth = (listingStandard.ColumnWidth - (colGap * (colCount - 1))) / colCount;
-
-            // 获取当前 Y 轴位置
-            Rect positionRect = listingStandard.GetRect(0f);
-            float startY = positionRect.y;
-
-            // =================================================
-            // 第一列：生物与背景 (Biology & Background) - 6项
-            // =================================================
-            Rect col1Rect = new Rect(positionRect.x, startY, colWidth, 9999f);
-            Listing_Standard list1 = new Listing_Standard { ColumnWidth = colWidth };
-            list1.Begin(col1Rect);
-
-            DrawHeader(list1, "RPD_Group_Bio".Translate());
-            DrawFilterRow(list1, "RPD_Filter_Basic".Translate(), ref ctx.Inc_Basic);
-            DrawFilterRow(list1, "RPD_Filter_Race".Translate(), ref ctx.Inc_Race, ref ctx.Inc_Race_Desc);
-            DrawFilterRow(list1, "RPD_Filter_Genes".Translate(), ref ctx.Inc_Genes, ref ctx.Inc_Genes_Desc, "RPD_Tip_GenesDesc".Translate());
-            DrawFilterRow(list1, "RPD_Filter_Backstory".Translate(), ref ctx.Inc_Backstory, ref ctx.Inc_Backstory_Desc);
-            DrawFilterRow(list1, "RPD_Filter_Relations".Translate(), ref ctx.Inc_Relations);
-            DrawFilterRow(list1, "RPD_Filter_DirectorNotes".Translate(), ref ctx.Inc_DirectorNotes, "RPD_Tip_NotesDesc".Translate());
-
-            list1.End();
-
-            // =================================================
-            // 第二列：特征与状态 (Traits & Status) - 6项
-            // =================================================
-            Rect col2Rect = new Rect(col1Rect.xMax + colGap, startY, colWidth, 9999f);
-            Listing_Standard list2 = new Listing_Standard { ColumnWidth = colWidth };
-            list2.Begin(col2Rect);
-
-            DrawHeader(list2, "RPD_Group_Traits".Translate());
-            DrawFilterRow(list2, "RPD_Filter_Traits".Translate(), ref ctx.Inc_Traits, ref ctx.Inc_Traits_Desc);
-            DrawFilterRow(list2, "RPD_Filter_Ideology".Translate(), ref ctx.Inc_Ideology, ref ctx.Inc_Ideology_Desc);
-            DrawFilterRow(list2, "RPD_Filter_Skills".Translate(), ref ctx.Inc_Skills, ref ctx.Inc_Skills_Desc);
-            DrawFilterRow(list2, "RPD_Filter_Health".Translate(), ref ctx.Inc_Health, ref ctx.Inc_Health_Desc);
-            DrawFilterRow(list2, "RPD_Filter_Equipment".Translate(), ref ctx.Inc_Equipment);
-            DrawFilterRow(list2, "RPD_Filter_Inventory".Translate(), ref ctx.Inc_Inventory);
-
-            list2.End();
-
-            // =================================================
-            // 第三列：外部数据源 (External Data) - 动态显示
-            // =================================================
-            Rect col3Rect = new Rect(col2Rect.xMax + colGap, startY, colWidth, 9999f);
-            Listing_Standard list3 = new Listing_Standard { ColumnWidth = colWidth };
-            list3.Begin(col3Rect);
-
-            DrawHeader(list3, "RPD_Group_ExternalData".Translate());
-
-            DrawFilterRow(list3, "RPD_Filter_DataComparison".Translate(), ref ctx.Inc_DataComparison);
-
-            // 1. RimPsyche
-            if (_isRimPsycheLoaded)
-            {
-                    DrawFilterRow(list3, "RPD_Filter_RimPsyche".Translate(), ref ctx.Inc_RimPsyche, ref ctx.Inc_RimPsyche_All, "RPD_Tip_RimPsyche".Translate());
-            }
-
-            // 2. Memory Mod
-            if (ModsConfig.IsActive("cj.rimtalk.expandmemory"))
-            {
-                    DrawFilterRow(list3, "RPD_Filter_Memories".Translate(), ref ctx.Inc_Memories);
-                    DrawFilterRow(list3, "RPD_Filter_CommonKnowledge".Translate(), ref ctx.Inc_CommonKnowledge);
-            }
-
-
-                list3.End();
-
-            // =================================================
-            // 布局收尾
-            // =================================================
-            // 计算三列中最高的一列，撑开主 Listing 的高度，防止内容重叠
-            float maxHeight = Mathf.Max(list1.CurHeight, list2.CurHeight);
-            maxHeight = Mathf.Max(maxHeight, list3.CurHeight);
-
-            listingStandard.Gap(maxHeight);
+            DirectorContextSettingsDrawer.Draw(
+                listingStandard,
+                Settings.Context,
+                _isRimPsycheLoaded);
         }
 
-        private void DrawFilterRow(Listing_Standard list, string label, ref bool nameSwitch, ref bool descSwitch, string descTooltip = null)
-        {
-            Rect rowRect = list.GetRect(24f);
-
-            float descCheckboxWidth = 24f;
-            float descCheckboxPadding = 5f;
-
-            Rect mainLabelRect = new Rect(rowRect.x, rowRect.y, rowRect.width - descCheckboxWidth - descCheckboxPadding, rowRect.height);
-            Widgets.CheckboxLabeled(mainLabelRect, label, ref nameSwitch);
-
-            if (!nameSwitch) GUI.enabled = false;
-
-            Rect descRect = new Rect(rowRect.xMax - descCheckboxWidth, rowRect.y, descCheckboxWidth, rowRect.height);
-            Widgets.Checkbox(descRect.position, ref descSwitch, descCheckboxWidth, !nameSwitch);
-
-            GUI.enabled = true;
-
-            if (descTooltip != null)
-            {
-                TooltipHandler.TipRegion(rowRect, descTooltip);
-            }
-        }
-
-        private void DrawFilterRow(Listing_Standard list, string label, ref bool nameSwitch, string tooltip = null)
-        {
-            Rect rowRect = list.GetRect(24f);
-            Widgets.CheckboxLabeled(rowRect, label, ref nameSwitch);
-
-            if (tooltip != null)
-            {
-                TooltipHandler.TipRegion(rowRect, tooltip);
-            }
-        }
-
-        private void DrawHeader(Listing_Standard list, string text)
-        {
-            GUI.color = Color.yellow;
-            list.Label($"━━ {text} ━━");
-            GUI.color = Color.white;
-            list.Gap(2f);
-        }
     }
 }

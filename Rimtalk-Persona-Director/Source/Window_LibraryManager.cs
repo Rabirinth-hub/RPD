@@ -19,6 +19,14 @@ namespace RimPersonaDirector
         private AssignmentRule selectedRule;
         private string selectedCategoryFilter = "All";
 
+        // 新增：规则界面右侧 PresetsPool 分类和全选功能
+        private string selectedRulePresetCategory = "All";
+        private bool IsAllPresetsSelected(List<CustomPreset> pool, AssignmentRule rule)
+        {
+            var filtered = pool.Where(p => selectedRulePresetCategory == "All" || p.category == selectedRulePresetCategory).Select(p => p.id);
+            return filtered.All(id => rule.allowedPresetIds.Contains(id)) && filtered.Any();
+        }
+
         public Window_LibraryManager()
         {
             doCloseX = true;
@@ -28,6 +36,14 @@ namespace RimPersonaDirector
         }
 
         public override Vector2 InitialSize => new Vector2(1000f, 700f);
+
+        public override void PostClose()
+        {
+            PresetSynchronizer.SyncToRimTalk();
+            DirectorMod.Settings.Write();
+            base.PostClose();
+        }
+
         public override void DoWindowContents(Rect inRect)
         {
             // 在执行任何操作之前，确保列表对象已创建
@@ -118,11 +134,11 @@ namespace RimPersonaDirector
             
             // 2. 分类筛选
             Rect filterRect = new Rect(innerLeft.x, topY, innerLeft.width, 24f);
-            if (Widgets.ButtonText(filterRect, "RPD_Library_Category".Translate(selectedCategoryFilter)))
+            if (Widgets.ButtonText(filterRect, "RPD_Library_Category".Translate(TranslatePresetCategory(selectedCategoryFilter))))
             {
-                List<FloatMenuOption> opts = new List<FloatMenuOption> { new FloatMenuOption("All", () => selectedCategoryFilter = "All") };
+                List<FloatMenuOption> opts = new List<FloatMenuOption> { new FloatMenuOption(TranslatePresetCategory("All"), () => selectedCategoryFilter = "All") };
                 foreach (var cat in DirectorMod.Settings.userPresets.Select(p => p.category).Distinct())
-                    opts.Add(new FloatMenuOption(cat, () => selectedCategoryFilter = cat));
+                    opts.Add(new FloatMenuOption(TranslatePresetCategory(cat), () => selectedCategoryFilter = cat));
                 Find.WindowStack.Add(new FloatMenu(opts));
             }
             topY += 30f;
@@ -134,7 +150,7 @@ namespace RimPersonaDirector
                 .Where(p => searchWidget.filter.Matches(p.label) && (selectedCategoryFilter == "All" || p.category == selectedCategoryFilter)).ToList();
 
             DrawLeftList(listRect, filtered,
-                p => $"[{p.category}] {p.label}",
+                p => $"[{TranslatePresetCategory(p.category)}] {p.label}",
                 p => selectedPreset = p,
                 ref scrollLeft,
                 selectedPreset,
@@ -220,18 +236,27 @@ namespace RimPersonaDirector
             var userPresets = DirectorMod.Settings.userPresets;
 
             // --- 1. 添加全部 ---
-            opts.Add(new FloatMenuOption("RPD_Library_AddAll".Translate(targetCategory.Translate()), () =>
+            opts.Add(new FloatMenuOption("RPD_Library_AddAll".Translate(TranslatePresetCategory(targetCategory)), () =>
             {
                 int count = 0;
                 if (vanillaSource != null)
                 {
                     foreach (var p in vanillaSource)
                     {
-                        string text = p.Persona.Translate().Resolve();
+                        string text = p.Persona;
                         if (!userPresets.Any(x => x.personaText == text))
                         {
-                            string label = ExtractLabelFromText(text) ?? $"{targetCategory} {++count}";
-                            userPresets.Add(new CustomPreset { label = label, personaText = text, chattiness = p.Chattiness, category = targetCategory, enabled = true });
+                            string label = DirectorMod.Settings.CreateVanillaLabel(text, count + 1);
+                            userPresets.Add(new CustomPreset
+                            {
+                                label = label,
+                                personaText = text,
+                                chattiness = p.Chattiness,
+                                category = targetCategory,
+                                localizationKey = p.Persona,
+                                lastLocalizedText = text,
+                                enabled = true
+                            });
                             count++;
                         }
                     }
@@ -241,7 +266,7 @@ namespace RimPersonaDirector
                     foreach (var p in builtInSource)
                     {
                         // ★ 修正：确保内置内容在导入时被翻译 ★
-                        string text = p.personaText.Translate().Resolve();
+                        string text = p.personaText.Translate(). Resolve();
                         if (!userPresets.Any(x => x.personaText == text))
                         {
                             userPresets.Add(new CustomPreset { label = p.label, personaText = text, chattiness = p.chattiness, category = targetCategory, enabled = true });
@@ -254,7 +279,7 @@ namespace RimPersonaDirector
             }));
 
             // --- 2. 移除全部 ---
-            opts.Add(new FloatMenuOption("RPD_Library_RemoveAll".Translate(targetCategory.Translate()), () =>
+            opts.Add(new FloatMenuOption("RPD_Library_RemoveAll".Translate(TranslatePresetCategory(targetCategory)), () =>
             {
                 int removed = userPresets.RemoveAll(p => p.category == targetCategory);
                 selectedPreset = null;
@@ -269,15 +294,26 @@ namespace RimPersonaDirector
 
                 if (vanillaSource != null)
                 {
+                    int sourceIndex = 0;
                     foreach (var p in vanillaSource)
                     {
-                        string text = p.Persona.Translate().Resolve();
-                        string label = ExtractLabelFromText(text) ?? "Vanilla Preset";
+                        sourceIndex++;
+                        string text = p.Persona;
+                        string label = DirectorMod.Settings.CreateVanillaLabel(text, sourceIndex);
                         if (!userPresets.Any(x => x.personaText == text))
                         {
                             // ★ 增加 tooltip 属性 ★
                             var opt = new FloatMenuOption(label, () => {
-                                userPresets.Add(new CustomPreset { label = label, personaText = text, chattiness = p.Chattiness, category = targetCategory, enabled = true });
+                                userPresets.Add(new CustomPreset
+                                {
+                                    label = label,
+                                    personaText = text,
+                                    chattiness = p.Chattiness,
+                                    category = targetCategory,
+                                    localizationKey = p.Persona,
+                                    lastLocalizedText = text,
+                                    enabled = true
+                                });
                                 PresetSynchronizer.SyncToRimTalk();
                             });
                             opt.tooltip = new TipSignal(text);
@@ -310,19 +346,6 @@ namespace RimPersonaDirector
             Find.WindowStack.Add(new FloatMenu(opts));
         }
 
-        private string ExtractLabelFromText(string text)
-        {
-            // ... (复制之前的逻辑) ...
-            if (string.IsNullOrEmpty(text)) return null;
-            string[] separators = new[] { " - ", " – ", " — ", "：", ": " };
-            foreach (var sep in separators)
-            {
-                int index = text.IndexOf(sep);
-                if (index > 0 && index < 30) return text.Substring(0, index).Trim();
-            }
-            return null;
-        }
-
         private void DrawRulesTab(Rect rect)
         {
             // Mirror Presets layout exactly for consistent alignment
@@ -346,7 +369,7 @@ namespace RimPersonaDirector
                 .Where(r => searchWidget.filter.Matches(r.targetDefName ?? "")).ToList();
 
             DrawLeftList(listRect, filtered,
-                r => $"{r.type}: {r.targetDefName ?? "None"} (P:{r.priority})",
+                r => $"{TranslateRuleType(r.type)}: {r.targetDefName ?? "None"} (P:{r.priority})",
                 r => selectedRule = r,
                 ref scrollRight,
                 selectedRule,
@@ -401,29 +424,90 @@ namespace RimPersonaDirector
 
                 string btnLabel = selectedRule.targetDefName ?? "RPD_Library_TargetSelect".Translate();
                 if (!IsDefExisting(selectedRule.type, selectedRule.targetDefName)) GUI.color = Color.red;
-                if (editor.ButtonText("RPD_Library_TargetDef".Translate(btnLabel))) OpenDefSelector(selectedRule);
+                if (selectedRule.type != RuleType.Age)
+                {
+                    if (editor.ButtonText("RPD_Library_TargetDef".Translate(btnLabel))) OpenDefSelector(selectedRule);
+                }
                 GUI.color = Color.white;
 
+                // 年龄规则：显示两个数字输入框
+                if (selectedRule.type == RuleType.Age)
+                {
+                    // int 类型不会为 null，无需判断
+                    editor.Label("RPD_Library_AgeRange".Translate());
+                    Rect ageRect = editor.GetRect(28f);
+                    float labelW = 40f, fieldW = 60f;
+                    // spacing 只声明一次
+                    float spacingAge = 10f;
+                    Widgets.Label(new Rect(ageRect.x, ageRect.y, labelW, 28f), "Min");
+                    string minStr = selectedRule.minAge.ToString();
+                    Widgets.TextFieldNumeric(new Rect(ageRect.x + labelW, ageRect.y, fieldW, 28f), ref selectedRule.minAge, ref minStr, 0, 999);
+                    Widgets.Label(new Rect(ageRect.x + labelW + fieldW + spacingAge, ageRect.y, labelW, 28f), "Max");
+                    string maxStr = selectedRule.maxAge.ToString();
+                    Widgets.TextFieldNumeric(new Rect(ageRect.x + labelW * 2 + fieldW + spacingAge, ageRect.y, fieldW, 28f), ref selectedRule.maxAge, ref maxStr, 0, 999);
+                }
+
                 editor.GapLine();
-                editor.Label("RPD_Library_PresetsPool".Translate());
+
+                // --- 新增：PresetsPool 分类和全选按钮 ---
+                Rect labelRect = editor.GetRect(24f);
+                Text.Anchor = TextAnchor.MiddleLeft;
+                Widgets.Label(new Rect(labelRect.x, labelRect.y, 180f, 24f), "RPD_Library_PresetsPool".Translate());
+                Text.Anchor = TextAnchor.UpperLeft;
+                var presets = DirectorMod.Settings.userPresets;
+                // 分类按钮
+                float btnW = 180f;
+                float btnH = 24f;
+                float spacing = 8f;
+                float rightBtnX = labelRect.xMax - btnW;
+                float leftBtnX = labelRect.xMax - btnW * 2 - spacing;
+                // 分类按钮
+                if (Widgets.ButtonText(new Rect(leftBtnX, labelRect.y, btnW, btnH), "RPD_Library_Category".Translate(TranslatePresetCategory(selectedRulePresetCategory))))
+                {
+                    List<FloatMenuOption> opts = new List<FloatMenuOption> { new FloatMenuOption(TranslatePresetCategory("All"), () => selectedRulePresetCategory = "All") };
+                    foreach (var cat in presets.Select(p => p.category).Distinct())
+                        opts.Add(new FloatMenuOption(TranslatePresetCategory(cat), () => selectedRulePresetCategory = cat));
+                    Find.WindowStack.Add(new FloatMenu(opts));
+                }
+                // 全选/全不选按钮
+                bool allSelected = IsAllPresetsSelected(presets, selectedRule);
+                string selectLabel = allSelected ? "RPD_Library_UnselectAll".Translate() : "RPD_Library_SelectAll".Translate();
+                if (Widgets.ButtonText(new Rect(rightBtnX, labelRect.y, btnW, btnH), selectLabel))
+                {
+                    var filteredIds = presets.Where(p => selectedRulePresetCategory == "All" || p.category == selectedRulePresetCategory).Select(p => p.id).ToList();
+                    if (allSelected)
+                    {
+                        // 全不选
+                        foreach (var id in filteredIds)
+                            selectedRule.allowedPresetIds.Remove(id);
+                    }
+                    else
+                    {
+                        // 全选
+                        foreach (var id in filteredIds)
+                            if (!selectedRule.allowedPresetIds.Contains(id))
+                                selectedRule.allowedPresetIds.Add(id);
+                    }
+                }
 
                 float poolH = rightRect.height - editor.CurHeight - 80f;
                 Rect poolRect = editor.GetRect(poolH);
                 Widgets.DrawMenuSection(poolRect);
 
-                var presets = DirectorMod.Settings.userPresets;
-                Rect viewRect = new Rect(0, 0, poolRect.width - 16f, presets.Count * 26f);
+                // 只显示当前分类下的预设
+                var filteredPresets = presets.Where(p => selectedRulePresetCategory == "All" || p.category == selectedRulePresetCategory).ToList();
+                Rect viewRect = new Rect(0, 0, poolRect.width - 16f, filteredPresets.Count * 26f);
                 Widgets.BeginScrollView(poolRect, ref poolScroll, viewRect);
-                for (int i = 0; i < presets.Count; i++)
+                for (int i = 0; i < filteredPresets.Count; i++)
                 {
                     Rect row = new Rect(0, i * 26f, viewRect.width, 24f);
-                    bool active = selectedRule.allowedPresetIds.Contains(presets[i].id);
+                    bool active = selectedRule.allowedPresetIds.Contains(filteredPresets[i].id);
                     bool newActive = active;
-                    Widgets.CheckboxLabeled(row, presets[i].label, ref newActive);
+                    Widgets.CheckboxLabeled(row, filteredPresets[i].label, ref newActive);
                     if (newActive != active)
                     {
-                        if (newActive) selectedRule.allowedPresetIds.Add(presets[i].id);
-                        else selectedRule.allowedPresetIds.Remove(presets[i].id);
+                        if (newActive) selectedRule.allowedPresetIds.Add(filteredPresets[i].id);
+                        else selectedRule.allowedPresetIds.Remove(filteredPresets[i].id);
                     }
                 }
                 Widgets.EndScrollView();
@@ -577,6 +661,17 @@ namespace RimPersonaDirector
 
             Find.WindowStack.Add(new FloatMenu(opts));
         }
+        private static string TranslatePresetCategory(string category)
+        {
+            switch (category)
+            {
+                case "All": return "RPD_Library_CategoryAll".Translate();
+                case "Vanilla": return "RPD_Library_CategoryVanilla".Translate();
+                case "Built-in": return "RPD_Library_CategoryBuiltIn".Translate();
+                default: return category;
+            }
+        }
+
         private string TranslateRuleType(RuleType type)
         {
             switch (type)
@@ -587,6 +682,8 @@ namespace RimPersonaDirector
                     return "RPD_RuleType_RaceDef".Translate();
                 case RuleType.XenotypeDef:
                     return "RPD_RuleType_XenotypeDef".Translate();
+                case RuleType.Age:
+                    return "RPD_RuleType_Age".Translate();
                 default:
                     return type.ToString(); // 保底
             }

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+  <RPD_ReleaseNotice_Title>Persona Director：重要更新</RPD_ReleaseNotice_Title>
+  <RPD_ReleaseNotice_Body>此版本包含重要更新。继续使用前，建议先备份存档。&#10;&#10;创意工坊模组通常位于 Steam 游戏库的 steamapps\workshop\content\294100\3619548407；Steam 游戏库可能安装在其他盘。&#10;&#10;复制成本地模组不会继承创意工坊版的模组设置。切换前请备份人格库、规则库和内置提示词；预设库的导出功能只包含前两项，内置提示词需要单独保存。&#10;&#10;本模组附带旧版 DLL。如需回退：先将整个模组复制为本地模组，再把本地副本 Backup 文件夹中的 RPD.dll 覆盖 Assemblies 文件夹中的同名文件。之后只启用本地副本，不要同时启用创意工坊版本。&#10;&#10;请勿直接修改创意工坊文件；新版存档也不保证能被旧版完整读取。</RPD_ReleaseNotice_Body>
+  <RPD_ReleaseNotice_Acknowledge>我已了解</RPD_ReleaseNotice_Acknowledge>
+
+  <RPD_Experimental_Enable>启用附加功能</RPD_Experimental_Enable>
+  <RPD_Experimental_EnableTip>自动生成、人格历史、自动更新与角色变化功能的总开关。关闭后会立即使待处理的附加任务失效，并保持正式版稳定核心行为。</RPD_Experimental_EnableTip>
+  <RPD_Experimental_EnableConfirm>附加功能已与正式版核心隔离，但实际运行验证覆盖较少。确定启用吗？</RPD_Experimental_EnableConfirm>
+  <RPD_Experimental_CoreMode>兼容模式：当前仅运行正式版稳定核心。</RPD_Experimental_CoreMode>
+  <RPD_Experimental_FuseReason>附加功能已自动停用：{0}</RPD_Experimental_FuseReason>
+  <RPD_Experimental_ClearError>清除错误</RPD_Experimental_ClearError>
+  <RPD_Experimental_PatchRegistrationFailed>附加功能补丁注册失败。</RPD_Experimental_PatchRegistrationFailed>
+  <RPD_Experimental_UnpatchFailed>附加功能补丁未能完全卸载。请重启游戏以完成安全模式切换。</RPD_Experimental_UnpatchFailed>
+  <RPD_Experimental_AutoGenRuntimeFailed>自动生成发生内部错误。</RPD_Experimental_AutoGenRuntimeFailed>
+  <RPD_Experimental_AutoGenTimeout>自动生成请求超时。</RPD_Experimental_AutoGenTimeout>
+  <RPD_Experimental_AutoEvolveRuntimeFailed>自动更新发生内部错误。</RPD_Experimental_AutoEvolveRuntimeFailed>
+  <RPD_Experimental_AutoEvolveTimeout>自动更新请求超时。</RPD_Experimental_AutoEvolveTimeout>
+  <RPD_History_MaxRecords>历史条数：</RPD_History_MaxRecords>
+  <RPD_History_MaxRecordsTip>每个角色最多保留的历史条数；0 表示不按条数限制。</RPD_History_MaxRecordsTip>
+  <RPD_AutoEvolve_InternalPromptNotice>两种模式共用高级预设；未选择时各自使用内置提示词。</RPD_AutoEvolve_InternalPromptNotice>
+
+</LanguageData>

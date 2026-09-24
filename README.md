@@ -20,7 +20,7 @@ Persona Director（RPD）是 [RimTalk](https://github.com/jlibrary/RimTalk) 的�
 
 ### 1. 安装与第一次生成人格
 
-1. 使用 RimWorld **1.6**。启用 [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077) → [RimTalk](https://steamcommunity.com/sharedfiles/filedetails/?id=3551203752) → [Persona Director](https://steamcommunity.com/sharedfiles/filedetails/?id=3619548407)。仓库将 C# 源码存放在 `Source`。可安装的模组目录需要 `About`、`Languages` 和包含编译 DLL 的 `Assemblies`；源码文件不能直接作为模组加载。
+1. 使用 RimWorld **1.6**。启用 [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077) → [RimTalk](https://steamcommunity.com/sharedfiles/filedetails/?id=3551203752) → [Persona Director](https://steamcommunity.com/sharedfiles/filedetails/?id=3619548407)。仓库中的 C# 源码位于 `Source`，编译后的 `RPD.dll` 位于 `Assemblies`。后续上传仅包含 `About`、`Languages`、`Source`、`Assemblies` 和本 `README.md`。
 2. 在 RimTalk 的设置里配置并验证 AI 连接，随后载入存档。
 3. 打开 **选项 → 模组设置 → RimTalk: Persona Director**。先保留默认数据筛选，选第一个内置提示词槽位。
 4. 打开一个 Pawn 的 RimTalk 人格编辑窗口，使用 **Smart Gen／智能生成**。RPD 会按选中的资料和提示词向 AI 请求人格；查看候选结果，再选择想用的版本。
@@ -345,7 +345,7 @@ Compared with RimTalk's native persona tools, RPD intercepts single-pawn Smart G
 
 ### 1. Install and create a first persona
 
-1. Use RimWorld **1.6**. Enable [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077) → [RimTalk](https://steamcommunity.com/sharedfiles/filedetails/?id=3551203752) → [Persona Director](https://steamcommunity.com/sharedfiles/filedetails/?id=3619548407). The repository stores C# source in `Source`. An installable mod directory needs `About`, `Languages`, and `Assemblies` with the compiled DLL; source files alone cannot be loaded as a mod.
+1. Use RimWorld **1.6**. Enable [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077) → [RimTalk](https://steamcommunity.com/sharedfiles/filedetails/?id=3551203752) → [Persona Director](https://steamcommunity.com/sharedfiles/filedetails/?id=3619548407). The repository stores C# source in `Source` and the compiled `RPD.dll` in `Assemblies`. Future uploads should include only `About`, `Languages`, `Source`, `Assemblies`, and this `README.md`.
 2. Configure and verify an AI connection in RimTalk's settings, then load a save.
 3. Open **Options → Mod Settings → RimTalk: Persona Director**. Keep the default data filters for now and select the first built-in prompt slot.
 4. Open a Pawn's RimTalk persona editor and use **Smart Gen**. RPD requests a persona from AI using the selected data and prompt. Review the returned options and choose one.
