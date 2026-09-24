@@ -59,7 +59,7 @@ Rimtalk-Persona-Director/
 
 ### 4. 资料筛选与提示词
 
-RPD 设置页的“选择发送给 AI 的数据内容”控制人格生成用的资料：基础身份、种族与异种型、基因、童年和成年背景、亲属、特质、意识形态、技能与热情、健康、装备、背包，以及可选的 RimPsyche、记忆和常识。某些项目还有单独的“详细描述”开关。描述越多，请求越长；先保留身份、背景、关系、特质和技能，再按角色需要添加基因或健康描述。RimPsyche、记忆及常识选项会随相应扩展模组是否安装而出现。相关 GitHub 仓库：[RimPsyche](https://github.com/jagerguy36/Rimpsyche)；[记忆拓展（记忆和常识）](https://github.com/sanguodxj-byte/RimTalk-ExpandMemory)。
+RPD 设置页的“选择发送给 AI 的数据内容”控制人格生成用的资料：基础身份、种族与异种型、基因、童年和成年背景、亲属、特质、意识形态、技能与热情、健康、装备、背包，以及可选的 RimPsyche、记忆和常识。某些项目还有单独的“详细描述”开关。描述越多，请求越长；先保留身份、背景、关系、特质和技能，再按角色需要添加基因或健康描述。RimPsyche、记忆及常识选项会随相应扩展模组是否安装而出现。RimPsyche：[GitHub](https://github.com/jagerguy36/Rimpsyche) · [Steam 创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3535112473)；记忆拓展（记忆和常识）：[GitHub](https://github.com/sanguodxj-byte/RimTalk-ExpandMemory) · [Steam 创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3608181242)。
 
 内置提示词有五个可编辑槽位：**Standard** 提供三种人格解读；**Story-Driven** 写单段故事；**Data-Driven** 严格连接童年与成年背景；另两个分别供演变“追加”与“覆盖”使用。用 Slot 下拉切换，修改名称或正文，**重置默认**仅重置当前槽位。`{LANG}` 表示游戏语言；返回格式协议由模组自动附加。普通单次生成若选到演变专用槽位，会改用 Standard。
 
@@ -397,7 +397,7 @@ The console can filter current-map pawns by colonist, prisoner, slave, visitor, 
 
 ### 4. Data filters and prompts
 
-RPD's **Select Data sent to AI** controls persona-generation material: identity, race/xenotype, genes, childhood and adulthood backstory, key relations, traits, ideology, skills and passions, health, equipment, inventory, and optional RimPsyche, memories, and common knowledge. Some fields have a separate description switch. Longer descriptions make longer requests. Start with identity, background, relations, traits, and skills; add detailed gene or health text only when useful. RimPsyche, memory, and common-knowledge controls appear when their corresponding expansion is installed. GitHub repositories: [RimPsyche](https://github.com/jagerguy36/Rimpsyche) and [RimTalk-ExpandMemory (Memory and Common Sense)](https://github.com/sanguodxj-byte/RimTalk-ExpandMemory).
+RPD's **Select Data sent to AI** controls persona-generation material: identity, race/xenotype, genes, childhood and adulthood backstory, key relations, traits, ideology, skills and passions, health, equipment, inventory, and optional RimPsyche, memories, and common knowledge. Some fields have a separate description switch. Longer descriptions make longer requests. Start with identity, background, relations, traits, and skills; add detailed gene or health text only when useful. RimPsyche, memory, and common-knowledge controls appear when their corresponding expansion is installed. RimPsyche: [GitHub](https://github.com/jagerguy36/Rimpsyche) · [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3535112473); RimTalk-ExpandMemory (Memory and Common Sense): [GitHub](https://github.com/sanguodxj-byte/RimTalk-ExpandMemory) · [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3608181242).
 
 There are five editable built-in prompt slots: **Standard** offers three interpretations; **Story-Driven** writes one narrative; **Data-Driven** links childhood and adult history more strictly; the last two are for evolution **Append** and **Overwrite**. Use the Slot menu to edit a title or prompt. **Reset Default** resets only the selected slot. `{LANG}` represents the active game language, and RPD appends its response-format rules automatically. Selecting an evolution-only slot for ordinary single generation falls back to Standard.
 
