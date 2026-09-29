@@ -249,7 +249,7 @@ namespace RimPersonaDirector
                     settings,
                     pending.TriggerContext);
                 if (request == null) continue;
-                Task<PersonalityData> task = AIService.Query<PersonalityData>(request);
+                Task<PersonalityData> task = DirectorPortraitService.Query(request);
                 if (task == null) continue;
 
                 _active = new ActiveWork
@@ -363,7 +363,8 @@ namespace RimPersonaDirector
             if (!string.IsNullOrWhiteSpace(category.advancedPreset)
                 && !string.Equals(category.advancedPreset, "None (Use Internal)", StringComparison.OrdinalIgnoreCase))
             {
-                return TryBuildAdvancedPresetRequest(pawn, category.advancedPreset, triggerContext);
+                return TryBuildAdvancedPresetRequest(pawn, category.advancedPreset, triggerContext,
+                    category.GetEffectiveContext(settings.Context).Inc_PawnPortrait);
             }
 
             int presetIndex = Mathf.Clamp(category.presetIndex, 0, 2);
@@ -389,7 +390,7 @@ namespace RimPersonaDirector
             string instruction = prompt.Replace("{LANG}", Constant.Lang)
                 + "\n\n" + DirectorSettings.HiddenTechnicalPrompt_Single;
 
-            return new TalkRequest(
+            var request = new TalkRequest(
                 "[Character Data]\n" + characterData,
                 pawn,
                 null,
@@ -397,12 +398,15 @@ namespace RimPersonaDirector
             {
                 Context = instruction
             };
+            DirectorPortraitService.Prepare(request, pawn, context.Inc_PawnPortrait, true);
+            return request;
         }
 
         private static TalkRequest TryBuildAdvancedPresetRequest(
             Pawn pawn,
             string presetName,
-            string triggerContext)
+            string triggerContext,
+            bool attachPortrait)
         {
             try
             {
@@ -423,9 +427,14 @@ namespace RimPersonaDirector
                 var user = new StringBuilder();
 
                 string previousTriggerContext = DirectorApiAdapter.AdvancedTriggerContext;
+                bool previousRendering = DirectorApiAdapter.RenderingRpdPreset;
+                bool previousPortraitRequested = DirectorApiAdapter.PortraitVariableRequested;
+                bool portraitVariableRequested = false;
                 try
                 {
                     DirectorApiAdapter.AdvancedTriggerContext = triggerContext?.Trim() ?? "";
+                    DirectorApiAdapter.RenderingRpdPreset = true;
+                    DirectorApiAdapter.PortraitVariableRequested = false;
                     foreach (var entry in preset.Entries)
                     {
                         if (entry == null || !entry.Enabled) continue;
@@ -437,10 +446,13 @@ namespace RimPersonaDirector
                         if (destination.Length > 0) destination.AppendLine().AppendLine();
                         destination.Append(rendered);
                     }
+                    portraitVariableRequested = DirectorApiAdapter.PortraitVariableRequested;
                 }
                 finally
                 {
                     DirectorApiAdapter.AdvancedTriggerContext = previousTriggerContext;
+                    DirectorApiAdapter.RenderingRpdPreset = previousRendering;
+                    DirectorApiAdapter.PortraitVariableRequested = previousPortraitRequested;
                 }
 
                 if (user.Length == 0 && system.Length == 0)
@@ -450,7 +462,7 @@ namespace RimPersonaDirector
                     return null;
                 }
 
-                return new TalkRequest(
+                var request = new TalkRequest(
                     user.ToString(),
                     pawn,
                     null,
@@ -458,6 +470,9 @@ namespace RimPersonaDirector
                 {
                     Context = system.ToString()
                 };
+                DirectorPortraitService.Prepare(request, pawn,
+                    attachPortrait || portraitVariableRequested, false);
+                return request;
             }
             catch (Exception ex)
             {

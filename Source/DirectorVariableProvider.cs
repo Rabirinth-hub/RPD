@@ -17,6 +17,15 @@ public static class DirectorVariableProvider
 
 	private static Type _mustacheContextType;
 
+	// RimTalk 1.3 replaced the Mustache prompt engine. Harmony treats a null
+	// TargetMethod as a fatal registration error, so skip this legacy patch when
+	// its target is absent while keeping the other Director patches active.
+	[HarmonyPrepare]
+	public static bool Prepare()
+	{
+		return TargetMethod() != null;
+	}
+
 	[HarmonyTargetMethod]
 	public static MethodBase TargetMethod()
 	{

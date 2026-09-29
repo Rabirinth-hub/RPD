@@ -38,6 +38,8 @@
 
   <RPD_Filter_Memories>Memories</RPD_Filter_Memories>
   <RPD_Filter_CommonKnowledge>Common Knowledge</RPD_Filter_CommonKnowledge>
+  <RPD_Filter_PawnPortrait>Attach Pawn Portrait</RPD_Filter_PawnPortrait>
+  <RPD_Tip_PawnPortrait>Attach a 512-pixel portrait to single-Pawn AI requests. Requires a vision-capable model. Combined batch requests never include portraits.</RPD_Tip_PawnPortrait>
   <RPD_Filter_DataComparison>Data Comparison (For Evolve Button)</RPD_Filter_DataComparison>
 
   <!-- Tooltips -->

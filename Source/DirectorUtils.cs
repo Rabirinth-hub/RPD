@@ -94,30 +94,40 @@ namespace RimPersonaDirector
             // C. 扁平化构建 (Flattening)
             StringBuilder systemBuilder = new StringBuilder();
             StringBuilder userBuilder = new StringBuilder();
-
-            foreach (var entry in targetPreset.Entries)
+            bool portraitVariableRequested = false;
+            bool previousRendering = DirectorApiAdapter.RenderingRpdPreset;
+            bool previousPortraitRequested = DirectorApiAdapter.PortraitVariableRequested;
+            try
             {
-                if (!entry.Enabled) continue;
-
-                string renderedText = (string)renderMethod.Invoke(null, new object[] { entry.Content, contextObj, true });
-                if (string.IsNullOrWhiteSpace(renderedText)) continue;
-
-                // 逻辑：System 角色放入 Context，其他角色放入 Prompt
-                // 这样能最大程度保留信息，同时适配 Query 接口
-                string roleStr = entry.Role.ToString();
-
-                if (roleStr == "System")
+                DirectorApiAdapter.RenderingRpdPreset = true;
+                DirectorApiAdapter.PortraitVariableRequested = false;
+                foreach (var entry in targetPreset.Entries)
                 {
-                    if (systemBuilder.Length > 0) systemBuilder.AppendLine("\n");
-                    systemBuilder.Append(renderedText);
+                    if (!entry.Enabled) continue;
+
+                    string renderedText = (string)renderMethod.Invoke(null, new object[] { entry.Content, contextObj, true });
+                    if (string.IsNullOrWhiteSpace(renderedText)) continue;
+
+                    // 逻辑：System 角色放入 Context，其他角色放入 Prompt
+                    string roleStr = entry.Role.ToString();
+                    if (roleStr == "System")
+                    {
+                        if (systemBuilder.Length > 0) systemBuilder.AppendLine("\n");
+                        systemBuilder.Append(renderedText);
+                    }
+                    else
+                    {
+                        if (userBuilder.Length > 0) userBuilder.AppendLine("\n");
+                        if (roleStr == "Assistant") userBuilder.Append("Assistant: ");
+                        userBuilder.Append(renderedText);
+                    }
                 }
-                else
-                {
-                    // User, Assistant 等都放入 User 消息流
-                    if (userBuilder.Length > 0) userBuilder.AppendLine("\n");
-                    if (roleStr == "Assistant") userBuilder.Append("Assistant: "); // 简单标记一下 Assistant
-                    userBuilder.Append(renderedText);
-                }
+                portraitVariableRequested = DirectorApiAdapter.PortraitVariableRequested;
+            }
+            finally
+            {
+                DirectorApiAdapter.RenderingRpdPreset = previousRendering;
+                DirectorApiAdapter.PortraitVariableRequested = previousPortraitRequested;
             }
 
             if (systemBuilder.Length == 0 && userBuilder.Length == 0) return null;
@@ -131,13 +141,18 @@ namespace RimPersonaDirector
             userBuilder.AppendLine("\n" + technicalProtocol);
 
             // E. 发送请求
-            // 使用标准的 AIService.Query
+            // No-image requests continue through the standard AIService.Query path.
             var request = new TalkRequest(userBuilder.ToString(), p)
             {
                 Context = systemBuilder.ToString()
             };
-
-            return await AIService.Query<PersonalityData>(request);
+            DirectorPortraitService.Prepare(request, p,
+                DirectorMod.Settings.Context.Inc_PawnPortrait || portraitVariableRequested, false);
+            bool sentImage = !string.IsNullOrEmpty(request.ImageBase64);
+            PersonalityData imageResult = await DirectorPortraitService.Query(request);
+            if (sentImage && imageResult == null)
+                throw new InvalidOperationException("Image persona response was empty or invalid.");
+            return imageResult;
         }
 
 
@@ -184,7 +199,9 @@ namespace RimPersonaDirector
                 };
 
                 // 直接调用 AIService，日志会自动记录
-                return await AIService.Query<PersonalityData>(request);
+                DirectorPortraitService.Prepare(request, pawn,
+                    DirectorMod.Settings.Context.Inc_PawnPortrait, true);
+                return await DirectorPortraitService.Query(request);
             }
             catch (Exception e)
             {
@@ -756,6 +773,8 @@ namespace RimPersonaDirector
                 string presetName = DirectorMod.Settings.rimTalkPreset_Evolve;
                 string finalPrompt = "";
                 string finalContext = "";
+                bool portraitVariableRequested = false;
+                bool usedAdvancedPreset = false;
 
                 // --- 分支 1: 使用 RimTalk 高级预设 ---
                 if (!string.IsNullOrEmpty(presetName) && presetName != "None (Use Internal)")
@@ -779,9 +798,13 @@ namespace RimPersonaDirector
 
                         // Only expose update-specific variables while rendering this Evolve request.
                         bool previousEvolveRendering = DirectorApiAdapter.RenderingAdvancedEvolve;
+                        bool previousRendering = DirectorApiAdapter.RenderingRpdPreset;
+                        bool previousPortraitRequested = DirectorApiAdapter.PortraitVariableRequested;
                         try
                         {
                             DirectorApiAdapter.RenderingAdvancedEvolve = true;
+                            DirectorApiAdapter.RenderingRpdPreset = true;
+                            DirectorApiAdapter.PortraitVariableRequested = false;
                             foreach (var entry in targetPreset.Entries)
                             {
                                 if (!entry.Enabled) continue;
@@ -808,10 +831,13 @@ namespace RimPersonaDirector
                                     userSb.Append(renderedText);
                                 }
                             }
+                            portraitVariableRequested = DirectorApiAdapter.PortraitVariableRequested;
                         }
                         finally
                         {
                             DirectorApiAdapter.RenderingAdvancedEvolve = previousEvolveRendering;
+                            DirectorApiAdapter.RenderingRpdPreset = previousRendering;
+                            DirectorApiAdapter.PortraitVariableRequested = previousPortraitRequested;
                         }
 
                         // 4. 加上 JSON 协议 (这是硬性要求，必须加在最后)
@@ -819,6 +845,7 @@ namespace RimPersonaDirector
 
                         finalContext = systemSb.ToString();
                         finalPrompt = userSb.ToString();
+                        usedAdvancedPreset = !string.IsNullOrEmpty(finalPrompt);
 
                         if (DirectorMod.Settings.EnableDebugLog)
                             Log.Message($"[Director] Advanced Preset Rendered.\nContext Len: {finalContext.Length}\nPrompt Len: {finalPrompt.Length}");
@@ -918,6 +945,10 @@ namespace RimPersonaDirector
                     Context = finalContext
                 };
 
+                DirectorPortraitService.Prepare(request, p,
+                    DirectorMod.Settings.Context.Inc_PawnPortrait || portraitVariableRequested,
+                    !usedAdvancedPreset, compareHistory: true);
+
                 return (request, currentPersona);
             }
             catch (Exception ex)
@@ -936,8 +967,8 @@ namespace RimPersonaDirector
         {
             try
             {
-                // 调用 AIService.Query (它内部是异步的，但在 Task.Run 里我们可以直接 .Result 阻塞等待)
-                var task = AIService.Query<PersonalityData>(request);
+                // Prepared image requests use streaming; no-image requests keep AIService.Query.
+                var task = DirectorPortraitService.Query(request);
                 return task.Result;
             }
             catch (Exception ex)
@@ -955,7 +986,7 @@ namespace RimPersonaDirector
             try
             {
                 // ★★★ 核心：在后台线程中阻塞等待 ★★★
-                Task<PersonalityData> task = AIService.Query<PersonalityData>(request);
+                Task<PersonalityData> task = DirectorPortraitService.Query(request);
                 PersonalityData result = task.Result; // 阻塞后台线程，不影响 UI
 
                 if (result != null && !string.IsNullOrEmpty(result.Persona))

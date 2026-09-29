@@ -17,6 +17,14 @@ namespace RimPersonaDirector
         internal static string AdvancedTriggerContext;
         [ThreadStatic]
         internal static bool RenderingAdvancedEvolve;
+        [ThreadStatic]
+        internal static bool RenderingRpdPreset;
+        [ThreadStatic]
+        internal static bool PortraitVariableRequested;
+        [ThreadStatic]
+        internal static bool RenderingDialoguePortrait;
+        [ThreadStatic]
+        internal static Pawn DialoguePortraitPawn;
 
         static DirectorApiAdapter()
         {
@@ -39,6 +47,15 @@ namespace RimPersonaDirector
             Reg("d_full_profile", p => DirectorDataEngine.BuildCompleteData(p), "Complete Profile with Mod Setting");
             Reg("d_memories", p => DirectorDataEngine.GetMemoryInfo(p), "Recent Memories");
             Reg("d_status_diff", p => DirectorDataEngine.GetDailyStatusDiff(p), "Daily Status Changes");
+            Reg("d_portrait_diff", p =>
+            {
+                // This is a dialogue-only trigger. In RPD Gen/Evolve templates it
+                // deliberately resolves to empty and must not request an image.
+                if (!RenderingDialoguePortrait || RenderingRpdPreset || RenderingAdvancedEvolve)
+                    return "";
+                if (DialoguePortraitPawn == null) DialoguePortraitPawn = p;
+                return "";
+            }, "Dialogue only: attach a changed previous/current portrait; empty in Gen and Evolve");
             Reg("d_evolve_current_persona", p => DirectorDataEngine.GetActiveUIText(p), "Evolve: Text currently in editor window (or hediff)");
             Reg("d_evolve_time_info", p => DirectorDataEngine.GetTimeInfo(p), "Evolve: Time passed since last update");
             Reg("d_evolve_memories", p => RenderingAdvancedEvolve
@@ -69,6 +86,17 @@ namespace RimPersonaDirector
                 "director_trigger_context",
                 _ => AdvancedTriggerContext ?? "",
                 "Current Auto-Gen or Auto-Evolve trigger event"
+            );
+
+            RimTalkPromptAPI.RegisterContextVariable(
+                ModId,
+                "pawn_portrait",
+                _ =>
+                {
+                    if (RenderingRpdPreset) PortraitVariableRequested = true;
+                    return "";
+                },
+                "Attach the current Pawn portrait to this RPD persona request without adding prompt text"
             );
             
 

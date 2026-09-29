@@ -27,6 +27,7 @@ namespace RimPersonaDirector
             {
                 Pawn pawn = PawnField?.GetValue(__instance) as Pawn;
                 if (!DirectorFeatureGate.ExperimentalEnabled
+                    || !DirectorPersonaEditorTab.IsPersonalityTab(__instance)
                     || DirectorHistoryService.IsSuppressed
                     || pawn == null
                     || pawn.Destroyed
@@ -69,9 +70,10 @@ namespace RimPersonaDirector
 
                 string snapshot = DirectorUtils.BuildCustomCharacterData(pawn, true, false);
                 string context = "RPD_ManualEdit".Translate() + "\n\n" + snapshot;
-                if (!string.IsNullOrWhiteSpace(__state.Previous))
+                string portrait = DirectorPortraitService.TakeHistoryPortrait(pawn, applied);
+                if (!string.IsNullOrWhiteSpace(__state.Previous) || !string.IsNullOrEmpty(portrait))
                 {
-                    world.AddHistory(pawn, __state.Previous, context);
+                    world.AddHistory(pawn, __state.Previous, context, portrait);
                 }
                 world.SetTimestamp(
                     pawn,

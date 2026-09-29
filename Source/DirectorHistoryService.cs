@@ -86,9 +86,10 @@ namespace RimPersonaDirector
             if (world != null)
             {
                 world.MarkAsProcessed(pawn);
-                if (!string.IsNullOrWhiteSpace(previous))
+                string portrait = DirectorPortraitService.TakeHistoryPortrait(pawn, target);
+                if (!string.IsNullOrWhiteSpace(previous) || !string.IsNullOrEmpty(portrait))
                 {
-                    world.AddHistory(pawn, previous, historyContext);
+                    world.AddHistory(pawn, previous, historyContext, portrait);
                 }
 
                 if (updateTimestamp)

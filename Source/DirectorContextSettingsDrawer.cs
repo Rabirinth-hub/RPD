@@ -71,6 +71,8 @@ namespace RimPersonaDirector
 
             Listing_Standard external = BeginColumn(origin.x + (columnWidth + gap) * 2f, origin.y, columnWidth);
             DrawHeader(external, "RPD_Group_ExternalData".Translate());
+            DrawFilterRow(external, "RPD_Filter_PawnPortrait".Translate(), ref context.Inc_PawnPortrait,
+                "RPD_Tip_PawnPortrait".Translate());
             if (includeDataComparison)
                 DrawFilterRow(external, "RPD_Filter_DataComparison".Translate(), ref context.Inc_DataComparison);
             if (rimPsycheLoaded)

@@ -114,6 +114,8 @@ namespace RimPersonaDirector
                 {
                     Context = instruction
                 };
+                DirectorPortraitService.Prepare(request, pawn,
+                    settings.Context?.Inc_PawnPortrait == true, true, compareHistory: true);
             }
 
             return new DirectorEvolveRequest
@@ -223,15 +225,20 @@ namespace RimPersonaDirector
                 context.CurrentPawn = pawn;
                 var system = new StringBuilder();
                 var user = new StringBuilder();
+                bool portraitVariableRequested = false;
                 string previousPersonaOverride = DirectorDataEngine.TempCurrentPersona;
                 string previousTriggerContext = DirectorApiAdapter.AdvancedTriggerContext;
                 bool previousEvolveRendering = DirectorApiAdapter.RenderingAdvancedEvolve;
+                bool previousRendering = DirectorApiAdapter.RenderingRpdPreset;
+                bool previousPortraitRequested = DirectorApiAdapter.PortraitVariableRequested;
 
                 try
                 {
                     DirectorDataEngine.TempCurrentPersona = currentPersona;
                     DirectorApiAdapter.AdvancedTriggerContext = triggerContext?.Trim() ?? "";
                     DirectorApiAdapter.RenderingAdvancedEvolve = true;
+                    DirectorApiAdapter.RenderingRpdPreset = true;
+                    DirectorApiAdapter.PortraitVariableRequested = false;
                     foreach (var entry in preset.Entries)
                     {
                         if (entry == null || !entry.Enabled) continue;
@@ -244,12 +251,15 @@ namespace RimPersonaDirector
                         if (destination.Length > 0) destination.AppendLine().AppendLine();
                         destination.Append(rendered);
                     }
+                    portraitVariableRequested = DirectorApiAdapter.PortraitVariableRequested;
                 }
                 finally
                 {
                     DirectorDataEngine.TempCurrentPersona = previousPersonaOverride;
                     DirectorApiAdapter.AdvancedTriggerContext = previousTriggerContext;
                     DirectorApiAdapter.RenderingAdvancedEvolve = previousEvolveRendering;
+                    DirectorApiAdapter.RenderingRpdPreset = previousRendering;
+                    DirectorApiAdapter.PortraitVariableRequested = previousPortraitRequested;
                 }
 
                 if (user.Length == 0 && system.Length == 0)
@@ -258,7 +268,7 @@ namespace RimPersonaDirector
                         + presetName + "' produced no prompt; request skipped.");
                     return null;
                 }
-                return new TalkRequest(
+                var request = new TalkRequest(
                     user.ToString(),
                     pawn,
                     null,
@@ -266,6 +276,10 @@ namespace RimPersonaDirector
                 {
                     Context = system.ToString()
                 };
+                DirectorPortraitService.Prepare(request, pawn,
+                    settings.Context?.Inc_PawnPortrait == true || portraitVariableRequested,
+                    false, compareHistory: true);
+                return request;
             }
             catch (Exception ex)
             {

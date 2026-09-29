@@ -222,7 +222,7 @@ namespace RimPersonaDirector
                         continue;
                     }
 
-                    Task<PersonalityData> task = AIService.Query<PersonalityData>(package.Request);
+                    Task<PersonalityData> task = DirectorPortraitService.Query(package.Request);
                     if (task == null)
                     {
                         Reschedule(pending.Pawn);
@@ -309,6 +309,7 @@ namespace RimPersonaDirector
                 }
 
                 string finalPersona = BuildFinalPersona(work.OriginalPersona, generated);
+                DirectorPortraitService.RemapPendingPortrait(work.Pawn, generated, finalPersona);
                 bool applied = DirectorHistoryService.ApplyWithHistory(
                     work.Pawn,
                     finalPersona,

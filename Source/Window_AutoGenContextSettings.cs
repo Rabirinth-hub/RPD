@@ -64,7 +64,7 @@ namespace RimPersonaDirector
                 context.Inc_Health, context.Inc_Health_Desc,
                 context.Inc_Equipment, context.Inc_Inventory,
                 context.Inc_RimPsyche, context.Inc_RimPsyche_All,
-                context.Inc_Memories, context.Inc_CommonKnowledge,
+                context.Inc_Memories, context.Inc_CommonKnowledge, context.Inc_PawnPortrait,
                 context.Inc_DataComparison
             });
         }

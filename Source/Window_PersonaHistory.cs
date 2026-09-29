@@ -16,6 +16,8 @@ namespace RimPersonaDirector
         private Vector2 _contextScroll;
         private Vector2 _beforePersonaScroll;
         private Vector2 _afterPersonaScroll;
+        private Texture2D _portraitTexture;
+        private string _portraitData;
 
         public Window_PersonaHistory(Pawn pawn)
         {
@@ -144,12 +146,55 @@ namespace RimPersonaDirector
             Widgets.Label(
                 new Rect(inner.x, inner.y, inner.width, 24f),
                 "RPD_History_Context".Translate(daysAgo).Colorize(Color.yellow));
+            float textTop = inner.y + 26f;
+            EnsurePortraitTexture(record.portraitBase64);
+            if (_portraitTexture != null)
+            {
+                const float size = 160f;
+                GUI.DrawTexture(new Rect(inner.x + (inner.width - size) / 2f,
+                    textTop, size, size), _portraitTexture, ScaleMode.ScaleToFit);
+                textTop += size + 8f;
+            }
             DrawScrollableText(
-                new Rect(inner.x, inner.y + 26f, inner.width, inner.height - 26f),
+                new Rect(inner.x, textTop, inner.width, inner.yMax - textTop),
                 ref _contextScroll,
                 string.IsNullOrEmpty(record.diffSnapshot)
                     ? "RPD_History_NoContext".Translate().ToString()
                     : record.diffSnapshot);
+        }
+
+        private void EnsurePortraitTexture(string base64)
+        {
+            if (string.Equals(_portraitData, base64, StringComparison.Ordinal)) return;
+            if (_portraitTexture != null) UnityEngine.Object.Destroy(_portraitTexture);
+            _portraitTexture = null;
+            _portraitData = base64;
+            if (string.IsNullOrEmpty(base64)) return;
+            Texture2D texture = null;
+            try
+            {
+                texture = new Texture2D(2, 2, TextureFormat.RGB24, false);
+                if (ImageConversion.LoadImage(texture, Convert.FromBase64String(base64)))
+                {
+                    _portraitTexture = texture;
+                    texture = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning("[Persona Director] Could not display history portrait: " + ex.Message);
+            }
+            finally
+            {
+                if (texture != null) UnityEngine.Object.Destroy(texture);
+            }
+        }
+
+        public override void PostClose()
+        {
+            if (_portraitTexture != null) UnityEngine.Object.Destroy(_portraitTexture);
+            _portraitTexture = null;
+            base.PostClose();
         }
 
         private void DrawPersona(

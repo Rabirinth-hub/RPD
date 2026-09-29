@@ -59,13 +59,15 @@ Rimtalk-Persona-Director/
 
 ### 4. 资料筛选与提示词
 
+第三列的“附加 Pawn 肖像”默认关闭。开启后，单人 Smart Gen、导演台单独发送、自动生成和演变会在同一次 AI 请求中附上长边 512 像素的肖像，需要支持视觉输入的模型。合并发送多人始终不附图。演变时若人格历史中保存了上次肖像，会发送左／右对比图，并在 prompt 中注明“左：上次记录；右：现在”；否则只发送当前肖像。实验性人格历史会保存生成时约 160 像素的缩略图，在应用结果后显示。
+
 RPD 设置页的“选择发送给 AI 的数据内容”控制人格生成用的资料：基础身份、种族与异种型、基因、童年和成年背景、亲属、特质、意识形态、技能与热情、健康、装备、背包，以及可选的 RimPsyche、记忆和常识。某些项目还有单独的“详细描述”开关。描述越多，请求越长；先保留身份、背景、关系、特质和技能，再按角色需要添加基因或健康描述。RimPsyche、记忆及常识选项会随相应扩展模组是否安装而出现。RimPsyche：[GitHub](https://github.com/jagerguy36/Rimpsyche) · [Steam 创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3535112473)；记忆拓展（记忆和常识）：[GitHub](https://github.com/sanguodxj-byte/RimTalk-ExpandMemory) · [Steam 创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3608181242)。
 
 内置提示词有五个可编辑槽位：**Standard** 提供三种人格解读；**Story-Driven** 写单段故事；**Data-Driven** 严格连接童年与成年背景；另两个分别供演变“追加”与“覆盖”使用。用 Slot 下拉切换，修改名称或正文，**重置默认**仅重置当前槽位。`{LANG}` 表示游戏语言；返回格式协议由模组自动附加。普通单次生成若选到演变专用槽位，会改用 Standard。
 
 设置页还能分别给单次生成和演变选择 **RimTalk 高级预设**；自动生成则可按角色类别单独选择。高级预设走另一条上下文路径，具体区别见本语言末尾的[附录](#附录人格上下文如何构建)。想明确控制 RPD 数据筛选时，先用内置模板验证结果，再切换高级预设。
 
-**高级预设实际怎么写**：在 RimTalk 的高级提示词编辑器中新建预设，启用一个 System 条目写人格任务与返回要求，再启用一个 User 条目放资料。把 `{{ pawn.d_full_profile }}` 写进 User 条目就能取到 RPD 的整合角色资料；把 `{{ director_notes }}` 单独写入可补上全局导演备注。选好预设后回 RPD 设置页将其指定给“单次生成”或对应自动生成类别。手动和自动更新都可引用现有人格、时间和状态差异；有时间记录时还可用 `pawn.d_evolve_memories` 读取此后的记忆。完整可粘贴模板、变量对照和精简格式的方法放在[附录 H](#h-scriban-高级预设与格式精简)。
+**高级预设实际怎么写**：在 RimTalk 的高级提示词编辑器中新建预设，启用一个 System 条目写人格任务与返回要求，再启用一个 User 条目放资料。把 `{{ pawn.d_full_profile }}` 写进 User 条目就能取到 RPD 的整合角色资料；把 `{{ director_notes }}` 单独写入可补上全局导演备注。选好预设后回 RPD 设置页将其指定给“单次生成”或对应自动生成类别。手动和自动更新都可引用现有人格、时间和状态差异；有时间记录时还可用 `pawn.d_evolve_memories` 读取此后的记忆。完整可粘贴模板和精简格式的方法放在[附录 H](#h-scriban-高级预设与格式精简)，全部变量见[变量索引](#附录rpd-变量索引)。
 
 RPD 也把 `pawn.d_full_profile`、`pawn.d_memories`、`pawn.d_status_diff` 等人物变量和 `director_notes`、`smart_history` 等上下文变量注册给 RimTalk。Persona 文本可写 Scriban 条件，让同一角色在囚禁、殖民地生活等处境下呈现不同表达；这是人格文本的动态渲染，不是给每次对话重新生成一份 Persona。例如：
 
@@ -250,7 +252,11 @@ Prompt  = [Update Data]
 
 RPD 可在 RimTalk 构建 Pawn 上下文时把 Persona 文本里的 Scriban 转为当前值，例如 `{{ pawn.d_status_diff }}`。该渲染只替换送入 RimTalk 上下文的 Persona 文本；不会改变 B–F 的请求结构，也不代表每次对话会重新生成人格。随机预设套用和规则分配同样没有生成请求。
 
+在 Persona 或 RimTalk 对话预设中写 `{{ pawn.d_portrait_diff }}`，可启用对话肖像变化附图；变量本身不输出文字，放在 Gen 或 Evolve 高级预设中也只会得到空字符串，不会触发附图。首次遇到该 Pawn 时只保存约 160 像素的本地基准肖像，不附图。此后每次对话先在本地比较缩略图的全部像素，并容忍少量颜色波动；只有检测到可见变化，才把上次记录放左侧、当前肖像放右侧拼成一张图，随原对话请求一次发送，并将当前肖像设为新基准。附图说明会标明与 RimTalk 上下文一致的 `[P序号]` 和角色名，让 AI 知道图中是哪位 Pawn。无变化时不增加图像 token。一个请求只附第一位触发该变量的参与 Pawn；如果 RimTalk 已给请求附图，则沿用其原图。
+
 #### H. Scriban 高级预设与格式精简
+
+高级预设可写 `{{ pawn_portrait }}` 来附图，即使第三列开关关闭也有效；变量本身不输出文字。RPD 按调用入口决定图片：单人生成发送当前肖像，演变发送上次／现在对比图（没有历史肖像则只发送当前肖像）。第三列开关开启时不必再写变量。图片请求由 RPD 在末尾附加专用返回格式规则；普通无图请求继续使用原格式。
 
 以下内容填在 **RimTalk 的高级提示词预设条目**里，不是填在 RPD 的五个内置提示词槽里。先在 RimTalk 创建或复制一个高级预设，保留两个已启用条目：System 写任务，User 写资料；保存后在 RPD 对应功能的高级预设下拉框选择它。预设中的 `{{ ... }}` 在发送请求前由 RimTalk 的 Scriban 渲染。RPD 人物变量写作 `pawn.d_*`，全局备注写作 `director_notes`；不要把这套写法与其他占位符混用。
 
@@ -351,6 +357,69 @@ Adulthood: {{ pawn.d_backstory_adulthood_title }}
 
 例如 `--- Basic Info ---` 会变成 `Basic Info:`，连续三个以上换行会压成两个。保留栏目名可避免种族、特质和技能混成一段。这里的替换只改变**该条目渲染出的请求文本**，不会改写游戏保存的人格或原始资料。函数语法可查 [Scriban 字符串函数](https://github.com/scriban/scriban/blob/master/site/docs/builtins/string.md)和[正则函数](https://github.com/scriban/scriban/blob/master/site/docs/builtins/regex.md)。
 
+### 附录：RPD 变量索引
+
+以下是本项目注册给 RimTalk Scriban 的变量。人物变量以 `pawn.` 开头，例如 `{{ pawn.d_basic_name }}`；上下文变量直接写，例如 `{{ director_notes }}`。单项人物变量直接读取当前 Pawn；`d_full_profile` 则按 RPD **全局资料筛选器**组装。缺少相关资料或联动 Mod 时，部分变量会返回空字符串。旧版 Mustache 的 `director.*` 写法在当前 RimTalk 1.3 中没有注册，请使用下面的 Scriban 名称。
+
+#### 身份、种族与基因
+
+| 变量（均加 `pawn.` 前缀） | 内容 |
+|---|---|
+| `d_basic_name` / `d_basic_fullname` | 简称／完整姓名；没有完整姓名时回退为简称。 |
+| `d_basic_gender` / `d_basic_age` | 游戏中的性别值／生物年龄（整年）。 |
+| `d_basic_status` | 当前社会身份，包括相关任务身份。 |
+| `d_basic_faction_label` / `d_basic_faction_desc` | 所属派系名称／派系说明；无派系时名称为 `None`。 |
+| `d_race_label` / `d_race_desc` | 种族名称／种族说明。 |
+| `d_race_xenotype` / `d_race_xenotype_desc` | 异种型名称／说明；无基因数据时名称为 `Baseliner`。 |
+| `d_genes_list` / `d_genes_list_with_desc` | 天然与植入基因列表；后者附基因说明，均排除被覆盖的基因。 |
+
+#### 经历、性格、信仰与关系
+
+| 变量（均加 `pawn.` 前缀） | 内容 |
+|---|---|
+| `d_backstory_childhood_title` / `d_backstory_childhood_desc` | 童年背景标题／完整说明。 |
+| `d_backstory_adulthood_title` / `d_backstory_adulthood_desc` | 成年背景标题／完整说明。 |
+| `d_backstory_full` | 童年与成年背景的标题及说明。 |
+| `d_traits_list` / `d_traits_list_with_desc` | 特质列表；后者附特质说明。 |
+| `d_ideology_list` / `d_ideology_list_with_desc` | 意识形态名称与核心信条；后者附信条说明。 |
+| `d_relations` | 父母、子女、兄弟姐妹、伴侣等关键关系及对方状态。 |
+
+#### 能力、身体与物品
+
+| 变量（均加 `pawn.` 前缀） | 内容 |
+|---|---|
+| `d_skills_list` / `d_skills_list_with_desc` | 技能等级、无法从事的技能与热情；当前这两个名称调用同一份详细输出。 |
+| `d_health_list` / `d_health_list_with_desc` | 可见健康状况、身体部位与说明；当前这两个名称调用同一份详细输出。 |
+| `d_equipment` | 已装备的武器与穿着的衣物。 |
+| `d_inventory` | 随身物品。 |
+| `d_rimpsyche` | RimPsyche 的人格倾向数据；联动不可用时为空。 |
+| `d_common_knowledge` | ExpandMemory 提供的相关常识；联动不可用或无匹配内容时为空。 |
+
+#### 汇总、记忆与变化
+
+| 变量（均加 `pawn.` 前缀） | 内容与适用范围 |
+|---|---|
+| `d_full_profile` | 按 RPD 全局资料筛选器拼出的完整角色资料；导演备注须另加 `director_notes`。 |
+| `d_memories` | 可取得的近期外部记忆；无记忆数据时为空。 |
+| `d_status_diff` | 日常状态相对于本地记录的变化；没有变化时可为空。 |
+| `d_evolve_current_persona` | 人格编辑器中的当前文字；编辑器未打开时取缓存或已保存的人格。 |
+| `d_evolve_time_info` | 上次记录更新时间至今的天数及生物年龄变化；无记录时给出提示文字。 |
+| `d_evolve_memories` | 上次记录更新时间之后的外部记忆；仅在 RPD 高级 Evolve 渲染中取值，没有时间记录时为空。 |
+| `d_evolve_diff` | 当前详细状态与“设置时间”时快照的差异；没有快照时返回 `No previous snapshot.`。显式引用不受内置“数据比较”开关控制。 |
+| `d_portrait_diff` | 对话专用附图触发器：无文字输出；首次建立肖像基准，之后仅在外貌变化时发送“上次／现在”拼图。Gen、Evolve 中为空且不附图。 |
+
+#### 上下文变量与图片
+
+| 变量（不加 `pawn.`） | 内容与适用范围 |
+|---|---|
+| `director_notes` | RPD 设置中的全局导演备注。 |
+| `evolve_director_notes` | 自动更新备注；按当前 Pawn 渲染其中的 Scriban。 |
+| `director_trigger_context` | 当前自动生成或自动更新的触发事件；其他请求中为空。 |
+| `smart_history` | 根据当前对话参与者及历史条数设置整理的对话记录；独白最多取三条。 |
+| `pawn_portrait` | 在 RPD 高级人格预设中触发附图，不输出文字且可独立于第三列开关使用。单人 Gen 发当前肖像，Evolve 有历史肖像时发“上次／现在”拼图；合并生成不附图。 |
+
+图片发送时机、尺寸及日常对话的比较规则见上文的[肖像说明](#g-persona-在日常对话中的动态渲染)。
+
 ---
 
 ## English
@@ -409,13 +478,15 @@ The console can filter current-map pawns by colonist, prisoner, slave, visitor, 
 
 ### 4. Data filters and prompts
 
+**Attach Pawn Portrait** in the third column is off by default. When enabled, single-Pawn Smart Gen, individual Director Console requests, Auto-Gen, and Evolve attach a portrait with a 512-pixel long edge in the same AI call; the model must accept images. Combined multi-Pawn requests never attach an image. Evolve sends a left/right comparison when the last portrait exists in persona history, and otherwise sends the current portrait. Experimental persona history keeps an approximately 160-pixel thumbnail from the generation request for display after the result is applied.
+
 RPD's **Select Data sent to AI** controls persona-generation material: identity, race/xenotype, genes, childhood and adulthood backstory, key relations, traits, ideology, skills and passions, health, equipment, inventory, and optional RimPsyche, memories, and common knowledge. Some fields have a separate description switch. Longer descriptions make longer requests. Start with identity, background, relations, traits, and skills; add detailed gene or health text only when useful. RimPsyche, memory, and common-knowledge controls appear when their corresponding expansion is installed. RimPsyche: [GitHub](https://github.com/jagerguy36/Rimpsyche) · [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3535112473); RimTalk-ExpandMemory (Memory and Common Sense): [GitHub](https://github.com/sanguodxj-byte/RimTalk-ExpandMemory) · [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3608181242).
 
 There are five editable built-in prompt slots: **Standard** offers three interpretations; **Story-Driven** writes one narrative; **Data-Driven** links childhood and adult history more strictly; the last two are for evolution **Append** and **Overwrite**. Use the Slot menu to edit a title or prompt. **Reset Default** resets only the selected slot. `{LANG}` represents the active game language, and RPD appends its response-format rules automatically. Selecting an evolution-only slot for ordinary single generation falls back to Standard.
 
 Separate **RimTalk advanced preset** selectors apply to single generation and evolution; Auto-Gen categories have their own selectors. Advanced presets follow different context paths, detailed in the [appendix](#appendix-how-persona-context-is-built). Start with an internal prompt when you need predictable RPD data filtering, then check what an advanced preset includes before switching.
 
-**Writing an advanced preset**: create one in RimTalk's advanced prompt editor. Enable a System entry for the persona task and response requirements, and a User entry for character data. Put `{{ pawn.d_full_profile }}` in User to import RPD's assembled profile, then add `{{ director_notes }}` separately for global Director Notes. Select the preset in RPD's single-generation setting or an Auto-Gen category. Manual and Auto-Evolve can import the current persona, time, and status difference; `pawn.d_evolve_memories` provides memories since the recorded time in either advanced Evolve workflow. The [Scriban recipes in Appendix H](#h-scriban-advanced-presets-and-format-cleanup) include paste-ready templates, variable mappings, and cleanup examples.
+**Writing an advanced preset**: create one in RimTalk's advanced prompt editor. Enable a System entry for the persona task and response requirements, and a User entry for character data. Put `{{ pawn.d_full_profile }}` in User to import RPD's assembled profile, then add `{{ director_notes }}` separately for global Director Notes. Select the preset in RPD's single-generation setting or an Auto-Gen category. Manual and Auto-Evolve can import the current persona, time, and status difference; `pawn.d_evolve_memories` provides memories since the recorded time in either advanced Evolve workflow. The [Scriban recipes in Appendix H](#h-scriban-advanced-presets-and-format-cleanup) include paste-ready templates and cleanup examples; the [variable reference](#appendix-rpd-variable-reference) lists every RPD variable.
 
 RPD also registers variables such as `pawn.d_full_profile`, `pawn.d_memories`, `pawn.d_status_diff`, `director_notes`, and `smart_history` with RimTalk. Persona text can use Scriban conditions to change expression by situation. This renders the saved persona dynamically; it does not regenerate a new persona for every conversation. For example:
 
@@ -600,7 +671,11 @@ With a RimTalk advanced preset, Auto-Evolve only renders its System/User/Assista
 
 When RimTalk builds Pawn context, RPD can render Scriban in the saved persona, such as `{{ pawn.d_status_diff }}`, into current values. This replaces persona text inside RimTalk's context. It does not change request paths B–F and does not regenerate the persona for every conversation. Applying a random preset or assigning one by rule also sends no generation request.
 
+Add `{{ pawn.d_portrait_diff }}` to a persona or RimTalk dialogue preset to attach a portrait only when its appearance changes. The variable emits no text; in a Gen or Evolve advanced preset it resolves to an empty string and does not attach an image. The first dialogue use saves a local baseline thumbnail of about 160 pixels and sends no image. Later requests compare every thumbnail pixel locally with a small color tolerance; a visible change sends one image with the previous portrait on the left and the current portrait on the right in the existing dialogue call, then updates the baseline. The image instruction names the Pawn using RimTalk's matching `[P number]` and unique dialogue name. Unchanged appearances use no image tokens. At most the first participating Pawn that triggers the variable is attached; an image already supplied by RimTalk takes precedence.
+
 #### H. Scriban advanced presets and format cleanup
+
+An advanced preset can include `{{ pawn_portrait }}` to attach the image even when the third-column switch is off. The variable adds no text. RPD sends the current portrait for single-Pawn generation, or the last/current comparison for Evolve when a historical portrait exists. The switch attaches the image without a variable. Image requests use an RPD-supplied response format rule; requests without an image keep their existing format.
 
 Enter these examples in **RimTalk advanced prompt preset entries**, not RPD's five built-in prompt slots. Create or duplicate a preset in RimTalk and enable two entries: System for the task and User for the data. Save it, then select it from the relevant advanced-preset dropdown in RPD. RimTalk renders `{{ ... }}` before sending the request. RPD pawn variables use `pawn.d_*`; global notes use `director_notes`.
 
@@ -700,3 +775,66 @@ Use Scriban's regular-expression replacement to shorten all `--- heading ---` li
 ```
 
 For example, `--- Basic Info ---` becomes `Basic Info:`, and three or more consecutive line breaks become two. Keeping section labels prevents race, traits, and skills from blending together. These transformations affect **the rendered request text in that entry**; they do not rewrite the saved persona or underlying game data. See the [Scriban string functions](https://github.com/scriban/scriban/blob/master/site/docs/builtins/string.md) and [regex functions](https://github.com/scriban/scriban/blob/master/site/docs/builtins/regex.md) for syntax.
+
+### Appendix: RPD variable reference
+
+These are the variables this project registers with RimTalk's Scriban engine. Prefix Pawn variables with `pawn.`, for example `{{ pawn.d_basic_name }}`; use context variables directly, for example `{{ director_notes }}`. Individual Pawn variables read the current Pawn. `d_full_profile` assembles data using RPD's **global data filter**. Variables backed by optional data or other mods can be empty. The old Mustache `director.*` names are not registered in RimTalk 1.3; use the Scriban names below.
+
+#### Identity, race, and genes
+
+| Variable (prefix with `pawn.`) | Content |
+|---|---|
+| `d_basic_name` / `d_basic_fullname` | Short / full name; full name falls back to short name if absent. |
+| `d_basic_gender` / `d_basic_age` | Game gender value / biological age in whole years. |
+| `d_basic_status` | Current social status, including relevant quest status. |
+| `d_basic_faction_label` / `d_basic_faction_desc` | Faction name / description; name is `None` without a faction. |
+| `d_race_label` / `d_race_desc` | Race name / description. |
+| `d_race_xenotype` / `d_race_xenotype_desc` | Xenotype name / description; name is `Baseliner` without gene data. |
+| `d_genes_list` / `d_genes_list_with_desc` | Endogenes and xenogenes; the second form adds gene descriptions. Overridden genes are omitted. |
+
+#### Backstory, personality, ideology, and relations
+
+| Variable (prefix with `pawn.`) | Content |
+|---|---|
+| `d_backstory_childhood_title` / `d_backstory_childhood_desc` | Childhood backstory title / full description. |
+| `d_backstory_adulthood_title` / `d_backstory_adulthood_desc` | Adulthood backstory title / full description. |
+| `d_backstory_full` | Titles and descriptions for both backstories. |
+| `d_traits_list` / `d_traits_list_with_desc` | Traits; the second form adds their descriptions. |
+| `d_ideology_list` / `d_ideology_list_with_desc` | Ideology name and memes; the second form adds meme descriptions. |
+| `d_relations` | Key relationships such as parents, children, siblings, and partners, with the other Pawn's status. |
+
+#### Skills, health, and possessions
+
+| Variable (prefix with `pawn.`) | Content |
+|---|---|
+| `d_skills_list` / `d_skills_list_with_desc` | Skill levels, incapable skills, and passions. Both names currently return the same detailed output. |
+| `d_health_list` / `d_health_list_with_desc` | Visible health conditions, body parts, and descriptions. Both names currently return the same detailed output. |
+| `d_equipment` | Equipped weapons and worn apparel. |
+| `d_inventory` | Carried inventory items. |
+| `d_rimpsyche` | RimPsyche personality data; empty when the integration has no data. |
+| `d_common_knowledge` | Relevant ExpandMemory common knowledge; empty without integration or matching data. |
+
+#### Profile, memories, and changes
+
+| Variable (prefix with `pawn.`) | Content and scope |
+|---|---|
+| `d_full_profile` | Assembled character profile using RPD's global data filter; add `director_notes` separately. |
+| `d_memories` | Available recent external memories; empty without memory data. |
+| `d_status_diff` | Daily status changes against the locally recorded baseline; may be empty when nothing changed. |
+| `d_evolve_current_persona` | Current text in the Persona Editor, or cached/saved persona when the editor is closed. |
+| `d_evolve_time_info` | Days since the last recorded update and biological age change; explanatory text when no record exists. |
+| `d_evolve_memories` | External memories since the last recorded update; populated only while rendering an RPD advanced Evolve preset and empty without a time record. |
+| `d_evolve_diff` | Detailed status difference from the snapshot taken by Set Time; returns `No previous snapshot.` when absent. An explicit reference bypasses the internal Data Comparison switch. |
+| `d_portrait_diff` | Dialogue-only image trigger with no text. The first use stores a portrait baseline; a later appearance change sends a previous/current composite. Empty and image-free in Gen and Evolve. |
+
+#### Context variables and images
+
+| Variable (no `pawn.` prefix) | Content and scope |
+|---|---|
+| `director_notes` | Global Director Notes from RPD settings. |
+| `evolve_director_notes` | Auto-Evolve notes, rendered as Scriban for the current Pawn. |
+| `director_trigger_context` | Current Auto-Gen or Auto-Evolve trigger event; empty outside a matching request. |
+| `smart_history` | Conversation history allocated across participants using the history-count setting; monologues use at most three entries. |
+| `pawn_portrait` | Image trigger in an RPD advanced persona preset. It emits no text and works independently of the third-column switch. Single Gen sends the current portrait; Evolve sends a previous/current composite when a historical portrait exists. Batch generation attaches no image. |
+
+See the [portrait section](#g-dynamic-persona-rendering-during-regular-dialogue) above for image timing, size, and dialogue comparison rules.

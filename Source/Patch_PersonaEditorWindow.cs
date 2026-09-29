@@ -2,16 +2,70 @@
 using RimTalk.UI;
 using RimWorld;
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using UnityEngine;
 using Verse;
 
 namespace RimPersonaDirector
 {
+    internal static class DirectorPersonaEditorTab
+    {
+        // RimTalk 1.3 added tabs; older versions have only the personality editor.
+        private static readonly PropertyInfo PersonalityTabProperty =
+            AccessTools.Property(typeof(PersonaEditorWindow), "IsPersonalityTabSelected");
+        private static readonly FieldInfo CurrentTabField =
+            AccessTools.Field(typeof(PersonaEditorWindow), "_currentTab");
+        internal static readonly MethodInfo PersonalityTabMethod =
+            AccessTools.Method(typeof(PersonaEditorWindow), "DrawPersonalityTab");
+
+        internal static bool HasTabs => PersonalityTabMethod != null;
+
+        internal static float RollGenButtonY(Rect inRect)
+        {
+            if (!HasTabs) return inRect.y + 365f;
+
+            // Match RimTalk's tabbed editor layout. Its native action row follows
+            // the instruction, 160-pixel text box, count, and chattiness slider.
+            GameFont previousFont = Text.Font;
+            try
+            {
+                Text.Font = GameFont.Small;
+                float instructionHeight = Text.CalcHeight(
+                    "RimTalk.PersonaEditor.Instruct".Translate(), inRect.width);
+                return inRect.y + 332f + instructionHeight;
+            }
+            finally
+            {
+                Text.Font = previousFont;
+            }
+        }
+
+        internal static bool IsPersonalityTab(PersonaEditorWindow window)
+        {
+            if (window == null) return false;
+            try
+            {
+                if (PersonalityTabProperty != null)
+                    return (bool)PersonalityTabProperty.GetValue(window);
+                if (CurrentTabField != null)
+                    return string.Equals(CurrentTabField.GetValue(window)?.ToString(),
+                        "Personality", StringComparison.Ordinal);
+            }
+            catch (Exception) { return true; }
+            return true;
+        }
+    }
+
     
-    [HarmonyPatch(typeof(PersonaEditorWindow), "DoWindowContents")]
+    [HarmonyPatch]
     public static class Patch_PersonaEditorWindow_DirectorFeatures
     {
+        [HarmonyTargetMethod]
+        private static MethodBase TargetMethod() =>
+            DirectorPersonaEditorTab.PersonalityTabMethod
+            ?? AccessTools.Method(typeof(PersonaEditorWindow), "DoWindowContents");
+
         // 状态变量
         private static Task<string> evolveTask = null;
         private static string evolveResult = null;
@@ -28,7 +82,8 @@ namespace RimPersonaDirector
             evolvingMode = AutoEvolveMode.Append;
         }
 
-        public static void Postfix(Rect inRect, Window __instance)
+        [HarmonyPostfix]
+        public static void Postfix(Rect inRect, PersonaEditorWindow __instance)
         {
             Pawn pawn = (Pawn)AccessTools.Field(typeof(PersonaEditorWindow), "_pawn").GetValue(__instance);
             if (pawn == null) return;
@@ -61,6 +116,7 @@ namespace RimPersonaDirector
                 string newText = evolvingMode == AutoEvolveMode.Overwrite
                     ? evolveResult
                     : $"{currentText}\n\n[Development]: {evolveResult}";
+                DirectorPortraitService.RemapPendingPortrait(pawn, evolveResult, newText);
                 DirectorUtils.SetWindowText(__instance, newText);
 
                 // 清理结果，防止重复应用
@@ -69,8 +125,14 @@ namespace RimPersonaDirector
                 evolvingWindow = null;
             }
 
+            // New RimTalk versions invoke this patch only for DrawPersonalityTab.
+            // The fallback target is the old single-page DoWindowContents method.
+            if (!DirectorPersonaEditorTab.IsPersonalityTab(__instance)) return;
+
             // --- 1. 布局参数 ---
-            float footerY = inRect.y + 267f;
+            float footerY = DirectorPersonaEditorTab.HasTabs
+                ? inRect.yMax - 28f
+                : inRect.y + 267f;
             float buttonWidth = 80f;
             float buttonHeight = 24f;
             float spacing = 5f;

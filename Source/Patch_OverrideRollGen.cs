@@ -16,11 +16,17 @@ namespace RimPersonaDirector
         [HarmonyPrefix]
         public static bool Prefix(Window __instance, Rect inRect)
         {
+            if (!DirectorPersonaEditorTab.IsPersonalityTab(__instance as PersonaEditorWindow))
+            {
+                _hijackNextClick = false;
+                return true;
+            }
+
             // 1. 计算按钮位置 (与之前一样)
             float buttonWidth = 90f;
             float buttonHeight = 28f;
             float spacing = 10f;
-            float buttonY = inRect.y + 365f; // 精确 Y 坐标
+            float buttonY = DirectorPersonaEditorTab.RollGenButtonY(inRect);
             float totalWidth = (buttonWidth * 4f) + (spacing * 3f);
             float startX = inRect.center.x - (totalWidth / 2f);
             Rect rollGenButtonRect = new Rect(startX + (buttonWidth + spacing) * 2, buttonY, buttonWidth, buttonHeight);

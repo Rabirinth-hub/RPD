@@ -27,17 +27,20 @@ namespace RimPersonaDirector
         public int timestampTick;
         public string personaText;
         public string diffSnapshot;
+        public string portraitBase64;
 
         public void ExposeData()
         {
             Scribe_Values.Look(ref timestampTick, "timestampTick", 0);
             Scribe_Values.Look(ref personaText, "personaText");
             Scribe_Values.Look(ref diffSnapshot, "diffSnapshot");
+            Scribe_Values.Look(ref portraitBase64, "portraitBase64");
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 if (personaText == null) personaText = "";
                 if (diffSnapshot == null) diffSnapshot = "";
+                if (portraitBase64 == null) portraitBase64 = "";
             }
         }
 
@@ -47,7 +50,8 @@ namespace RimPersonaDirector
             {
                 timestampTick = timestampTick,
                 personaText = personaText ?? "",
-                diffSnapshot = diffSnapshot ?? ""
+                diffSnapshot = diffSnapshot ?? "",
+                portraitBase64 = portraitBase64 ?? ""
             };
         }
     }

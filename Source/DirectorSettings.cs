@@ -890,6 +890,7 @@ Fields:
         public bool Inc_RimPsyche = false; public bool Inc_RimPsyche_All = false;
         public bool Inc_Memories = false; 
         public bool Inc_CommonKnowledge = false;
+        public bool Inc_PawnPortrait = false;
         public bool Inc_DataComparison = false;
 
         public ContextSettings Copy()
@@ -919,6 +920,7 @@ Fields:
                 Inc_RimPsyche_All = Inc_RimPsyche_All,
                 Inc_Memories = Inc_Memories,
                 Inc_CommonKnowledge = Inc_CommonKnowledge,
+                Inc_PawnPortrait = Inc_PawnPortrait,
                 Inc_DataComparison = Inc_DataComparison
             };
         }
@@ -948,6 +950,7 @@ Fields:
             Scribe_Values.Look(ref Inc_RimPsyche_All, "Inc_RimPsyche_All", false);
             Scribe_Values.Look(ref Inc_Memories, "Inc_Memories", false);
             Scribe_Values.Look(ref Inc_CommonKnowledge, "Inc_CommonKnowledge", false);
+            Scribe_Values.Look(ref Inc_PawnPortrait, "Inc_PawnPortrait", false);
             Scribe_Values.Look(ref Inc_DataComparison, "Inc_DataComparison", false);
         }
     }

@@ -27,6 +27,7 @@ namespace RimPersonaDirector
         private Dictionary<int, string> _dataSnapshots = new Dictionary<int, string>();
         private Dictionary<int, string> _dailySnapshots = new Dictionary<int, string>();
         private Dictionary<int, int> _dailySnapshotDays = new Dictionary<int, int>();
+        private Dictionary<int, string> _dailyPortraitSnapshots = new Dictionary<int, string>();
         private Dictionary<int, string> _initialPersonaBaselines = new Dictionary<int, string>();
         private Dictionary<int, AutoEvolveConfig> _autoConfigs = new Dictionary<int, AutoEvolveConfig>();
         private Dictionary<int, List<PersonaHistoryRecord>> _historyVault =
@@ -63,6 +64,7 @@ namespace RimPersonaDirector
             Scribe_Collections.Look(ref _dataSnapshots, "dataSnapshots", LookMode.Value, LookMode.Value);
             Scribe_Collections.Look(ref _dailySnapshots, "dailySnapshots", LookMode.Value, LookMode.Value);
             Scribe_Collections.Look(ref _dailySnapshotDays, "dailySnapshotDays", LookMode.Value, LookMode.Value);
+            Scribe_Collections.Look(ref _dailyPortraitSnapshots, "dailyPortraitSnapshots", LookMode.Value, LookMode.Value);
             Scribe_Collections.Look(ref _initialPersonaBaselines, "initialPersonaBaselines", LookMode.Value, LookMode.Value);
             Scribe_Collections.Look(ref _autoConfigs, "autoConfigs", LookMode.Value, LookMode.Deep);
             Scribe_Collections.Look(ref _historyVault, "historyVault", LookMode.Value, LookMode.Deep);
@@ -77,6 +79,7 @@ namespace RimPersonaDirector
                 // 初始化
                 if (_dailySnapshots == null) _dailySnapshots = new Dictionary<int, string>();
                 if (_dailySnapshotDays == null) _dailySnapshotDays = new Dictionary<int, int>();
+                if (_dailyPortraitSnapshots == null) _dailyPortraitSnapshots = new Dictionary<int, string>();
                 if (_initialPersonaBaselines == null)
                     _initialPersonaBaselines = new Dictionary<int, string>();
                 if (_autoConfigs == null) _autoConfigs = new Dictionary<int, AutoEvolveConfig>();
@@ -90,6 +93,18 @@ namespace RimPersonaDirector
         }
 
         // --- A. 每日自动快照 (Daily) ---
+        public string GetDailyPortraitBaseline(Pawn pawn)
+        {
+            return pawn != null && _dailyPortraitSnapshots.TryGetValue(pawn.thingIDNumber, out string value)
+                ? value : null;
+        }
+
+        public void SaveDailyPortraitBaseline(Pawn pawn, string thumbnail)
+        {
+            if (pawn != null && !string.IsNullOrEmpty(thumbnail))
+                _dailyPortraitSnapshots[pawn.thingIDNumber] = thumbnail;
+        }
+
         public void SaveDailySnapshot(Pawn p)
         {
             if (p == null) return;
@@ -288,14 +303,24 @@ namespace RimPersonaDirector
             return snapshot;
         }
 
-        public bool AddHistory(Pawn pawn, string persona, string diffSnapshot)
+        public string GetLatestHistoryPortrait(Pawn pawn)
+        {
+            if (pawn == null) return null;
+            List<PersonaHistoryRecord> records;
+            if (!_historyVault.TryGetValue(pawn.thingIDNumber, out records)
+                || records == null || records.Count == 0)
+                return null;
+            return records[0]?.portraitBase64;
+        }
+
+        public bool AddHistory(Pawn pawn, string persona, string diffSnapshot, string portraitBase64 = null)
         {
             if (!DirectorFeatureGate.ExperimentalEnabled
                 || pawn == null
                 || !pawn.Spawned
                 || pawn.Map == null
                 || DirectorUtils.UsesGlobalPlayerPersona(pawn)
-                || string.IsNullOrWhiteSpace(persona))
+                || (string.IsNullOrWhiteSpace(persona) && string.IsNullOrEmpty(portraitBase64)))
             {
                 return false;
             }
@@ -303,8 +328,9 @@ namespace RimPersonaDirector
             var record = new PersonaHistoryRecord
             {
                 timestampTick = GenTicks.TicksGame,
-                personaText = persona.Trim(),
-                diffSnapshot = diffSnapshot ?? ""
+                personaText = persona?.Trim() ?? "",
+                diffSnapshot = diffSnapshot ?? "",
+                portraitBase64 = portraitBase64 ?? ""
             };
             if (EstimateBytes(record) > HistoryBytesPerPawn)
             {
@@ -343,6 +369,7 @@ namespace RimPersonaDirector
             RemoveMissingKeys(_dataSnapshots, retainedPawnIds);
             RemoveMissingKeys(_dailySnapshots, retainedPawnIds);
             RemoveMissingKeys(_dailySnapshotDays, retainedPawnIds);
+            RemoveMissingKeys(_dailyPortraitSnapshots, retainedPawnIds);
             RemoveMissingKeys(_initialPersonaBaselines, retainedPawnIds);
             RemoveMissingKeys(_autoConfigs, retainedPawnIds);
             RemoveMissingKeys(_historyVault, retainedPawnIds);
@@ -428,7 +455,9 @@ namespace RimPersonaDirector
                     continue;
                 }
 
-                records.RemoveAll(record => record == null || string.IsNullOrWhiteSpace(record.personaText));
+                records.RemoveAll(record => record == null
+                    || (string.IsNullOrWhiteSpace(record.personaText)
+                        && string.IsNullOrEmpty(record.portraitBase64)));
                 PrunePawnHistory(records);
                 if (records.Count == 0) _historyVault.Remove(pawnId);
             }
@@ -440,6 +469,7 @@ namespace RimPersonaDirector
             if (record == null) return 0;
             return Encoding.UTF8.GetByteCount(record.personaText ?? "")
                 + Encoding.UTF8.GetByteCount(record.diffSnapshot ?? "")
+                + Encoding.UTF8.GetByteCount(record.portraitBase64 ?? "")
                 + 64;
         }
 
