@@ -104,9 +104,11 @@ Escape line breaks and quotes correctly inside the JSON string. Do not use Markd
 
         public static Task<PersonalityData> Query(TalkRequest request)
         {
-            if (request == null || string.IsNullOrEmpty(request.ImageBase64))
-                return AIService.Query<PersonalityData>(request);
-            return QueryWithImage(request);
+            bool usesImage = request != null && !string.IsNullOrEmpty(request.ImageBase64);
+            return DirectorPersonaResponseFormat.Run(
+                () => usesImage
+                    ? QueryWithImage(request)
+                    : AIService.Query<PersonalityData>(request));
         }
 
         private static async Task<PersonalityData> QueryWithImage(TalkRequest request)

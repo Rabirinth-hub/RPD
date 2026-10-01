@@ -231,7 +231,8 @@ namespace RimPersonaDirector
                     Context = finalInstruction
                 };
 
-                return await AIService.Query<PersonalityData>(request);
+                return await DirectorPersonaResponseFormat.Run(
+                    () => AIService.Query<PersonalityData>(request));
             }
             catch (Exception e)
             {

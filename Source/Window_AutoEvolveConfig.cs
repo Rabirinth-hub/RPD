@@ -404,7 +404,7 @@ namespace RimPersonaDirector
             if (Widgets.ButtonText(new Rect(x, row.y, buttonWidth, 24f),
                 "RPD_AutoEvolve_ButtonEdit".Translate()))
             {
-                Find.WindowStack.Add(new PersonaEditorWindow(pawn));
+                DirectorPersonaEditorPin.Open(pawn);
             }
             x += buttonWidth + 6f;
             if (Widgets.ButtonText(new Rect(x, row.y, buttonWidth, 24f),

@@ -144,7 +144,7 @@ namespace RimPersonaDirector
                 _generationTasks[pawn] = DirectorUtils.GeneratePersonalityTask(data, pawn.LabelShortCap, pawn);
             }
             if (Widgets.ButtonText(edit, "RPD_Batch_Button_DeepEdit".Translate()))
-                Find.WindowStack.Add(new RimTalk.UI.PersonaEditorWindow(pawn));
+                DirectorPersonaEditorPin.Open(pawn);
         }
 
         private void DrawGlobalActions(Listing_Standard list)
