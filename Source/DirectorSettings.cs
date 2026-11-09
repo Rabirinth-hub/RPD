@@ -549,7 +549,7 @@ Fields:
                     preset.localizationKey = definition.Persona;
                     if (!canReplaceText) continue;
 
-                    string translatedText = definition.Persona.Translate().Resolve();
+                    string translatedText = LocalizeVanillaPersona(definition.Persona);
                     string translatedLabel = ExtractLabelFromText(translatedText) ?? preset.label;
                     preset.personaText = translatedText;
                     preset.label = translatedLabel;
@@ -559,6 +559,15 @@ Fields:
 
             _libraryLanguage = currentLanguage;
             return changed;
+        }
+
+        // RimTalk's PersonalityData.Persona is normally already-localized text, not a key.
+        // Calling Translate() on a non-key returns RimWorld's pseudo-translated debug text
+        // (e.g. "Gùàr̠ðèð àŋð þľùŋţ") whenever Dev Mode is on, so only translate real keys.
+        private static string LocalizeVanillaPersona(string persona)
+        {
+            if (string.IsNullOrEmpty(persona)) return persona;
+            return persona.TryTranslate(out TaggedString translated) ? translated.Resolve() : persona;
         }
 
         public void InitLibrary()
@@ -616,7 +625,7 @@ Fields:
                 {
                     // 保护翻译和提取过程
                     string translatedText = p.Persona;
-                    try { translatedText = p.Persona.Translate().Resolve(); } catch { }
+                    try { translatedText = LocalizeVanillaPersona(p.Persona); } catch { }
                     bool isBuiltIn = PresetLibrary.Defaults.Any(d => d.personaText == translatedText);
                     if (!isBuiltIn && !userPresets.Any(existing => existing.personaText == translatedText))
                     {
